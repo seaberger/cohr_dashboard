@@ -21,10 +21,10 @@ export default async function handler(req, res) {
     try {
       let newsData = [];
       
-      // Method 1: Try Yahoo Finance News API for company-specific news
+      // Method 1: Try Yahoo Finance Search API for company-specific news
       try {
-        const yahooNewsResponse = await fetch(
-          `https://query1.finance.yahoo.com/v2/finance/news?symbols=${symbol}`,
+        const yahooSearchResponse = await fetch(
+          `https://query1.finance.yahoo.com/v1/finance/search?q=${symbol}`,
           {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -32,11 +32,11 @@ export default async function handler(req, res) {
           }
         );
         
-        if (yahooNewsResponse.ok) {
-          const yahooNewsData = await yahooNewsResponse.json();
+        if (yahooSearchResponse.ok) {
+          const yahooData = await yahooSearchResponse.json();
           
-          if (yahooNewsData && yahooNewsData.Content && yahooNewsData.Content.result) {
-            const yahooArticles = yahooNewsData.Content.result
+          if (yahooData && yahooData.news && yahooData.news.length > 0) {
+            const yahooArticles = yahooData.news
               .slice(0, limit)
               .map(item => ({
                 title: item.title,
@@ -48,11 +48,11 @@ export default async function handler(req, res) {
               }));
             
             newsData = yahooArticles;
-            console.log(`Yahoo Finance loaded ${newsData.length} COHR-specific articles`);
+            console.log(`Yahoo Finance search loaded ${newsData.length} COHR-specific articles`);
           }
         }
       } catch (error) {
-        console.log('Yahoo Finance news API failed:', error.message);
+        console.log('Yahoo Finance search API failed:', error.message);
       }
       
       console.log(`Loading additional news for ${symbol} - Yahoo returned ${newsData.length} articles`);

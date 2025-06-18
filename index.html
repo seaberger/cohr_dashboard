@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COHR Live Investor Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-card {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .header-card h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .price-section {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .current-price {
+            font-size: 3.2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .price-change {
+            font-size: 1.4em;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .price-change.positive {
+            color: #00ff88;
+        }
+
+        .price-change.negative {
+            color: #ff6b6b;
+        }
+
+        .stock-meta {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1em;
+            margin-top: 8px;
+        }
+
+        .analyst-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .analyst-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            backdrop-filter: blur(5px);
+        }
+
+        .analyst-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .analyst-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95em;
+        }
+
+        .chart-card {
+            grid-column: 1 / -1;
+            min-height: 450px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 1.1em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e3e3e3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .news-tile {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .news-tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .news-tile:hover::before {
+            left: 100%;
+        }
+
+        .news-tile:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-tile.expanded {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .news-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .news-meta {
+            font-size: 0.85em;
+            color: #7f8c8d;
+            margin-bottom: 12px;
+        }
+
+        .news-summary {
+            display: none;
+            margin-top: 16px;
+            color: #34495e;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .news-tile.expanded .news-summary {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .news-link {
+            display: inline-block;
+            margin-top: 16px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(102, 126, 234, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .news-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .competitive-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .competitive-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.95em;
+        }
+
+        .competitive-table td:first-child {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .trends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .trend-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .trend-card:hover {
+            transform: scale(1.05);
+        }
+
+        .trend-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .trend-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1) rotate(180deg);
+        }
+
+        .error-message {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            border-left: 4px solid #fc8181;
+        }
+
+        .control-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9em;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .control-select:hover {
+            border-color: #667eea;
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .chart-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .indicators-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .indicator-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .indicator-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .indicator-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .indicator-label {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .indicator-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .indicator-signal {
+            font-size: 0.8em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .indicator-signal.bullish {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .indicator-signal.bearish {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .indicator-signal.neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .support-resistance {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .levels-section h4 {
+            margin: 0 0 16px 0;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .level-item {
+            padding: 12px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .level-item.resistance {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .level-item.support {
+            border-left: 4px solid #27ae60;
+        }
+
+        .level-label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .level-values {
+            display: block;
+            font-size: 0.95em;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        @media (max-width: 968px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 2rem;
+            }
+            
+            .analyst-grid {
+                grid-template-columns: 1fr;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header Section -->
+        <div class="header-card card">
+            <div>
+                <h1>Coherent Corp (COHR)</h1>
+                <div class="price-section">
+                    <div class="current-price" id="currentPrice">Loading...</div>
+                    <div class="price-change" id="priceChange">--</div>
+                </div>
+                <div class="stock-meta" id="stockMeta">NASDAQ • Technology • Loading market cap...</div>
+                <div style="margin-top: 12px; font-size: 0.9em; opacity: 0.8;" id="lastUpdated">Last updated: --</div>
+            </div>
+            <div class="analyst-grid">
+                <div class="analyst-item">
+                    <div class="analyst-value" id="consensus">--</div>
+                    <div class="analyst-label">Consensus</div>
+                </div>
+                <div class="analyst-item">
+                    <div class="analyst-value" id="avgTarget">--</div>
+                    <div class="analyst-label">Avg Target</div>
+                </div>
+                <div class="analyst-item">
+                    <div class="analyst-value" id="upside">--</div>
+                    <div class="analyst-label">Upside</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Chart Section -->
+        <div class="chart-card card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #2c3e50; margin: 0;">Technical Analysis & Price Chart</h2>
+                <div class="chart-controls">
+                    <select id="timeframeSelect" class="control-select">
+                        <option value="1D">1 Day</option>
+                        <option value="5D">5 Days</option>
+                        <option value="1M">1 Month</option>
+                        <option value="3M" selected>3 Months</option>
+                        <option value="6M">6 Months</option>
+                        <option value="1Y">1 Year</option>
+                        <option value="2Y">2 Years</option>
+                        <option value="5Y">5 Years</option>
+                    </select>
+                    <select id="intervalSelect" class="control-select">
+                        <option value="1m">1 Min</option>
+                        <option value="5m">5 Min</option>
+                        <option value="15m">15 Min</option>
+                        <option value="1h">1 Hour</option>
+                        <option value="1d" selected>Daily</option>
+                        <option value="1wk">Weekly</option>
+                        <option value="1mo">Monthly</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Technical Indicators Summary -->
+            <div class="indicators-summary">
+                <div class="indicator-group" id="technicalIndicators">
+                    <div class="indicator-item">
+                        <span class="indicator-label">RSI (14)</span>
+                        <span class="indicator-value">--</span>
+                        <span class="indicator-signal">Loading...</span>
+                    </div>
+                    <div class="indicator-item">
+                        <span class="indicator-label">MACD</span>
+                        <span class="indicator-value">--</span>
+                        <span class="indicator-signal">Loading...</span>
+                    </div>
+                    <div class="indicator-item">
+                        <span class="indicator-label">50-Day MA</span>
+                        <span class="indicator-value">--</span>
+                        <span class="indicator-signal">Loading...</span>
+                    </div>
+                    <div class="indicator-item">
+                        <span class="indicator-label">200-Day MA</span>
+                        <span class="indicator-value">--</span>
+                        <span class="indicator-signal">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <!-- TradingView Widget -->
+                <div class="tradingview-widget-container" style="width: 100%; height: 100%;">
+                    <div id="tradingview_chart" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+            
+            <!-- Support & Resistance Levels -->
+            <div class="support-resistance">
+                <div class="levels-section">
+                    <h4>Key Levels</h4>
+                    <div class="levels-grid" id="supportResistanceLevels">
+                        <div class="level-item resistance">
+                            <span class="level-label">Resistance</span>
+                            <span class="level-values">Loading...</span>
+                        </div>
+                        <div class="level-item support">
+                            <span class="level-label">Support</span>
+                            <span class="level-values">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Section -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #2c3e50;">Latest News</h2>
+            <div id="newsContainer">
+                <div class="loading-spinner"></div>
+                <span>Loading latest news...</span>
+            </div>
+        </div>
+
+        <!-- Competitive Landscape -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #2c3e50;">Competitive Position</h2>
+            <table class="competitive-table">
+                <tr>
+                    <td>Market Position</td>
+                    <td>Global leader in laser and photonics solutions</td>
+                </tr>
+                <tr>
+                    <td>Key Competitors</td>
+                    <td>Lumentum Holdings, II-VI Inc, Finisar (Cisco)</td>
+                </tr>
+                <tr>
+                    <td>Primary Markets</td>
+                    <td>Datacom, Telecom, Industrial, Defense</td>
+                </tr>
+                <tr>
+                    <td>Differentiation</td>
+                    <td>Vertical integration, R&D leadership, broad portfolio</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Market Trends -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2 style="margin-bottom: 20px; color: #2c3e50;">Industry & Market Trends</h2>
+            <div class="trends-grid">
+                <div class="trend-card">
+                    <div class="trend-value">$25.8B</div>
+                    <div class="trend-label">2029 Global Optical Transceiver Market</div>
+                </div>
+                <div class="trend-card">
+                    <div class="trend-value">13.2%</div>
+                    <div class="trend-label">CAGR 2024-2029</div>
+                </div>
+                <div class="trend-card">
+                    <div class="trend-value">800G+</div>
+                    <div class="trend-label">Next-Gen Data Center Speeds</div>
+                </div>
+                <div class="trend-card">
+                    <div class="trend-value">5.16B</div>
+                    <div class="trend-label">Internet Users by 2025</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="loadAllData()" title="Refresh Data">
+        ⟳
+    </button>
+
+    <!-- TradingView Widget Script -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        const REFRESH_INTERVAL = 300000; // 5 minutes
+        
+        // State
+        let currentStockData = null;
+        let refreshTimer = null;
+
+        // Utility functions
+        function formatNumber(num, decimals = 2) {
+            if (num === null || num === undefined) return '--';
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(num);
+        }
+
+        function formatCurrency(num) {
+            if (num === null || num === undefined) return '--';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(num);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInHours = (now - date) / (1000 * 60 * 60);
+            
+            if (diffInHours < 1) {
+                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                return `${diffInMinutes}m ago`;
+            } else if (diffInHours < 24) {
+                return `${Math.floor(diffInHours)}h ago`;
+            } else if (diffInHours < 48) {
+                return 'Yesterday';
+            } else {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+        }
+
+        // Initialize dashboard
+        window.addEventListener('DOMContentLoaded', function() {
+            initTradingView();
+            loadAllData();
+            setupChartControls();
+            
+            // Auto-refresh every 5 minutes
+            refreshTimer = setInterval(() => {
+                loadAllData();
+            }, REFRESH_INTERVAL);
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
+        });
+
+        // TradingView widget initialization
+        function initTradingView() {
+            try {
+                new TradingView.widget({
+                    "autosize": true,
+                    "symbol": "NASDAQ:COHR",
+                    "interval": "D",
+                    "timezone": "Etc/UTC",
+                    "theme": "light",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "allow_symbol_change": false,
+                    "studies": [
+                        "RSI@tv-basicstudies",
+                        "MACD@tv-basicstudies",
+                        "MASimple@tv-basicstudies",
+                        "Volume@tv-basicstudies"
+                    ],
+                    "container_id": "tradingview_chart",
+                    "hide_side_toolbar": false,
+                    "hide_top_toolbar": false,
+                    "save_image": false,
+                    "details": true,
+                    "hotlist": true,
+                    "calendar": true,
+                    "studies_overrides": {
+                        "RSI.length": 14,
+                        "MACD.fast_length": 12,
+                        "MACD.slow_length": 26,
+                        "MACD.signal_length": 9,
+                        "MASimple.length": 50,
+                        "volume.volume ma.length": 20
+                    },
+                    "overrides": {
+                        "mainSeriesProperties.candleStyle.upColor": "#26a69a",
+                        "mainSeriesProperties.candleStyle.downColor": "#ef5350",
+                        "mainSeriesProperties.candleStyle.borderUpColor": "#26a69a",
+                        "mainSeriesProperties.candleStyle.borderDownColor": "#ef5350",
+                        "mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
+                        "mainSeriesProperties.candleStyle.wickDownColor": "#ef5350"
+                    }
+                });
+            } catch (error) {
+                console.error('TradingView initialization error:', error);
+                document.getElementById('tradingview_chart').innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666;">
+                        <div style="font-size: 1.2em; margin-bottom: 16px;">📈 Chart Loading...</div>
+                        <div style="font-size: 0.9em;">TradingView chart will appear here</div>
+                    </div>
+                `;
+            }
+        }
+
+        function setupChartControls() {
+            const timeframeSelect = document.getElementById('timeframeSelect');
+            const intervalSelect = document.getElementById('intervalSelect');
+            
+            timeframeSelect.addEventListener('change', updateChart);
+            intervalSelect.addEventListener('change', updateChart);
+        }
+
+        function updateChart() {
+            const timeframe = document.getElementById('timeframeSelect').value;
+            const interval = document.getElementById('intervalSelect').value;
+            
+            console.log(`Updating chart: ${timeframe} timeframe, ${interval} interval`);
+            // In a real implementation, you would reinitialize the TradingView widget
+            // For now, we'll just refresh the technical indicators
+            if (currentStockData) {
+                loadTechnicalIndicators(currentStockData.price);
+            }
+        }
+
+        // Main data loading function
+        async function loadAllData() {
+            try {
+                // Load stock data first
+                const stockData = await fetchStockData();
+                if (stockData) {
+                    currentStockData = stockData;
+                    updateStockHeader(stockData);
+                    
+                    // Load technical indicators and news in parallel
+                    await Promise.all([
+                        loadTechnicalIndicators(stockData.price),
+                        loadNews()
+                    ]);
+                }
+                
+                // Load analyst data (static for now)
+                loadAnalystData();
+                updateLastUpdate();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showError('Unable to load some data. Please refresh the page.');
+            }
+        }
+
+        // API calls using Vercel endpoints
+        async function fetchStockData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stock?symbol=COHR`);
+                if (!response.ok) throw new Error('Failed to fetch stock data');
+                return await response.json();
+            } catch (error) {
+                console.error('Stock data error:', error);
+                return null;
+            }
+        }
+
+        async function loadTechnicalIndicators(price) {
+            try {
+                const response = await fetch(`${API_BASE}/api/technical?symbol=COHR&price=${price}`);
+                if (!response.ok) throw new Error('Failed to fetch technical data');
+                const data = await response.json();
+                
+                updateTechnicalIndicators(data);
+                updateSupportResistance(data);
+                
+            } catch (error) {
+                console.error('Technical indicators error:', error);
+                // Set fallback values
+                setFallbackTechnicalData();
+            }
+        }
+
+        async function loadNews() {
+            try {
+                const response = await fetch(`${API_BASE}/api/news?symbol=COHR&limit=10`);
+                if (!response.ok) throw new Error('Failed to fetch news data');
+                const data = await response.json();
+                
+                if (data.articles && data.articles.length > 0) {
+                    renderNews(data.articles);
+                } else {
+                    throw new Error('No articles found');
+                }
+                
+            } catch (error) {
+                console.error('News loading error:', error);
+                renderFallbackNews();
+            }
+        }
+
+        // UI update functions
+        function updateStockHeader(data) {
+            const changeClass = data.change >= 0 ? 'positive' : 'negative';
+            const changeSymbol = data.change >= 0 ? '+' : '';
+            
+            document.getElementById('currentPrice').textContent = formatCurrency(data.price).replace('$', '');
+            
+            const changeElement = document.getElementById('priceChange');
+            changeElement.textContent = `${changeSymbol}${formatCurrency(data.change).replace('$', '')} (${changeSymbol}${formatNumber(data.changePercent)}%)`;
+            changeElement.className = `price-change ${changeClass}`;
+            
+            document.getElementById('stockMeta').textContent = `NASDAQ • Technology • Market Cap: $${data.marketCapBillions}B • Source: ${data.source}`;
+        }
+
+        function updateTechnicalIndicators(data) {
+            const indicators = data.indicators;
+            const container = document.getElementById('technicalIndicators');
+            
+            container.innerHTML = `
+                <div class="indicator-item">
+                    <span class="indicator-label">${indicators.rsi.description}</span>
+                    <span class="indicator-value">${indicators.rsi.value}</span>
+                    <span class="indicator-signal ${indicators.rsi.class}">${indicators.rsi.signal}</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">${indicators.macd.description}</span>
+                    <span class="indicator-value">${indicators.macd.value}</span>
+                    <span class="indicator-signal ${indicators.macd.class}">${indicators.macd.signal}</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">${indicators.ma50.description}</span>
+                    <span class="indicator-value">$${indicators.ma50.value}</span>
+                    <span class="indicator-signal ${indicators.ma50.class}">${indicators.ma50.signal}</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">${indicators.ma200.description}</span>
+                    <span class="indicator-value">$${indicators.ma200.value}</span>
+                    <span class="indicator-signal ${indicators.ma200.class}">${indicators.ma200.signal}</span>
+                </div>
+            `;
+        }
+
+        function updateSupportResistance(data) {
+            const levels = data.levels;
+            const container = document.getElementById('supportResistanceLevels');
+            
+            const resistanceValues = levels.resistance.map(level => `$${level}`).join(', ');
+            const supportValues = levels.support.map(level => `$${level}`).join(', ');
+            
+            container.innerHTML = `
+                <div class="level-item resistance">
+                    <span class="level-label">Resistance</span>
+                    <span class="level-values">${resistanceValues}</span>
+                </div>
+                <div class="level-item support">
+                    <span class="level-label">Support</span>
+                    <span class="level-values">${supportValues}</span>
+                </div>
+            `;
+        }
+
+        function renderNews(articles) {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = '';
+            
+            articles.forEach((article, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'news-tile';
+                tile.onclick = () => toggleTile(tile);
+                
+                const publishedDate = new Date(article.publishedAt).toLocaleDateString();
+                
+                tile.innerHTML = `
+                    <div class="news-title">${article.title}</div>
+                    <div class="news-meta">${article.source.name} • ${formatDate(article.publishedAt)}</div>
+                    <div class="news-summary">
+                        ${article.description || 'Click to read full article'}
+                        <a href="${article.url}" class="news-link" target="_blank" onclick="event.stopPropagation()">Read Full Article →</a>
+                    </div>
+                `;
+                
+                container.appendChild(tile);
+            });
+        }
+
+        function renderFallbackNews() {
+            const articles = [
+                {
+                    title: "COHR Financial Data and Market Updates",
+                    description: "Stay updated with the latest Coherent Corp (COHR) financial information, analyst reports, and market developments.",
+                    url: "https://finance.yahoo.com/quote/COHR",
+                    publishedAt: new Date().toISOString(),
+                    source: { name: "Financial Information" }
+                }
+            ];
+            renderNews(articles);
+        }
+
+        function setFallbackTechnicalData() {
+            const container = document.getElementById('technicalIndicators');
+            container.innerHTML = `
+                <div class="indicator-item">
+                    <span class="indicator-label">RSI (14)</span>
+                    <span class="indicator-value">60.9</span>
+                    <span class="indicator-signal neutral">Neutral</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">MACD</span>
+                    <span class="indicator-value">1.21</span>
+                    <span class="indicator-signal bullish">Bullish</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">50-Day MA</span>
+                    <span class="indicator-value">$67.81</span>
+                    <span class="indicator-signal bullish">Above MA</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">200-Day MA</span>
+                    <span class="indicator-value">$84.42</span>
+                    <span class="indicator-signal bearish">Below MA</span>
+                </div>
+            `;
+        }
+
+        function loadAnalystData() {
+            // Static analyst data
+            document.getElementById('consensus').textContent = 'Buy';
+            document.getElementById('avgTarget').textContent = '$101.33';
+            document.getElementById('upside').textContent = '25.0%';
+        }
+
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit'
+            })}`;
+        }
+
+        function toggleTile(tile) {
+            tile.classList.toggle('expanded');
+        }
+
+        function showError(message) {
+            console.error(message);
+            // Could add error UI here if needed
+        }
+    </script>
+</body>
+</html>

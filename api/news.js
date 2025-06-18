@@ -20,62 +20,10 @@ export default async function handler(req, res) {
   
     try {
       let newsData = [];
-  
-      // Method 1: Try FMP Company News API if key is available
-      const FMP_API_KEY = process.env.FINANCIAL_MODELING_PREP_API_KEY;
-      if (FMP_API_KEY) {
-        try {
-          const response = await fetch(
-            `https://financialmodelingprep.com/api/v3/stock_news?tickers=${symbol}&limit=${limit}&apikey=${FMP_API_KEY}`
-          );
-          const data = await response.json();
-  
-          console.log(`FMP Company News response for ${symbol}:`, data && data.length ? `${data.length} articles` : 'No articles');
-  
-          if (data && data.length > 0) {
-            newsData = data.map(article => ({
-              title: article.title,
-              description: article.text || 'Click to read full article',
-              url: article.url,
-              publishedAt: article.publishedDate,
-              source: { name: article.site || 'Financial News' },
-              relevance: article.symbol === symbol.toUpperCase() ? 'high' : 'medium'
-            }));
-            console.log(`FMP Company News loaded ${newsData.length} articles for ${symbol}`);
-          }
-        } catch (error) {
-          console.log('FMP Company News failed:', error.message);
-        }
-      } else {
-        console.log('FMP API key not available, skipping FMP Company News');
-      }
       
-      // Method 2: Try NewsAPI as fallback if FMP didn't work
-      if (newsData.length === 0 && process.env.NEWS_API_KEY) {
-        try {
-          const NEWS_API_KEY = process.env.NEWS_API_KEY;
-          const response = await fetch(
-            `https://newsapi.org/v2/everything?q=${symbol}+OR+Coherent+Corp&sortBy=publishedAt&pageSize=${limit}&apikey=${NEWS_API_KEY}`
-          );
-          const data = await response.json();
+      console.log(`Loading news for ${symbol} - using RSS feeds and curated content for better COHR relevance`);
   
-          if (data.articles && data.articles.length > 0) {
-            newsData = data.articles.map(article => ({
-              title: article.title,
-              description: article.description || 'Click to read full article',
-              url: article.url,
-              publishedAt: article.publishedAt,
-              source: { name: article.source.name },
-              relevance: article.title.toLowerCase().includes('coherent') ? 'high' : 'medium'
-            }));
-            console.log(`NewsAPI loaded ${newsData.length} articles`);
-          }
-        } catch (error) {
-          console.log('NewsAPI failed:', error.message);
-        }
-      }
-  
-      // Method 2: Try RSS2JSON with Bloomberg if we need more news
+      // Method 1: Try RSS2JSON with Bloomberg for financial news
       if (newsData.length < limit) {
         try {
           const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bloomberg.com/markets/news.rss&count=20';
@@ -115,7 +63,7 @@ export default async function handler(req, res) {
         }
       }
   
-      // Method 3: Try TechCrunch RSS if we still need more news
+      // Method 2: Try TechCrunch RSS if we still need more news
       if (newsData.length < limit) {
         try {
           const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://techcrunch.com/feed/&count=15';
@@ -210,10 +158,8 @@ export default async function handler(req, res) {
         totalResults: newsData.length,
         symbol: symbol.toUpperCase(),
         lastUpdated: new Date().toISOString(),
-        apiKeysUsed: {
-          financialModelingPrep: !!process.env.FINANCIAL_MODELING_PREP_API_KEY,
-          newsapi: !!process.env.NEWS_API_KEY
-        }
+        dataSources: ['Bloomberg RSS', 'TechCrunch RSS', 'Curated COHR Content'],
+        note: 'Using RSS feeds and curated content for better COHR relevance than free API tiers'
       };
   
       res.status(200).json(response);

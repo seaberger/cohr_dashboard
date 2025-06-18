@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       // Method 1: Try RSS2JSON with Bloomberg for financial news
       if (newsData.length < limit) {
         try {
-          const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bloomberg.com/markets/news.rss&count=20';
+          const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bloomberg.com/markets/news.rss';
           const response = await fetch(rssUrl);
           const data = await response.json();
   
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
       // Method 2: Try TechCrunch RSS if we still need more news
       if (newsData.length < limit) {
         try {
-          const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://techcrunch.com/feed/&count=15';
+          const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://techcrunch.com/feed/';
           const response = await fetch(rssUrl);
           const data = await response.json();
   
@@ -103,41 +103,41 @@ export default async function handler(req, res) {
           {
             title: "Coherent Corp Reports Strong Q3 2025 Financial Performance",
             description: "Coherent Corp (NASDAQ: COHR) announced robust Q3 2025 earnings with revenue of $1.52B, representing a 26% year-over-year increase. The company's strong performance was driven by exceptional demand in AI datacenter solutions and next-generation optical networking products, with earnings per share of $0.94 exceeding analyst expectations of $0.89.",
-            url: "https://finance.yahoo.com/quote/COHR/financials/",
+            url: "https://finance.yahoo.com/quote/COHR/",
             publishedAt: new Date(currentDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            source: { name: "Yahoo Finance" },
+            source: { name: "Yahoo Finance (Example)" },
             relevance: 'high'
           },
           {
             title: "Strategic NVIDIA Partnership Accelerates Silicon Photonics Innovation",
             description: "Coherent Corp announced a comprehensive multi-year partnership with NVIDIA focused on developing advanced co-packaged optics solutions for next-generation AI infrastructure. This collaboration is expected to significantly accelerate the adoption of 800G and 1.6T transceiver technologies in hyperscale data centers.",
-            url: "https://www.coherent.com/news",
+            url: "https://investors.coherent.com/news-releases",
             publishedAt: new Date(currentDate.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            source: { name: "Coherent Corp" },
+            source: { name: "Coherent Corp (Example)" },
             relevance: 'high'
           },
           {
             title: "Analyst Day 2025: Growth Strategy and Market Leadership Outlined",
             description: "During its annual Analyst Day, Coherent Corp's management outlined an ambitious strategy targeting 22%+ annual revenue growth through 2027. The company emphasized its market leadership position in optical networking and laser technologies, highlighting significant opportunities in emerging AI applications and 5G infrastructure.",
-            url: "https://investors.coherent.com/events",
+            url: "https://investors.coherent.com/",
             publishedAt: new Date(currentDate.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            source: { name: "Investor Relations" },
+            source: { name: "Investor Relations (Example)" },
             relevance: 'high'
           },
           {
             title: "$200M Advanced Manufacturing Facility Announced in Austin",
             description: "Coherent Corp unveiled plans for a state-of-the-art $200 million, 200,000 square foot advanced manufacturing facility in Austin, Texas. The new facility will focus on high-volume production of optical components specifically designed for AI and hyperscale data center applications.",
-            url: "https://www.coherent.com/manufacturing",
+            url: "https://www.coherent.com/",
             publishedAt: new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            source: { name: "Manufacturing Weekly" },
+            source: { name: "Manufacturing Weekly (Example)" },
             relevance: 'high'
           },
           {
             title: "Market Leadership in High-Speed Optical Transceivers Confirmed",
             description: "Latest industry analysis from LightCounting confirms Coherent Corp's strengthening position in the high-speed optical transceiver market. The report highlights significant market share gains in the rapidly growing 400G segment and early leadership in emerging 800G applications.",
-            url: "https://www.lightcounting.com/reports",
+            url: "https://www.marketresearch.com/search/go.asp?query=coherent+optical+transceiver",
             publishedAt: new Date(currentDate.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            source: { name: "LightCounting Research" },
+            source: { name: "LightCounting Research (Example)" },
             relevance: 'high'
           }
         ];

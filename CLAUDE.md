@@ -53,14 +53,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### API Endpoints
 All endpoints support CORS and have 30-second timeout limits:
 - `GET /api/stock?symbol=COHR` - Stock price, market cap, change data
-- `GET /api/news?symbol=COHR&limit=10` - Financial news articles
+- `GET /api/news?symbol=COHR&limit=10` - Financial news articles (FMP primary, NewsAPI fallback)
 - `GET /api/technical?symbol=COHR&price={price}` - Technical indicators
+- `GET /api/analyst?symbol=COHR&currentPrice={price}` - Analyst consensus and price targets
 
 ### Data Flow Architecture
 1. **Stock Data**: Multi-source cascade (Alpha Vantage → fallback APIs → demo data)
-2. **News Data**: NewsAPI (if key present) → RSS feeds → curated fallback
+2. **News Data**: FMP Company News → NewsAPI → RSS feeds → curated fallback
 3. **Technical Data**: Real-time calculation based on current stock price
-4. **Frontend**: 5-minute auto-refresh, real-time updates
+4. **Analyst Data**: FMP endpoints (if available) → Research-compiled data
+5. **Frontend**: 5-minute auto-refresh, real-time updates
 
 ## Environment Variables
 
@@ -72,14 +74,16 @@ NEWS_API_KEY=your_key_here              # Financial news articles
 
 ### Optional (Configuration)
 ```
-DEFAULT_SYMBOL=COHR                     # Default stock symbol
-MAX_NEWS_ARTICLES=10                    # Max news articles to return
-REFRESH_INTERVAL_MS=300000              # Frontend refresh interval
+FINANCIAL_MODELING_PREP_API_KEY=your_key_here  # FMP API for news and analyst data
+DEFAULT_SYMBOL=COHR                            # Default stock symbol
+MAX_NEWS_ARTICLES=10                           # Max news articles to return
+REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 ```
 
 ### API Fallback Strategy
 - **Stock Data**: Alpha Vantage → Finnhub → IEX → Polygon → Demo data
-- **News Data**: NewsAPI → Bloomberg RSS → TechCrunch RSS → Curated fallback
+- **News Data**: FMP Company News → NewsAPI → Bloomberg RSS → TechCrunch RSS → Curated fallback
+- **Analyst Data**: FMP endpoints → Research-compiled consensus data
 - **Error Handling**: Graceful degradation, never breaks dashboard
 
 ## Current Data Sources Status
@@ -88,10 +92,15 @@ REFRESH_INTERVAL_MS=300000              # Frontend refresh interval
 - Stock price, change, market cap (Alpha Vantage)
 - TradingView interactive charts
 - Technical indicators (calculated from real price)
-- News articles (when API keys configured)
+- News articles (FMP Company News API when configured, otherwise NewsAPI)
+- Analyst consensus data (Research-compiled from TipRanks, Zacks, StockAnalysis)
+
+### ⚠️ SEMI-STATIC DATA (Updated periodically)
+- Analyst ratings: Buy consensus from 17 analysts
+- Price targets: $102.81 average, $136 high, $80 low
+- Recent analyst actions from major firms
 
 ### ❌ EXAMPLE/STATIC DATA  
-- Analyst consensus, price targets, upside estimates
 - Support/resistance levels (calculated as price percentages)
 - Competitive positioning table
 - Industry market trend statistics
@@ -164,3 +173,26 @@ REFRESH_INTERVAL_MS=300000              # Frontend refresh interval
 - Add service worker for offline capability
 - Optimize JavaScript bundle size
 - Consider lazy loading for non-critical components
+
+## Financial Modeling Prep (FMP) API Reference
+
+### Key Endpoints Used
+- **Company News**: `https://financialmodelingprep.com/api/v3/stock_news?tickers={symbol}&limit={limit}&apikey={key}`
+- **Analyst Recommendations**: `https://financialmodelingprep.com/api/v3/analyst-stock-recommendations/{symbol}?apikey={key}`
+- **Price Targets**: `https://financialmodelingprep.com/api/v3/price-target?symbol={symbol}&apikey={key}`
+- **Upgrades/Downgrades**: `https://financialmodelingprep.com/api/v3/upgrades-downgrades?symbol={symbol}&apikey={key}`
+- **Analyst Estimates**: `https://financialmodelingprep.com/api/v3/analyst-estimates/{symbol}?apikey={key}`
+
+### Additional FMP Endpoints (For Future Use)
+- **Stock Search**: `https://financialmodelingprep.com/stable/search-symbol?query={query}&apikey={key}`
+- **Company Name Search**: `https://financialmodelingprep.com/stable/search-name?query={query}&apikey={key}`
+- **CIK Search**: `https://financialmodelingprep.com/stable/search-cik?cik={cik}&apikey={key}`
+- **CUSIP Search**: `https://financialmodelingprep.com/stable/search-cusip?cusip={cusip}&apikey={key}`
+- **Stock Screener**: `https://financialmodelingprep.com/stable/company-screener?apikey={key}`
+- **Company Symbols List**: `https://financialmodelingprep.com/stable/stock-list?apikey={key}`
+- **Earnings Transcript**: `https://financialmodelingprep.com/stable/earnings-transcript-list?apikey={key}`
+
+### FMP Free Tier Limitations
+- Analyst endpoints (recommendations, price targets) require paid tier
+- Free tier includes company news and basic financial data
+- Rate limits apply based on subscription level

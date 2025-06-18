@@ -694,7 +694,21 @@
 
         <!-- Market Trends -->
         <div class="card" style="grid-column: 1 / -1;">
-            <h2 style="margin-bottom: 20px; color: #2c3e50;" id="marketTrendsTitle">Industry & Market Trends</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #2c3e50; margin: 0;" id="marketTrendsTitle">Industry & Market Trends</h2>
+                <button id="dataSourcesBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666;">
+                    📊 Data Sources
+                </button>
+            </div>
+            
+            <!-- Data Sources Panel (initially hidden) -->
+            <div id="dataSourcesPanel" style="display: none; background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 16px; border-left: 4px solid #3498db;">
+                <h4 style="margin: 0 0 12px 0; color: #2c3e50; font-size: 1em;">Market Intelligence Sources & Methodology</h4>
+                <div id="dataSourcesContent">
+                    <p style="margin: 8px 0; font-size: 0.9em; color: #555;">Loading source information...</p>
+                </div>
+            </div>
+            
             <div class="trends-grid" id="marketTrendsContainer">
                 <div class="trend-card">
                     <div class="trend-value">Loading...</div>
@@ -771,6 +785,7 @@
             initTradingView();
             loadAllData();
             setupChartControls();
+            setupDataSourcesPanel();
             
             // Auto-refresh every 5 minutes
             refreshTimer = setInterval(() => {
@@ -846,6 +861,21 @@
             
             timeframeSelect.addEventListener('change', updateChart);
             intervalSelect.addEventListener('change', updateChart);
+        }
+
+        function setupDataSourcesPanel() {
+            const button = document.getElementById('dataSourcesBtn');
+            const panel = document.getElementById('dataSourcesPanel');
+            
+            button.addEventListener('click', () => {
+                if (panel.style.display === 'none') {
+                    panel.style.display = 'block';
+                    button.textContent = '📊 Hide Sources';
+                } else {
+                    panel.style.display = 'none';
+                    button.textContent = '📊 Data Sources';
+                }
+            });
         }
 
         function updateChart() {
@@ -1202,6 +1232,7 @@
                 const data = await response.json();
                 
                 updateMarketTrends(data.marketIntelligence);
+                updateDataSources(data.marketIntelligence);
                 
                 // Update title to remove "[Example Data]" indicator
                 document.getElementById('marketTrendsTitle').innerHTML = 
@@ -1269,6 +1300,51 @@
             // Update title to show fallback data
             document.getElementById('marketTrendsTitle').innerHTML = 
                 'Industry & Market Trends <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Cached Data</span>';
+        }
+
+        function updateDataSources(data) {
+            const container = document.getElementById('dataSourcesContent');
+            
+            const lastUpdated = new Date(data.lastUpdated).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                    <div>
+                        <strong style="color: #2c3e50;">Data Quality:</strong> ${data.dataQuality}<br>
+                        <strong style="color: #2c3e50;">Confidence Level:</strong> ${data.confidence}<br>
+                        <strong style="color: #2c3e50;">Last Updated:</strong> ${lastUpdated}
+                    </div>
+                    <div>
+                        <strong style="color: #2c3e50;">Update Frequency:</strong> ${data.updateFrequency}<br>
+                        <strong style="color: #2c3e50;">Source Count:</strong> ${data.sources.length} reports<br>
+                        <strong style="color: #2c3e50;">Research Method:</strong> Multi-source aggregation
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #2c3e50;">Primary Data Sources:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #555;">
+                        ${data.sources.map(source => `<li style="margin: 4px 0;">${source}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div style="background: #e8f4fd; padding: 12px; border-radius: 6px; border-left: 3px solid #3498db;">
+                    <strong style="color: #2c3e50;">Methodology:</strong>
+                    <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #555;">
+                        Market data is compiled from multiple industry research reports and cross-validated for accuracy. 
+                        Figures represent consensus estimates from leading market research firms. Data is updated monthly 
+                        to reflect the latest market intelligence and industry trends.
+                    </p>
+                </div>
+                
+                <div style="margin-top: 12px; font-size: 0.85em; color: #666; text-align: center;">
+                    <em>Specific data points may vary between sources due to different methodologies and market definitions.</em>
+                </div>
+            `;
         }
 
         function updateLastUpdate() {

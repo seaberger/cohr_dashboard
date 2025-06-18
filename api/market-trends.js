@@ -16,76 +16,55 @@ export default async function handler(req, res) {
     }
   
     try {
-      // Real market data compiled from multiple sources (Dec 2024)
+      // COHR-Specific Market Data (Based on Q2 2025 Earnings)
       const marketData = {
-        // Optical Transceiver Market - Core market for COHR
-        opticalTransceiverMarket: {
-          marketSize2024: 12.1, // USD Billions (average of multiple sources)
-          projectedSize2030: 32.8, // USD Billions
-          cagr: "13.8%", // 2024-2030 CAGR
-          growthDriver: "AI datacenters & 5G infrastructure"
+        // AI Datacenter/Datacom - COHR's fastest growing segment
+        aiDatacomGrowth: {
+          cohrDatacomGrowthYoY: "+79%", // Actual COHR Q2 2025 performance
+          cohrDatacomGrowthQoQ: "+4%", // Sequential growth
+          keyDriver: "AI datacenter demand, 800G transceiver adoption",
+          status: "All-time high revenue"
         },
         
-        // 5G Network Deployment - Key demand driver
-        fiveGAdoption: {
-          globalSubscriptions2024: 2.6, // Billions
-          projectedSubscriptions2030: 6.3, // Billions
-          adoptionRate2024: "32%", // of total mobile subscriptions
-          projectedAdoptionRate2030: "67%"
+        // Telecom Segment - COHR's second major segment
+        telecomGrowth: {
+          cohrTelecomGrowthYoY: "+11%", // Actual COHR Q2 2025 performance
+          cohrTelecomGrowthQoQ: "+16%", // Sequential growth
+          keyDriver: "Data center interconnect, 100G/400G/800G ZR transceivers",
+          status: "Strong sequential improvement"
         },
         
-        // AI Datacenter Growth - Major demand catalyst
-        aiDatacenterMarket: {
-          edgeDatacenterSize2024: 15.2, // USD Billions
-          projectedSize2030: 33.9, // USD Billions
-          cagr: "14.8%",
-          investmentHighlight: "Meta $1.1B datacenter projects"
+        // Industrial/Laser Market - COHR's traditional business
+        industrialLaserMarket: {
+          cohrLaserGrowthYoY: "+6%", // Actual COHR Q2 2025 performance
+          cohrLaserGrowthQoQ: "+8%", // Sequential growth
+          keyDriver: "Industrial applications, precision manufacturing",
+          status: "Steady growth"
         },
         
-        // Technology Transitions - Speed evolution
-        speedTransitions: {
-          current400G: "Mainstream deployment",
-          emerging800G: "Early adoption phase",
-          next1600G: "R&D and standards development",
-          timeframe: "400G→800G (2024-2026), 800G→1.6T (2027-2030)"
+        // Materials Segment - COHR's semiconductor materials business
+        materialsGrowth: {
+          cohrMaterialsGrowthYoY: "-4%", // Actual COHR Q2 2025 performance
+          cohrMaterialsGrowthQoQ: "+3%", // Sequential growth
+          keyDriver: "Automotive weakness offset by other applications",
+          status: "Mixed performance"
         },
         
-        // Geographic Distribution
-        regionalMarkets: {
-          northAmerica: {
-            marketShare: "36.1%",
-            status: "Dominant region",
-            growthDrivers: "Hyperscale datacenters, 5G"
-          },
-          asiaPacific: {
-            marketShare: "31.4%", 
-            status: "Fastest growing",
-            growthDrivers: "Manufacturing, 5G rollout"
-          },
-          europe: {
-            marketShare: "24.2%",
-            status: "Stable growth", 
-            growthDrivers: "Digital infrastructure, green initiatives"
-          }
+        // Networking Segment - COHR's combined networking business
+        networkingGrowth: {
+          cohrNetworkingGrowthYoY: "+56%", // Actual COHR Q2 2025 performance
+          cohrNetworkingGrowthQoQ: "+7%", // Sequential growth
+          keyDriver: "AI datacenter demand, 800G transceiver ramp",
+          status: "Record performance"
         },
         
-        // End Market Analysis
-        endMarkets: {
-          datacom: {
-            share: "68%",
-            growth: "Strong",
-            drivers: "AI/ML workloads, cloud expansion"
-          },
-          telecom: {
-            share: "24%", 
-            growth: "Moderate",
-            drivers: "5G backhaul, fiber to home"
-          },
-          enterprise: {
-            share: "8%",
-            growth: "Emerging",
-            drivers: "Digital transformation, hybrid work"
-          }
+        // Overall COHR Performance
+        cohrOverallPerformance: {
+          totalRevenueQ2: "$1.43B", // Actual Q2 2025 revenue
+          revenueGrowthYoY: "+27%", // Year over year growth
+          revenueGrowthQoQ: "+6%", // Sequential growth
+          grossMargin: "35.5%", // GAAP gross margin
+          keyHighlight: "Record revenue driven by AI demand"
         },
         
         // Technology Trends
@@ -97,17 +76,18 @@ export default async function handler(req, res) {
         },
         
         // Market Intelligence Metadata
-        dataQuality: "High", // Based on multiple industry sources
+        dataQuality: "High", // Based on actual COHR earnings reports
         lastUpdated: new Date().toISOString(),
         sources: [
-          "Technavio Market Research",
-          "Cognitive Market Research", 
-          "Fortune Business Insights",
-          "Ericsson Mobility Report 2024",
-          "IoT Analytics Private 5G Report"
+          "Coherent Corp Q2 2025 Earnings Report",
+          "COHR SEC 10-Q Filing Q2 2025", 
+          "Coherent Corp Investor Relations",
+          "Yahoo Finance Earnings Call Transcript",
+          "The Futurum Group Analysis"
         ],
-        confidence: "85%", // Confidence level in data accuracy
-        updateFrequency: "Monthly" // How often this data is refreshed
+        confidence: "95%", // High confidence - actual company data
+        updateFrequency: "Quarterly", // Updated when COHR reports earnings
+        dataType: "Company-Specific Performance" // Based on actual COHR results
       };
 
       // Calculate some dynamic insights

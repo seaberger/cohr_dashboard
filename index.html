@@ -1234,9 +1234,9 @@
                 updateMarketTrends(data.marketIntelligence);
                 updateDataSources(data.marketIntelligence);
                 
-                // Update title to remove "[Example Data]" indicator
+                // Update title to show COHR-specific data
                 document.getElementById('marketTrendsTitle').innerHTML = 
-                    'Industry & Market Trends <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Live Data</span>';
+                    'COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Q2 2025 Earnings</span>';
                 
             } catch (error) {
                 console.error('Market trends error:', error);
@@ -1249,28 +1249,28 @@
             
             container.innerHTML = `
                 <div class="trend-card">
-                    <div class="trend-value">$${data.opticalTransceiverMarket.marketSize2024}B</div>
-                    <div class="trend-label">2024 Optical Transceiver Market</div>
+                    <div class="trend-value">${data.aiDatacomGrowth.cohrDatacomGrowthYoY}</div>
+                    <div class="trend-label">COHR AI Datacom Growth (YoY)</div>
                 </div>
                 <div class="trend-card">
-                    <div class="trend-value">${data.opticalTransceiverMarket.cagr}</div>
-                    <div class="trend-label">Market CAGR (2024-2030)</div>
+                    <div class="trend-value">${data.networkingGrowth.cohrNetworkingGrowthYoY}</div>
+                    <div class="trend-label">COHR Networking Growth (YoY)</div>
                 </div>
                 <div class="trend-card">
-                    <div class="trend-value">${data.fiveGAdoption.globalSubscriptions2024}B</div>
-                    <div class="trend-label">Global 5G Subscriptions 2024</div>
+                    <div class="trend-value">${data.telecomGrowth.cohrTelecomGrowthYoY}</div>
+                    <div class="trend-label">COHR Telecom Growth (YoY)</div>
                 </div>
                 <div class="trend-card">
-                    <div class="trend-value">${data.aiDatacenterMarket.cagr}</div>
-                    <div class="trend-label">AI Datacenter Market CAGR</div>
+                    <div class="trend-value">${data.industrialLaserMarket.cohrLaserGrowthYoY}</div>
+                    <div class="trend-label">COHR Laser Growth (YoY)</div>
                 </div>
                 <div class="trend-card">
-                    <div class="trend-value">${data.regionalMarkets.northAmerica.marketShare}</div>
-                    <div class="trend-label">North America Market Share</div>
+                    <div class="trend-value">${data.cohrOverallPerformance.totalRevenueQ2}</div>
+                    <div class="trend-label">Q2 2025 Total Revenue</div>
                 </div>
                 <div class="trend-card">
-                    <div class="trend-value">${data.endMarkets.datacom.share}</div>
-                    <div class="trend-label">Datacom Market Share</div>
+                    <div class="trend-value">${data.cohrOverallPerformance.grossMargin}</div>
+                    <div class="trend-label">Q2 2025 Gross Margin</div>
                 </div>
             `;
         }

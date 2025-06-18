@@ -1,6 +1,4 @@
-// Enhanced technical analysis with real support/resistance levels
-import { calculateSupportResistance } from '../lib/technicalAnalysis.js';
-
+// Enhanced technical analysis with embedded calculations (Vercel-compatible)
 export default async function handler(req, res) {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,7 +19,7 @@ export default async function handler(req, res) {
     const period = req.query.period || '1y';
     
     try {
-      // Fetch historical data directly from Yahoo Finance (avoid internal API calls)
+      // Fetch historical data directly from Yahoo Finance
       const now = Math.floor(Date.now() / 1000);
       let periodSeconds;
       
@@ -34,6 +32,8 @@ export default async function handler(req, res) {
       }
       
       const startTime = now - periodSeconds;
+      
+      console.log(`Fetching ${period} historical data for ${symbol}...`);
       
       // Fetch historical data directly from Yahoo Finance
       const yahooResponse = await fetch(
@@ -81,15 +81,16 @@ export default async function handler(req, res) {
         throw new Error('No valid historical data points');
       }
       
+      console.log(`Historical data loaded: ${data.length} data points`);
+      
       const currentPrice = data[data.length - 1].close;
       
       // Calculate real support and resistance levels
-      const supportResistance = calculateSupportResistance(data, currentPrice);
+      const supportResistance = calculateRealSupportResistance(data, currentPrice);
       
-      // Calculate additional technical indicators from historical data
-      const technicalIndicators = calculateTechnicalIndicators(data);
+      // Calculate technical indicators from historical data
+      const technicalIndicators = calculateRealTechnicalIndicators(data);
       
-      // Combine with existing technical analysis for backward compatibility
       const response = {
         symbol: symbol.toUpperCase(),
         currentPrice: currentPrice,
@@ -100,28 +101,21 @@ export default async function handler(req, res) {
         levels: {
           resistance: supportResistance.resistance.map(level => ({
             price: parseFloat(level.price.toFixed(2)),
-            strength: level.strength || level.overallScore,
-            type: level.type || 'swing_high',
+            strength: level.strength || level.overallScore || 0.5,
+            type: level.source || level.type || 'swing_high',
             distance: `${level.distance}%`,
             significance: level.significance || 'medium',
-            source: getSourceDescription(level),
-            testCount: level.testCount || null,
-            volume: level.volume || null
+            source: getSourceDescription(level)
           })),
           support: supportResistance.support.map(level => ({
             price: parseFloat(level.price.toFixed(2)),
-            strength: level.strength || level.overallScore,
-            type: level.type || 'swing_low',
+            strength: level.strength || level.overallScore || 0.5,
+            type: level.source || level.type || 'swing_low', 
             distance: `${level.distance}%`,
             significance: level.significance || 'medium',
-            source: getSourceDescription(level),
-            testCount: level.testCount || null,
-            volume: level.volume || null
+            source: getSourceDescription(level)
           }))
         },
-        
-        // Moving averages as dynamic support/resistance
-        movingAverages: supportResistance.movingAverages,
         
         // Traditional technical indicators
         indicators: technicalIndicators,
@@ -129,15 +123,14 @@ export default async function handler(req, res) {
         // Analysis summary
         analysis: {
           ...supportResistance.analysis,
-          trend: determineTrend(data, supportResistance.movingAverages),
-          volatility: calculateVolatility(data),
-          momentum: calculateMomentum(data)
+          trend: determineTrend(data),
+          volatility: calculateVolatility(data)
         },
         
         lastUpdated: new Date().toISOString()
       };
       
-      console.log(`Enhanced technical analysis completed for ${symbol}: ${data.length} data points, ${response.levels.resistance.length} resistance, ${response.levels.support.length} support levels`);
+      console.log(`Enhanced technical analysis completed for ${symbol}: ${response.levels.resistance.length} resistance, ${response.levels.support.length} support levels`);
       
       res.status(200).json(response);
       
@@ -145,21 +138,158 @@ export default async function handler(req, res) {
       console.error('Enhanced technical analysis error:', error);
       res.status(500).json({ 
         error: 'Failed to calculate enhanced technical analysis',
-        message: error.message 
+        message: error.message,
+        symbol: symbol,
+        fallback: 'Use /api/technical for basic analysis'
       });
     }
 }
 
-function getSourceDescription(level) {
-  if (level.period) return `${level.period}-day Moving Average`;
-  if (level.type === 'volume') return 'High Volume Area';
-  if (level.description) return level.description;
-  if (level.type === 'resistance') return 'Swing High';
-  if (level.type === 'support') return 'Swing Low';
-  return 'Technical Level';
+// Embedded technical analysis functions (simplified for Vercel)
+function calculateRealSupportResistance(data, currentPrice) {
+  const swingHighs = findSwingHighs(data, 5);
+  const swingLows = findSwingLows(data, 5);
+  const movingAverages = calculateMovingAverages(data);
+  
+  // Combine resistance levels
+  const resistanceLevels = [
+    ...swingHighs.filter(level => level.price > currentPrice).slice(0, 4),
+    ...Object.values(movingAverages).filter(ma => ma.position === 'resistance').slice(0, 2)
+  ].sort((a, b) => a.price - b.price);
+  
+  // Combine support levels  
+  const supportLevels = [
+    ...swingLows.filter(level => level.price < currentPrice).slice(0, 4),
+    ...Object.values(movingAverages).filter(ma => ma.position === 'support').slice(0, 2)
+  ].sort((a, b) => b.price - a.price);
+  
+  // Add distance scoring
+  const addDistanceScore = (levels) => {
+    return levels.map(level => {
+      const distance = Math.abs(level.price - currentPrice) / currentPrice;
+      return {
+        ...level,
+        distance: parseFloat((distance * 100).toFixed(1)),
+        overallScore: level.strength || 0.5
+      };
+    });
+  };
+  
+  return {
+    resistance: addDistanceScore(resistanceLevels).slice(0, 5),
+    support: addDistanceScore(supportLevels).slice(0, 5),
+    analysis: {
+      totalDataPoints: data.length,
+      swingHighsFound: swingHighs.length,
+      swingLowsFound: swingLows.length,
+      currentPrice: currentPrice,
+      lastUpdated: new Date().toISOString()
+    }
+  };
 }
 
-function calculateTechnicalIndicators(data) {
+function findSwingHighs(data, lookback = 5) {
+  const swingHighs = [];
+  
+  for (let i = lookback; i < data.length - lookback; i++) {
+    const currentHigh = data[i].high;
+    let isSwingHigh = true;
+    
+    // Check if current high is higher than lookback periods before and after
+    for (let j = i - lookback; j <= i + lookback; j++) {
+      if (j !== i && data[j].high >= currentHigh) {
+        isSwingHigh = false;
+        break;
+      }
+    }
+    
+    if (isSwingHigh) {
+      // Calculate strength based on how much higher it is than surrounding highs
+      const surroundingHighs = [];
+      for (let j = i - lookback; j <= i + lookback; j++) {
+        if (j !== i) surroundingHighs.push(data[j].high);
+      }
+      const avgSurrounding = surroundingHighs.reduce((sum, h) => sum + h, 0) / surroundingHighs.length;
+      const strength = ((currentHigh - avgSurrounding) / avgSurrounding) * 100;
+      
+      swingHighs.push({
+        price: currentHigh,
+        date: data[i].date,
+        strength: Math.max(0.1, strength / 100), // Normalize to 0-1
+        source: 'swing_high',
+        type: 'resistance'
+      });
+    }
+  }
+  
+  return swingHighs.sort((a, b) => b.strength - a.strength);
+}
+
+function findSwingLows(data, lookback = 5) {
+  const swingLows = [];
+  
+  for (let i = lookback; i < data.length - lookback; i++) {
+    const currentLow = data[i].low;
+    let isSwingLow = true;
+    
+    // Check if current low is lower than lookback periods before and after
+    for (let j = i - lookback; j <= i + lookback; j++) {
+      if (j !== i && data[j].low <= currentLow) {
+        isSwingLow = false;
+        break;
+      }
+    }
+    
+    if (isSwingLow) {
+      // Calculate strength based on how much lower it is than surrounding lows
+      const surroundingLows = [];
+      for (let j = i - lookback; j <= i + lookback; j++) {
+        if (j !== i) surroundingLows.push(data[j].low);
+      }
+      const avgSurrounding = surroundingLows.reduce((sum, l) => sum + l, 0) / surroundingLows.length;
+      const strength = ((avgSurrounding - currentLow) / avgSurrounding) * 100;
+      
+      swingLows.push({
+        price: currentLow,
+        date: data[i].date,
+        strength: Math.max(0.1, strength / 100), // Normalize to 0-1
+        source: 'swing_low',
+        type: 'support'
+      });
+    }
+  }
+  
+  return swingLows.sort((a, b) => b.strength - a.strength);
+}
+
+function calculateMovingAverages(data, periods = [20, 50, 200]) {
+  const movingAverages = {};
+  
+  periods.forEach(period => {
+    if (data.length >= period) {
+      const recentPrices = data.slice(-period).map(d => d.close);
+      const ma = recentPrices.reduce((sum, price) => sum + price, 0) / period;
+      
+      // Determine if MA is acting as support or resistance
+      const currentPrice = data[data.length - 1].close;
+      const position = currentPrice > ma ? 'support' : 'resistance';
+      
+      movingAverages[`MA${period}`] = {
+        price: parseFloat(ma.toFixed(2)),
+        period: period,
+        position: position,
+        strength: 0.6, // Fixed strength for MAs
+        type: position,
+        source: `ma_${period}`,
+        significance: period >= 200 ? 'high' : period >= 50 ? 'medium' : 'low'
+      };
+    }
+  });
+  
+  return movingAverages;
+}
+
+function calculateRealTechnicalIndicators(data) {
   const prices = data.map(d => d.close);
   const currentPrice = prices[prices.length - 1];
   
@@ -179,13 +309,13 @@ function calculateTechnicalIndicators(data) {
       value: rsi.toFixed(1),
       signal: rsi < 30 ? 'Oversold' : rsi > 70 ? 'Overbought' : 'Neutral',
       class: rsi < 30 ? 'bullish' : rsi > 70 ? 'bearish' : 'neutral',
-      description: 'Relative Strength Index (14-period)'
+      description: 'RSI (14-period) - Real Calculation'
     },
     macd: {
       value: macd.toFixed(3),
-      signal: macd > 0 ? 'Bullish' : macd < 0 ? 'Bearish' : 'Neutral',
+      signal: macd > 0 ? 'Bullish' : 'Bearish',
       class: macd > 0 ? 'bullish' : 'bearish',
-      description: 'MACD Signal'
+      description: 'MACD - Real Calculation'
     },
     volume: {
       value: Math.round(currentVolume).toLocaleString(),
@@ -198,12 +328,11 @@ function calculateTechnicalIndicators(data) {
 }
 
 function calculateRSI(prices, period = 14) {
-  if (prices.length < period + 1) return 50; // Default neutral RSI
+  if (prices.length < period + 1) return 50;
   
   let gains = 0;
   let losses = 0;
   
-  // Calculate initial gains and losses
   for (let i = prices.length - period; i < prices.length; i++) {
     const change = prices[i] - prices[i - 1];
     if (change > 0) {
@@ -227,7 +356,6 @@ function calculateRSI(prices, period = 14) {
 function calculateMACD(prices) {
   if (prices.length < 26) return 0;
   
-  // Simplified MACD calculation
   const ema12 = calculateEMA(prices, 12);
   const ema26 = calculateEMA(prices, 26);
   
@@ -238,7 +366,7 @@ function calculateEMA(prices, period) {
   if (prices.length < period) return prices[prices.length - 1];
   
   const multiplier = 2 / (period + 1);
-  let ema = prices.slice(-period, -period + 1)[0]; // Start with SMA
+  let ema = prices.slice(-period, -period + 1)[0]; // Start with first price
   
   for (let i = prices.length - period + 1; i < prices.length; i++) {
     ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
@@ -247,35 +375,24 @@ function calculateEMA(prices, period) {
   return ema;
 }
 
-function determineTrend(data, movingAverages) {
+function determineTrend(data) {
   const currentPrice = data[data.length - 1].close;
-  const priceChange20 = ((currentPrice - data[data.length - 21].close) / data[data.length - 21].close) * 100;
-  
-  let bullishSignals = 0;
-  let totalSignals = 0;
-  
-  // Check moving average signals
-  Object.values(movingAverages).forEach(ma => {
-    totalSignals++;
-    if (ma.position === 'support') bullishSignals++;
-  });
-  
-  // Check price momentum
-  totalSignals++;
-  if (priceChange20 > 0) bullishSignals++;
-  
-  const bullishPercentage = bullishSignals / totalSignals;
+  const price20DaysAgo = data[data.length - 21]?.close || currentPrice;
+  const priceChange = ((currentPrice - price20DaysAgo) / price20DaysAgo) * 100;
   
   let trend = 'Neutral';
   let trendClass = 'neutral';
   
-  if (bullishPercentage >= 0.7) {
+  if (priceChange > 5) {
     trend = 'Strong Bullish';
     trendClass = 'bullish';
-  } else if (bullishPercentage >= 0.5) {
+  } else if (priceChange > 1) {
     trend = 'Bullish';
     trendClass = 'bullish';
-  } else if (bullishPercentage <= 0.3) {
+  } else if (priceChange < -5) {
+    trend = 'Strong Bearish';
+    trendClass = 'bearish';
+  } else if (priceChange < -1) {
     trend = 'Bearish';
     trendClass = 'bearish';
   }
@@ -283,13 +400,12 @@ function determineTrend(data, movingAverages) {
   return {
     direction: trend,
     class: trendClass,
-    strength: bullishPercentage,
-    momentum: priceChange20.toFixed(2) + '%'
+    momentum: priceChange.toFixed(2) + '%'
   };
 }
 
 function calculateVolatility(data) {
-  if (data.length < 20) return { value: 0, description: 'Insufficient data' };
+  if (data.length < 20) return { value: '0%', description: 'Insufficient data' };
   
   const prices = data.slice(-20).map(d => d.close);
   const returns = [];
@@ -300,7 +416,7 @@ function calculateVolatility(data) {
   
   const avgReturn = returns.reduce((sum, ret) => sum + ret, 0) / returns.length;
   const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - avgReturn, 2), 0) / returns.length;
-  const volatility = Math.sqrt(variance) * Math.sqrt(252) * 100; // Annualized volatility
+  const volatility = Math.sqrt(variance) * Math.sqrt(252) * 100;
   
   let description = 'Normal';
   if (volatility > 40) description = 'High';
@@ -309,39 +425,14 @@ function calculateVolatility(data) {
   
   return {
     value: volatility.toFixed(1) + '%',
-    description: description,
-    raw: volatility
+    description: description
   };
 }
 
-function calculateMomentum(data) {
-  if (data.length < 10) return { value: 0, description: 'Insufficient data' };
-  
-  const currentPrice = data[data.length - 1].close;
-  const price10DaysAgo = data[data.length - 11].close;
-  const momentum = ((currentPrice - price10DaysAgo) / price10DaysAgo) * 100;
-  
-  let description = 'Neutral';
-  let momentumClass = 'neutral';
-  
-  if (momentum > 5) {
-    description = 'Strong Positive';
-    momentumClass = 'bullish';
-  } else if (momentum > 1) {
-    description = 'Positive';
-    momentumClass = 'bullish';
-  } else if (momentum < -5) {
-    description = 'Strong Negative';
-    momentumClass = 'bearish';
-  } else if (momentum < -1) {
-    description = 'Negative';
-    momentumClass = 'bearish';
-  }
-  
-  return {
-    value: momentum.toFixed(2) + '%',
-    description: description,
-    class: momentumClass,
-    raw: momentum
-  };
+function getSourceDescription(level) {
+  if (level.period) return `${level.period}-day Moving Average`;
+  if (level.source === 'swing_high') return 'Swing High';
+  if (level.source === 'swing_low') return 'Swing Low';
+  if (level.source && level.source.startsWith('ma_')) return `${level.source.split('_')[1]}-day MA`;
+  return 'Technical Level';
 }

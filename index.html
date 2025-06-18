@@ -895,14 +895,14 @@
 
         async function loadTechnicalIndicators(price) {
             try {
-                // Try enhanced technical analysis first
-                const enhancedResponse = await fetch(`${API_BASE}/api/technical-enhanced?symbol=COHR&period=1y`);
+                // Try real technical analysis first
+                const realResponse = await fetch(`${API_BASE}/api/technical-real?symbol=COHR&period=1y`);
                 
-                if (enhancedResponse.ok) {
-                    const enhancedData = await enhancedResponse.json();
-                    updateEnhancedTechnicalIndicators(enhancedData);
-                    updateEnhancedSupportResistance(enhancedData);
-                    console.log('Using enhanced technical analysis with real historical data');
+                if (realResponse.ok) {
+                    const realData = await realResponse.json();
+                    updateEnhancedTechnicalIndicators(realData);
+                    updateEnhancedSupportResistance(realData);
+                    console.log('Using real technical analysis with historical data');
                 } else {
                     // Fallback to basic technical analysis
                     const response = await fetch(`${API_BASE}/api/technical?symbol=COHR&price=${price}`);

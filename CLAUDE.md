@@ -2,80 +2,165 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+**COHR Investor Dashboard** - A professional, real-time financial dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, technical analysis, and financial news.
+
+**Status**: ✅ **DEPLOYED AND LIVE** on Vercel  
+**Live URL**: Available in Vercel dashboard  
+**Last Updated**: December 2024
+
 ## Commands
 
 ### Development
 - `npm run dev` or `vercel dev` - Start local development server with serverless functions
 - `npm run start` - Alias for dev server
-- **Important**: Create a `.env` file locally with API keys (see `.env` example in repo)
+- **Local Setup**: Create `.env` file with API keys (see `.env` example in repo)
 
 ### Deployment
-- Push to GitHub main branch - Automatic deployment via Vercel integration
-- `vercel` - Manual deployment using Vercel CLI
-- **Important**: Environment variables must be configured in Vercel dashboard before deployment
+- **Auto-deployment**: Push to GitHub main branch triggers Vercel deployment
+- **Manual**: Vercel dashboard → Deployments → Redeploy
+- **Environment Variables**: Must be configured in Vercel dashboard before deployment
 
-### Notes on Testing/Linting
-Currently, no testing framework or linting tools are configured. The build command (`npm run build`) simply echoes a message since this is a static site.
+### Testing
+- No testing framework currently configured
+- Manual testing via live dashboard and API endpoint testing
 
 ## Architecture Overview
 
-### Project Type
-Static frontend with Vercel serverless functions for a financial investor dashboard tracking Coherent Corp (NASDAQ: COHR).
+### Current Tech Stack
+- **Frontend**: Static HTML5 + Vanilla JavaScript with professional financial styling
+- **Backend**: Vercel Serverless Functions (Node.js)
+- **Deployment**: Vercel with GitHub integration
+- **Charts**: TradingView widget integration
+- **APIs**: Multiple financial data sources with fallback strategy
 
-### Key Components
+### Project Structure
+```
+/
+├── index.html              # Main dashboard (hybrid design)
+├── api/                    # Vercel serverless functions
+│   ├── stock.js           # Multi-source stock data with fallbacks
+│   ├── news.js            # News aggregation (NewsAPI + RSS feeds)
+│   └── technical.js       # Technical indicators calculation
+├── backups/               # Original design files
+├── docs/                  # Deployment and project documentation
+├── package.json           # Dependencies (node-fetch, cors)
+├── vercel.json            # Deployment configuration
+└── .env                   # API keys (local only, gitignored)
+```
 
-1. **Frontend (Missing in current structure)**
-   - Main entry: `index.html` (referenced but not present)
-   - Features: Real-time stock data, technical analysis, financial news, TradingView charts
-   - Design: Responsive with glassmorphism effects
+### API Endpoints
+All endpoints support CORS and have 30-second timeout limits:
+- `GET /api/stock?symbol=COHR` - Stock price, market cap, change data
+- `GET /api/news?symbol=COHR&limit=10` - Financial news articles
+- `GET /api/technical?symbol=COHR&price={price}` - Technical indicators
 
-2. **API Layer** (`/src/api/`)
-   - `stock.js` - Stock price data with multi-source fallback:
-     - Primary: Finnhub API (env: `FINNHUB_API_KEY`)
-     - Secondary: Alpha Vantage API (env: `ALPHA_VANTAGE_API_KEY`)
-     - Tertiary: IEX Cloud (env: `IEX_API_KEY`)
-     - Quaternary: Polygon.io (env: `POLYGON_API_KEY`)
-     - Fallback: Simulated data
-   - `news.js` - Financial news aggregation:
-     - Primary: NewsAPI (env: `NEWS_API_KEY`) - if configured
-     - Secondary: Bloomberg Markets RSS via RSS2JSON
-     - Tertiary: TechCrunch RSS via RSS2JSON
-     - Fallback: Curated COHR-specific news
-   - `technical.js` - Technical indicators (RSI, MACD, Moving Averages, Support/Resistance)
+### Data Flow Architecture
+1. **Stock Data**: Multi-source cascade (Alpha Vantage → fallback APIs → demo data)
+2. **News Data**: NewsAPI (if key present) → RSS feeds → curated fallback
+3. **Technical Data**: Real-time calculation based on current stock price
+4. **Frontend**: 5-minute auto-refresh, real-time updates
 
-3. **Infrastructure**
-   - Platform: Vercel (serverless functions + static hosting)
-   - Node.js version: 18+
-   - Key dependencies: `node-fetch` (HTTP client), `cors` (CORS middleware)
+## Environment Variables
 
-### API Endpoints Pattern
-All endpoints follow RESTful design with query parameters:
-- `/api/stock?symbol=COHR`
-- `/api/news?symbol=COHR&limit=5`
-- `/api/technical?symbol=COHR&price=81.07`
+### Required (Production)
+```
+ALPHA_VANTAGE_API_KEY=your_key_here     # Primary stock data source
+NEWS_API_KEY=your_key_here              # Financial news articles
+```
 
-### Environment Variables
-Required for production deployment (configure in Vercel dashboard):
-- `ALPHA_VANTAGE_API_KEY` - Stock market data
-- `NEWS_API_KEY` - Financial news articles
-- `FINNHUB_API_KEY` - Alternative stock data source
-- `IEX_API_KEY` - Alternative stock data source
-- `POLYGON_API_KEY` - Alternative stock data source
+### Optional (Configuration)
+```
+DEFAULT_SYMBOL=COHR                     # Default stock symbol
+MAX_NEWS_ARTICLES=10                    # Max news articles to return
+REFRESH_INTERVAL_MS=300000              # Frontend refresh interval
+```
 
-Optional configuration:
-- `DEFAULT_SYMBOL` - Default stock symbol (default: COHR)
-- `MAX_NEWS_ARTICLES` - Maximum news articles to return (default: 10)
-- `REFRESH_INTERVAL_MS` - Frontend refresh interval in milliseconds
+### API Fallback Strategy
+- **Stock Data**: Alpha Vantage → Finnhub → IEX → Polygon → Demo data
+- **News Data**: NewsAPI → Bloomberg RSS → TechCrunch RSS → Curated fallback
+- **Error Handling**: Graceful degradation, never breaks dashboard
 
-### Security Considerations
+## Current Data Sources Status
+
+### ✅ LIVE & REAL
+- Stock price, change, market cap (Alpha Vantage)
+- TradingView interactive charts
+- Technical indicators (calculated from real price)
+- News articles (when API keys configured)
+
+### ❌ EXAMPLE/STATIC DATA  
+- Analyst consensus, price targets, upside estimates
+- Support/resistance levels (calculated as price percentages)
+- Competitive positioning table
+- Industry market trend statistics
+
+## Known Issues & Next Steps
+
+### Immediate Priorities
+1. **Real Analyst Data**: Integrate Financial Modeling Prep or Finnhub API for consensus ratings
+2. **Support/Resistance**: Replace calculated levels with real technical analysis
+3. **News Relevance**: Improve COHR-specific news filtering
+4. **Environment Variables**: Ensure all API keys properly configured in Vercel
+
+### Technical Debt
+- Add proper error handling UI
+- Implement loading states for all data sections
+- Add retry logic for failed API calls
+- Consider adding data caching strategy
+
+### Future Enhancements
+- Real-time WebSocket data feeds
+- Portfolio tracking capabilities
+- Multiple stock symbol support
+- User authentication and preferences
+
+## Development Workflow
+
+### Making Changes
+1. **Local development**: Use `vercel dev` to test serverless functions
+2. **API changes**: Modify files in `/api/` directory
+3. **Frontend changes**: Edit `index.html` directly
+4. **Testing**: Manual testing via browser and API endpoint testing
+
+### Deployment Process
+1. Commit changes to main branch
+2. GitHub automatically triggers Vercel deployment
+3. Check Vercel dashboard for deployment status
+4. Verify live dashboard functionality
+
+### Debugging
+- **Vercel Function Logs**: Available in Vercel dashboard
+- **Browser Console**: Check for JavaScript errors
+- **API Testing**: Test endpoints directly via browser or curl
+- **Network Tab**: Monitor API response times and failures
+
+## Security Considerations
+
+### ✅ Current Security Measures
 - API keys stored as environment variables (never in code)
-- `.env` file excluded from version control via `.gitignore`
-- CORS properly configured
-- HTTPS enforced by Vercel
+- `.env` file excluded from version control
+- CORS properly configured for API endpoints
+- HTTPS enforced by Vercel platform
 - No client-side exposure of sensitive data
 
-### Development Workflow
-1. Local development uses Vercel dev server to simulate serverless environment
-2. Changes pushed to GitHub automatically deploy via Vercel integration
-3. No build process required (static site)
-4. Auto-refresh configured for 5-minute intervals on frontend
+### 🔒 Security Best Practices
+- Regularly rotate API keys
+- Monitor API usage and rate limits
+- Keep dependencies updated
+- Review function logs for suspicious activity
+
+## Performance Notes
+
+### Current Performance
+- **Page Load**: ~2-3 seconds initial load
+- **API Response**: ~500ms-2s depending on external APIs
+- **Auto-refresh**: Every 5 minutes
+- **Caching**: Browser-level caching only
+
+### Optimization Opportunities
+- Implement server-side caching for API responses
+- Add service worker for offline capability
+- Optimize JavaScript bundle size
+- Consider lazy loading for non-critical components

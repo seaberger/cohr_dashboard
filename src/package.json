@@ -1,0 +1,31 @@
+{
+    "name": "cohr-investor-dashboard",
+    "version": "1.0.0",
+    "description": "Professional investor dashboard for Coherent Corp (COHR) with real-time data and technical analysis",
+    "main": "index.html",
+    "scripts": {
+      "dev": "vercel dev",
+      "build": "echo 'Static site - no build needed'",
+      "start": "vercel dev"
+    },
+    "dependencies": {
+      "node-fetch": "^3.3.2",
+      "cors": "^2.8.5"
+    },
+    "devDependencies": {
+      "@vercel/node": "^3.0.0"
+    },
+    "engines": {
+      "node": ">=18.0.0"
+    },
+    "keywords": [
+      "stock-dashboard",
+      "financial-data",
+      "technical-analysis",
+      "vercel",
+      "cohr",
+      "coherent-corp"
+    ],
+    "author": "Your Name",
+    "license": "MIT"
+  }

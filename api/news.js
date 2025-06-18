@@ -36,19 +36,60 @@ export default async function handler(req, res) {
           const yahooData = await yahooSearchResponse.json();
           
           if (yahooData && yahooData.news && yahooData.news.length > 0) {
-            const yahooArticles = yahooData.news
-              .slice(0, limit)
-              .map(item => ({
-                title: item.title,
-                description: item.summary || 'Click to read full article',
-                url: item.link,
-                publishedAt: new Date(item.providerPublishTime * 1000).toISOString(),
-                source: { name: item.publisher },
-                relevance: 'high'
-              }));
+            const yahooArticles = await Promise.all(
+              yahooData.news.slice(0, limit).map(async (item) => {
+                let description = item.summary || 'Click to read full article';
+                
+                // Try to fetch article summary if none provided
+                if (!item.summary && item.link && item.link.includes('finance.yahoo.com')) {
+                  try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+                    
+                    const articleResponse = await fetch(item.link, {
+                      headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                      },
+                      signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (articleResponse.ok) {
+                      const articleHtml = await articleResponse.text();
+                      
+                      // Extract meta description (most reliable for Yahoo Finance)
+                      const metaDescMatch = articleHtml.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)/i);
+                      
+                      if (metaDescMatch && metaDescMatch[1]) {
+                        description = metaDescMatch[1].trim();
+                        // Truncate if too long
+                        if (description.length > 250) {
+                          description = description.substring(0, 250) + '...';
+                        }
+                      }
+                    }
+                  } catch (fetchError) {
+                    // Silently fail for summaries - not critical
+                    if (fetchError.name !== 'AbortError') {
+                      console.log(`Could not fetch summary for: ${item.title}`);
+                    }
+                  }
+                }
+                
+                return {
+                  title: item.title,
+                  description: description,
+                  url: item.link,
+                  publishedAt: new Date(item.providerPublishTime * 1000).toISOString(),
+                  source: { name: item.publisher },
+                  relevance: 'high'
+                };
+              })
+            );
             
             newsData = yahooArticles;
-            console.log(`Yahoo Finance search loaded ${newsData.length} COHR-specific articles`);
+            console.log(`Yahoo Finance search loaded ${newsData.length} COHR-specific articles with summaries`);
           }
         }
       } catch (error) {

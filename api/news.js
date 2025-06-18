@@ -21,8 +21,33 @@ export default async function handler(req, res) {
     try {
       let newsData = [];
   
-      // Method 1: Try NewsAPI if key is available
-      if (process.env.NEWS_API_KEY) {
+      // Method 1: Try FMP Company News API if key is available
+      const FMP_API_KEY = process.env.FINANCIAL_MODELING_PREP_API_KEY;
+      if (FMP_API_KEY) {
+        try {
+          const response = await fetch(
+            `https://financialmodelingprep.com/api/v3/stock_news?tickers=${symbol}&limit=${limit}&apikey=${FMP_API_KEY}`
+          );
+          const data = await response.json();
+  
+          if (data && data.length > 0) {
+            newsData = data.map(article => ({
+              title: article.title,
+              description: article.text || 'Click to read full article',
+              url: article.url,
+              publishedAt: article.publishedDate,
+              source: { name: article.site || 'Financial News' },
+              relevance: article.symbol === symbol.toUpperCase() ? 'high' : 'medium'
+            }));
+            console.log(`FMP Company News loaded ${newsData.length} articles`);
+          }
+        } catch (error) {
+          console.log('FMP Company News failed:', error.message);
+        }
+      }
+      
+      // Method 2: Try NewsAPI as fallback if FMP didn't work
+      if (newsData.length === 0 && process.env.NEWS_API_KEY) {
         try {
           const NEWS_API_KEY = process.env.NEWS_API_KEY;
           const response = await fetch(
@@ -182,6 +207,7 @@ export default async function handler(req, res) {
         symbol: symbol.toUpperCase(),
         lastUpdated: new Date().toISOString(),
         apiKeysUsed: {
+          financialModelingPrep: !!process.env.FINANCIAL_MODELING_PREP_API_KEY,
           newsapi: !!process.env.NEWS_API_KEY
         }
       };

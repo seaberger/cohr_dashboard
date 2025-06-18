@@ -116,32 +116,37 @@ export default async function handler(req, res) {
             };
           }
           
-          analystData = {
-            symbol: symbol.toUpperCase(),
-            consensus: {
-              rating: consensus,
-              score: consensusScore,
-              analystCount: analystCount,
-              distribution: recommendations && recommendations.length > 0 ? {
-                buy: recommendations[0].analystRatingsbuy || 0,
-                hold: recommendations[0].analystRatingsHold || 0,
-                sell: recommendations[0].analystRatingsSell || 0
-              } : null
-            },
-            priceTarget: {
-              average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
-              high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
-              low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
-              upside: upside ? parseFloat(upside.toFixed(1)) : null,
-              targetCount: priceTargets ? Math.min(priceTargets.length, 10) : 0
-            },
-            recentActivity: recentActivity,
-            nextEarnings: nextEarnings,
-            source: 'Financial Modeling Prep',
-            lastUpdated: new Date().toISOString()
-          };
-          
-          console.log(`FMP analyst data loaded for ${symbol}`);
+          // Only use FMP data if we have meaningful analyst data
+          if (analystCount > 0 || avgPriceTarget !== null) {
+            analystData = {
+              symbol: symbol.toUpperCase(),
+              consensus: {
+                rating: consensus,
+                score: consensusScore,
+                analystCount: analystCount,
+                distribution: recommendations && recommendations.length > 0 ? {
+                  buy: recommendations[0].analystRatingsbuy || 0,
+                  hold: recommendations[0].analystRatingsHold || 0,
+                  sell: recommendations[0].analystRatingsSell || 0
+                } : null
+              },
+              priceTarget: {
+                average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
+                high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
+                low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
+                upside: upside ? parseFloat(upside.toFixed(1)) : null,
+                targetCount: priceTargets ? Math.min(priceTargets.length, 10) : 0
+              },
+              recentActivity: recentActivity,
+              nextEarnings: nextEarnings,
+              source: 'Financial Modeling Prep',
+              lastUpdated: new Date().toISOString()
+            };
+            
+            console.log(`FMP analyst data loaded for ${symbol} - ${analystCount} analysts, $${avgPriceTarget} target`);
+          } else {
+            console.log(`FMP returned empty analyst data for ${symbol} - falling back to research data`);
+          }
           
         } catch (error) {
           console.log('FMP analyst API failed:', error.message);

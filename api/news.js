@@ -30,6 +30,8 @@ export default async function handler(req, res) {
           );
           const data = await response.json();
   
+          console.log(`FMP Company News response for ${symbol}:`, data && data.length ? `${data.length} articles` : 'No articles');
+  
           if (data && data.length > 0) {
             newsData = data.map(article => ({
               title: article.title,
@@ -39,11 +41,13 @@ export default async function handler(req, res) {
               source: { name: article.site || 'Financial News' },
               relevance: article.symbol === symbol.toUpperCase() ? 'high' : 'medium'
             }));
-            console.log(`FMP Company News loaded ${newsData.length} articles`);
+            console.log(`FMP Company News loaded ${newsData.length} articles for ${symbol}`);
           }
         } catch (error) {
           console.log('FMP Company News failed:', error.message);
         }
+      } else {
+        console.log('FMP API key not available, skipping FMP Company News');
       }
       
       // Method 2: Try NewsAPI as fallback if FMP didn't work

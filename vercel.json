@@ -1,48 +1,7 @@
 {
-    "version": 2,
-    "name": "cohr-dashboard",
-    "builds": [
-      {
-        "src": "index.html",
-        "use": "@vercel/static"
-      },
-      {
-        "src": "api/**/*.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/api/(.*)",
-        "dest": "/api/$1"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "/$1"
-      }
-    ],
-    "functions": {
-      "api/**/*.js": {
-        "maxDuration": 30
-      }
-    },
-    "headers": [
-      {
-        "source": "/api/(.*)",
-        "headers": [
-          {
-            "key": "Access-Control-Allow-Origin",
-            "value": "*"
-          },
-          {
-            "key": "Access-Control-Allow-Methods",
-            "value": "GET, POST, PUT, DELETE, OPTIONS"
-          },
-          {
-            "key": "Access-Control-Allow-Headers",
-            "value": "X-Requested-With, Content-Type, Authorization"
-          }
-        ]
-      }
-    ]
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 30
+    }
   }
+}

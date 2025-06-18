@@ -463,6 +463,27 @@
             font-weight: 500;
         }
 
+        /* Analyst data styling */
+        .consensus-buy {
+            color: #27ae60 !important;
+        }
+
+        .consensus-sell {
+            color: #e74c3c !important;
+        }
+
+        .consensus-hold {
+            color: #f39c12 !important;
+        }
+
+        .positive-upside {
+            color: #27ae60 !important;
+        }
+
+        .negative-upside {
+            color: #e74c3c !important;
+        }
+
         @media (max-width: 968px) {
             .dashboard {
                 grid-template-columns: 1fr;
@@ -984,11 +1005,66 @@
             `;
         }
 
-        function loadAnalystData() {
-            // TODO: Replace with real analyst data API
-            document.getElementById('consensus').textContent = 'Example Data';
-            document.getElementById('avgTarget').textContent = 'TBD';
-            document.getElementById('upside').textContent = 'TBD';
+        async function loadAnalystData() {
+            try {
+                const currentPrice = currentStockData ? currentStockData.price : 81.07;
+                const response = await fetch(`${API_BASE}/api/analyst?symbol=COHR&currentPrice=${currentPrice}`);
+                if (!response.ok) throw new Error('Failed to fetch analyst data');
+                const data = await response.json();
+                
+                updateAnalystDisplay(data);
+                
+            } catch (error) {
+                console.error('Analyst data error:', error);
+                // Fallback to loading indicator
+                document.getElementById('consensus').textContent = 'Loading...';
+                document.getElementById('avgTarget').textContent = 'Loading...';
+                document.getElementById('upside').textContent = 'Loading...';
+            }
+        }
+
+        function updateAnalystDisplay(data) {
+            // Update consensus rating
+            const consensusElement = document.getElementById('consensus');
+            consensusElement.textContent = data.consensus.rating;
+            consensusElement.className = `analyst-value ${getConsensusClass(data.consensus.rating)}`;
+            
+            // Update average price target
+            const avgTargetElement = document.getElementById('avgTarget');
+            if (data.priceTarget.average) {
+                avgTargetElement.textContent = `$${data.priceTarget.average}`;
+            } else {
+                avgTargetElement.textContent = 'N/A';
+            }
+            
+            // Update upside potential
+            const upsideElement = document.getElementById('upside');
+            if (data.priceTarget.upside !== null) {
+                const upside = data.priceTarget.upside;
+                upsideElement.textContent = `${upside >= 0 ? '+' : ''}${upside}%`;
+                upsideElement.className = `analyst-value ${upside >= 0 ? 'positive-upside' : 'negative-upside'}`;
+            } else {
+                upsideElement.textContent = 'N/A';
+            }
+            
+            // Add source indicator
+            const sourceIndicator = data.source === 'Demo Data' ? ' (Demo)' : '';
+            if (sourceIndicator) {
+                consensusElement.textContent += sourceIndicator;
+            }
+        }
+
+        function getConsensusClass(rating) {
+            switch(rating.toLowerCase()) {
+                case 'buy':
+                case 'strong buy':
+                    return 'consensus-buy';
+                case 'sell':
+                case 'strong sell':
+                    return 'consensus-sell';
+                default:
+                    return 'consensus-hold';
+            }
         }
 
         function updateLastUpdate() {

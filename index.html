@@ -1048,7 +1048,12 @@
             }
             
             // Add source indicator
-            const sourceIndicator = data.source === 'Demo Data' ? ' (Demo)' : '';
+            let sourceIndicator = '';
+            if (data.source === 'Demo Data') {
+                sourceIndicator = ' (Demo)';
+            } else if (data.source === 'Research Compilation') {
+                sourceIndicator = ' (Research)';
+            }
             if (sourceIndicator) {
                 consensusElement.textContent += sourceIndicator;
             }

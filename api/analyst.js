@@ -20,10 +20,132 @@ export default async function handler(req, res) {
     try {
       let analystData = null;
       
-      // Check if FMP API key is available
+      // Try Yahoo Finance API for analyst data (free and often reliable)
+      try {
+        const yahooResponse = await fetch(
+          `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=recommendationTrend,financialData,defaultKeyStatistics,upgradeDowngradeHistory`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+          }
+        );
+        
+        if (yahooResponse.ok) {
+          const yahooData = await yahooResponse.json();
+          
+          if (yahooData && yahooData.quoteSummary && yahooData.quoteSummary.result && yahooData.quoteSummary.result[0]) {
+            const result = yahooData.quoteSummary.result[0];
+            
+            // Process recommendation trend
+            let consensus = 'Hold';
+            let consensusScore = 0;
+            let analystCount = 0;
+            let distribution = null;
+            
+            if (result.recommendationTrend && result.recommendationTrend.trend && result.recommendationTrend.trend.length > 0) {
+              const latest = result.recommendationTrend.trend[0];
+              const strongBuy = latest.strongBuy || 0;
+              const buy = latest.buy || 0;
+              const hold = latest.hold || 0;
+              const sell = latest.sell || 0;
+              const strongSell = latest.strongSell || 0;
+              
+              analystCount = strongBuy + buy + hold + sell + strongSell;
+              
+              if (analystCount > 0) {
+                consensusScore = ((strongBuy * 2) + (buy * 1) + (hold * 0) + (sell * -1) + (strongSell * -2)) / analystCount;
+                
+                if (consensusScore > 0.5) consensus = 'Strong Buy';
+                else if (consensusScore > 0.1) consensus = 'Buy';
+                else if (consensusScore < -0.5) consensus = 'Strong Sell';
+                else if (consensusScore < -0.1) consensus = 'Sell';
+                else consensus = 'Hold';
+                
+                distribution = {
+                  strongBuy: strongBuy,
+                  buy: buy,
+                  hold: hold,
+                  sell: sell,
+                  strongSell: strongSell
+                };
+              }
+            }
+            
+            // Process price targets from financial data
+            let avgPriceTarget = null;
+            let highTarget = null;
+            let lowTarget = null;
+            let upside = null;
+            const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+            
+            if (result.financialData) {
+              if (result.financialData.targetMeanPrice && result.financialData.targetMeanPrice.raw) {
+                avgPriceTarget = result.financialData.targetMeanPrice.raw;
+              }
+              if (result.financialData.targetHighPrice && result.financialData.targetHighPrice.raw) {
+                highTarget = result.financialData.targetHighPrice.raw;
+              }
+              if (result.financialData.targetLowPrice && result.financialData.targetLowPrice.raw) {
+                lowTarget = result.financialData.targetLowPrice.raw;
+              }
+              
+              if (avgPriceTarget) {
+                upside = ((avgPriceTarget - currentPrice) / currentPrice) * 100;
+              }
+            }
+            
+            // Process recent upgrades/downgrades
+            let recentActivity = [];
+            if (result.upgradeDowngradeHistory && result.upgradeDowngradeHistory.history) {
+              recentActivity = result.upgradeDowngradeHistory.history
+                .slice(0, 5)
+                .map(item => ({
+                  date: new Date(item.epochGradeDate * 1000).toISOString().split('T')[0],
+                  company: item.firm,
+                  action: item.toGrade || 'Updated',
+                  previousGrade: item.fromGrade,
+                  priceTarget: null
+                }));
+            }
+            
+            // Only use Yahoo data if we have meaningful information
+            if (analystCount > 0 || avgPriceTarget !== null) {
+              analystData = {
+                symbol: symbol.toUpperCase(),
+                consensus: {
+                  rating: consensus,
+                  score: consensusScore,
+                  analystCount: analystCount,
+                  distribution: distribution
+                },
+                priceTarget: {
+                  average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
+                  high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
+                  low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
+                  upside: upside ? parseFloat(upside.toFixed(1)) : null,
+                  targetCount: analystCount
+                },
+                recentActivity: recentActivity,
+                nextEarnings: null, // Yahoo doesn't provide this in this endpoint
+                source: 'Yahoo Finance',
+                lastUpdated: new Date().toISOString()
+              };
+              
+              console.log(`Yahoo Finance analyst data loaded for ${symbol} - ${analystCount} analysts, $${avgPriceTarget} target`);
+            } else {
+              console.log(`Yahoo Finance returned no useful analyst data for ${symbol}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Yahoo Finance API failed:', error.message);
+      }
+      
+      // Fallback: Try FMP API if Yahoo didn't work and FMP key is available
       const FMP_API_KEY = process.env.FINANCIAL_MODELING_PREP_API_KEY;
       
-      if (FMP_API_KEY) {
+      if (!analystData && FMP_API_KEY) {
         try {
           // Fetch multiple analyst data endpoints from FMP
           const [

@@ -1,8 +1,9 @@
 # COHR Investor Dashboard
 
-**Status**: 🟢 **LIVE & DEPLOYED** | **Last Updated**: December 2024
+**Status**: 🟢 **LIVE & DEPLOYED** | **Last Updated**: January 2025  
+**Development Stage**: Sprint 3 Complete (Technical Analysis ✅, Market Intelligence ✅)
 
-A professional, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, technical analysis, and financial news. Built with Vercel serverless architecture for reliable, scalable performance.
+A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, COHR business segment performance, and intelligent financial news. Built with Vercel serverless architecture for professional-grade financial analysis.
 
 ## 🎯 Live Dashboard
 
@@ -12,17 +13,25 @@ A professional, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) fe
 
 ## 🚀 Key Features
 
-### ✅ **Live Data Sources**
-- **Real-time Stock Prices** - Alpha Vantage API with multi-source fallbacks
-- **Interactive Charts** - TradingView widget with technical indicators
-- **Market Data** - Live price, change, volume, market cap
-- **Financial News** - NewsAPI integration with RSS feed fallbacks
+### ✅ **LIVE & REAL DATA**
+- **Real-time Stock Prices** - Alpha Vantage API with intelligent fallbacks
+- **Interactive Charts** - TradingView widget with professional technical overlays
+- **Historical Technical Analysis** - Yahoo Finance 1-2 year historical data
+  - Real support/resistance from swing highs/lows
+  - Moving averages (20, 50, 200-day) as dynamic levels
+  - RSI, MACD calculated from actual price history
+- **COHR Business Intelligence** - Q2 2025 earnings segment performance
+  - AI Datacom: +79% YoY growth (all-time high)
+  - Networking: +56% YoY growth (record performance)
+  - Telecom: +11% YoY growth
+  - Industrial Lasers: +6% YoY growth
+- **COHR-Specific News** - Yahoo Finance search with article summaries
+- **Analyst Consensus** - Yahoo Finance quoteSummary API data
+- **Data Transparency** - Full source verification and methodology
 
-### ⚠️ **Enhanced Features (In Development)**
-- **Technical Analysis** - Calculated RSI, MACD, Moving Averages
-- **News Intelligence** - COHR-specific filtering and relevance scoring
-- **Analyst Data** - Consensus ratings and price targets (coming soon)
-- **Support/Resistance** - Professional technical analysis levels (coming soon)
+### 🔜 **PLANNED FEATURES (Next Sprints)**
+- **Competitive Intelligence** - Peer company performance comparison (Sprint 2)
+- **AI-Powered Insights** - OpenAI integration for sentiment analysis (Sprint 4)
 
 ## 🏗️ Architecture
 
@@ -36,18 +45,23 @@ A professional, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) fe
 ### **Project Structure**
 ```
 /
-├── index.html              # Main dashboard (hybrid design)
-├── api/                    # Vercel serverless functions
-│   ├── stock.js           # Multi-source stock data
-│   ├── news.js            # News aggregation
-│   └── technical.js       # Technical indicators
-├── backups/               # Original design files
-├── docs/                  # Project documentation
-├── package.json           # Dependencies
-├── vercel.json            # Deployment config
-├── CLAUDE.md              # AI development guide
-├── PROJECT_STATUS.md      # Current project status
-└── DATA_SOURCES.md        # Data source documentation
+├── index.html                    # Enhanced dashboard with real data
+├── api/                          # Vercel serverless functions
+│   ├── stock.js                 # Multi-source stock data
+│   ├── news.js                  # Yahoo Finance news with summaries
+│   ├── analyst.js               # Yahoo Finance analyst consensus
+│   ├── technical.js             # Basic technical indicators (fallback)
+│   ├── technical-real.js        # Real historical technical analysis
+│   ├── historical.js            # Yahoo Finance historical OHLCV
+│   └── market-trends.js         # COHR business segment performance
+├── lib/                          # Technical analysis libraries
+│   └── technicalAnalysis.js     # Support/resistance calculations
+├── backups/                      # Original design files
+├── docs/                         # Project documentation
+├── DEVELOPMENT_ROADMAP.md        # 4-sprint development plan
+├── package.json                  # Dependencies
+├── vercel.json                   # Deployment config
+└── CLAUDE.md                     # Complete technical guide
 ```
 
 ## 🔧 API Endpoints
@@ -55,34 +69,41 @@ A professional, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) fe
 All endpoints include CORS support and 30-second timeout limits:
 
 - **`GET /api/stock?symbol=COHR`** - Live stock price, change, market cap
-- **`GET /api/news?symbol=COHR&limit=10`** - Financial news articles
-- **`GET /api/technical?symbol=COHR&price={price}`** - Technical indicators
+- **`GET /api/news?symbol=COHR&limit=10`** - COHR-specific financial news with summaries
+- **`GET /api/analyst?symbol=COHR&currentPrice={price}`** - Analyst consensus and price targets
+- **`GET /api/technical-real?symbol=COHR&period=1y`** - Real historical technical analysis
+- **`GET /api/historical?symbol=COHR&period=1y`** - Historical OHLCV data
+- **`GET /api/market-trends`** - COHR business segment performance (Q2 2025)
 
-### **Data Flow**
-1. **Stock Data**: Alpha Vantage → Fallback APIs → Demo data (if needed)
-2. **News Data**: NewsAPI → RSS feeds → Curated content
-3. **Technical Data**: Real-time calculation from current stock price
-4. **Frontend**: Auto-refresh every 5 minutes with error handling
+### **Enhanced Data Flow**
+1. **Stock Data**: Alpha Vantage → fallback APIs → demo data
+2. **News Data**: Yahoo Finance search → article summary extraction → curated fallback
+3. **Analyst Data**: Yahoo Finance quoteSummary → research-compiled data
+4. **Technical Analysis**: Yahoo Finance historical → real support/resistance calculation
+5. **Market Intelligence**: COHR Q2 2025 earnings → business segment performance
+6. **Frontend**: 5-minute auto-refresh with enhanced technical analysis and data transparency
 
-## 📊 Data Quality
+## 📊 Data Quality & Sources
 
-### **Real & Reliable ✅**
-- Stock prices and market data (Alpha Vantage)
-- Interactive charts (TradingView)
-- Basic technical indicators
-- Multi-source news aggregation
+### **✅ LIVE & REAL DATA**
+- **Stock prices and market data** (Alpha Vantage)
+- **Interactive charts** (TradingView with professional overlays)
+- **Real technical analysis** (Yahoo Finance historical data)
+  - Support/resistance from actual swing highs/lows
+  - Moving averages calculated from historical prices
+  - RSI, MACD from real price data
+- **COHR business segment performance** (Q2 2025 earnings)
+- **COHR-specific news** (Yahoo Finance search API)
+- **Analyst consensus data** (Yahoo Finance quoteSummary)
 
-### **In Development ⚠️**
-- Enhanced news relevance for COHR
-- Professional technical analysis
-- Real analyst consensus data
-- Competitive intelligence
+### **⚠️ QUARTERLY UPDATED DATA**
+- **Market Intelligence**: COHR Q2 2025 earnings performance
+- **Business segment growth**: Updated with each earnings report
+- **Data transparency**: Full source verification available
 
-### **Example Data (Labeled) 📋**
-- Analyst ratings and price targets
-- Support/resistance levels
-- Competitive positioning
-- Market trend statistics
+### **❌ HIDDEN/PLANNED DATA**
+- **Competitive positioning** (hidden until Sprint 2 implementation)
+- **AI-powered insights** (planned for Sprint 4 with OpenAI integration)
 
 ## 🚀 Quick Deployment
 
@@ -149,25 +170,39 @@ All endpoints include CORS support and 30-second timeout limits:
 - Comprehensive financial news monitoring
 - Mobile-accessible from anywhere
 
-## 🔮 Roadmap
+## 🔮 Development Roadmap
 
-### **Phase 1: Data Enhancement** (Current)
-- [ ] Real analyst consensus ratings and price targets
-- [ ] Enhanced COHR-specific news filtering
-- [ ] Professional support/resistance analysis
-- [ ] Improved technical indicator accuracy
+### **✅ COMPLETED SPRINTS**
+**Sprint 1: Real Technical Analysis** ✅
+- [x] Yahoo Finance historical data integration
+- [x] Real support/resistance from swing highs/lows
+- [x] Enhanced technical indicators (RSI, MACD, Volume)
+- [x] Moving averages as dynamic support/resistance levels
 
-### **Phase 2: Advanced Features** (Q1 2025)
-- [ ] Real-time WebSocket data feeds
-- [ ] Portfolio tracking capabilities
-- [ ] Custom alerts and notifications
-- [ ] Export functionality (PDF reports)
+**Sprint 3: Market Intelligence** ✅
+- [x] COHR business segment performance data
+- [x] Q2 2025 earnings-based market intelligence
+- [x] Data transparency features with source verification
+- [x] Quarterly update cycle aligned with earnings
 
-### **Phase 3: Professional Tools** (Q2 2025)
-- [ ] Multiple stock symbol support
-- [ ] Peer comparison analysis
-- [ ] Options data integration
-- [ ] SEC filing monitoring
+### **🚧 NEXT PRIORITIES**
+**Sprint 2: Competitive Intelligence** (Next)
+- [ ] Competitive positioning section (currently hidden)
+- [ ] Peer company performance comparison
+- [ ] Relative stock performance vs competitors
+- [ ] Industry positioning and market share data
+
+**Sprint 4: AI Integration** (Future)
+- [ ] OpenAI-powered news sentiment analysis
+- [ ] AI-generated investment insights
+- [ ] Interactive Q&A about COHR performance
+- [ ] Automated earnings analysis and alerts
+
+### **🔧 TECHNICAL IMPROVEMENTS**
+- [ ] Server-side caching for API responses
+- [ ] Enhanced error handling UI
+- [ ] Performance optimization
+- [ ] WebSocket real-time data feeds
 
 ## 🤝 Contributing
 

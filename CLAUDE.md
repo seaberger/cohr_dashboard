@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**COHR Investor Dashboard** - A professional, real-time financial dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, technical analysis, and financial news.
+**COHR Investor Dashboard** - A comprehensive, real-time financial dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real technical analysis, business segment performance, and financial news intelligence.
 
 **Status**: ✅ **DEPLOYED AND LIVE** on Vercel  
 **Live URL**: Available in Vercel dashboard  
-**Last Updated**: December 2024
+**Last Updated**: January 2025  
+**Development Stage**: Sprint 3 Complete (Technical Analysis ✅, Market Intelligence ✅)
 
 ## Commands
 
@@ -38,31 +39,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Project Structure
 ```
 /
-├── index.html              # Main dashboard (hybrid design)
-├── api/                    # Vercel serverless functions
-│   ├── stock.js           # Multi-source stock data with fallbacks
-│   ├── news.js            # News aggregation (NewsAPI + RSS feeds)
-│   └── technical.js       # Technical indicators calculation
-├── backups/               # Original design files
-├── docs/                  # Deployment and project documentation
-├── package.json           # Dependencies (node-fetch, cors)
-├── vercel.json            # Deployment configuration
-└── .env                   # API keys (local only, gitignored)
+├── index.html                    # Main dashboard with enhanced features
+├── api/                          # Vercel serverless functions
+│   ├── stock.js                 # Multi-source stock data with fallbacks
+│   ├── news.js                  # Yahoo Finance news with article summaries
+│   ├── analyst.js               # Yahoo Finance analyst consensus data
+│   ├── technical.js             # Basic technical indicators (fallback)
+│   ├── technical-real.js        # Real historical technical analysis
+│   ├── technical-enhanced.js    # Advanced technical analysis (ES6 issues)
+│   ├── historical.js            # Yahoo Finance historical OHLCV data
+│   └── market-trends.js         # COHR business segment performance
+├── lib/                          # Technical analysis libraries
+│   └── technicalAnalysis.js     # Support/resistance calculation functions
+├── backups/                      # Original design files
+├── docs/                         # Project documentation
+├── DEVELOPMENT_ROADMAP.md        # 4-sprint development plan
+├── package.json                  # Dependencies (node-fetch, cors)
+├── vercel.json                   # Deployment configuration
+└── .env                          # API keys (local only, gitignored)
 ```
 
 ### API Endpoints
 All endpoints support CORS and have 30-second timeout limits:
 - `GET /api/stock?symbol=COHR` - Stock price, market cap, change data
-- `GET /api/news?symbol=COHR&limit=10` - Financial news articles (FMP primary, NewsAPI fallback)
-- `GET /api/technical?symbol=COHR&price={price}` - Technical indicators
+- `GET /api/news?symbol=COHR&limit=10` - COHR-specific financial news with summaries
 - `GET /api/analyst?symbol=COHR&currentPrice={price}` - Analyst consensus and price targets
+- `GET /api/technical?symbol=COHR&price={price}` - Basic technical indicators (fallback)
+- `GET /api/technical-real?symbol=COHR&period=1y` - Real historical technical analysis
+- `GET /api/historical?symbol=COHR&period=1y` - Historical OHLCV data
+- `GET /api/market-trends` - COHR business segment performance (Q2 2025 earnings)
 
 ### Data Flow Architecture
-1. **Stock Data**: Multi-source cascade (Alpha Vantage → fallback APIs → demo data)
-2. **News Data**: FMP Company News → NewsAPI → RSS feeds → curated fallback
-3. **Technical Data**: Real-time calculation based on current stock price
-4. **Analyst Data**: FMP endpoints (if available) → Research-compiled data
-5. **Frontend**: 5-minute auto-refresh, real-time updates
+1. **Stock Data**: Alpha Vantage primary → fallback APIs → demo data
+2. **News Data**: Yahoo Finance search API → article summary extraction
+3. **Analyst Data**: Yahoo Finance quoteSummary → fallback to research data
+4. **Technical Analysis**: Yahoo Finance historical data → real support/resistance calculation
+5. **Market Intelligence**: COHR Q2 2025 earnings data → business segment performance
+6. **Frontend**: 5-minute auto-refresh, enhanced technical analysis, data transparency
 
 ## Environment Variables
 
@@ -82,48 +95,71 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 
 ### API Fallback Strategy
 - **Stock Data**: Alpha Vantage → Finnhub → IEX → Polygon → Demo data
-- **News Data**: FMP Company News → NewsAPI → Bloomberg RSS → TechCrunch RSS → Curated fallback
-- **Analyst Data**: FMP endpoints → Research-compiled consensus data
-- **Error Handling**: Graceful degradation, never breaks dashboard
+- **News Data**: Yahoo Finance search → article summary extraction → curated fallback
+- **Analyst Data**: Yahoo Finance quoteSummary → research-compiled consensus data
+- **Technical Analysis**: Yahoo Finance historical → basic calculated indicators → demo data
+- **Market Intelligence**: COHR earnings data → cached Q2 2025 performance
+- **Error Handling**: Graceful degradation, comprehensive fallback strategies
 
 ## Current Data Sources Status
 
-### ✅ LIVE & REAL
-- Stock price, change, market cap (Alpha Vantage)
-- TradingView interactive charts
-- Technical indicators (calculated from real price)
-- News articles (FMP Company News API when configured, otherwise NewsAPI)
-- Analyst consensus data (Research-compiled from TipRanks, Zacks, StockAnalysis)
+### ✅ LIVE & REAL DATA
+- **Stock price, change, market cap** (Alpha Vantage)
+- **TradingView interactive charts** with technical overlays
+- **Real technical analysis** (Yahoo Finance historical data)
+  - Support/resistance from actual swing highs/lows
+  - Moving averages (20, 50, 200-day) as dynamic levels
+  - RSI, MACD calculated from historical price data
+- **COHR-specific news articles** (Yahoo Finance search API)
+- **Article summaries** (extracted from meta descriptions)
+- **Analyst consensus data** (Yahoo Finance quoteSummary)
+- **COHR business segment performance** (Q2 2025 earnings data)
+  - AI Datacom: +79% YoY growth
+  - Networking: +56% YoY growth
+  - Telecom: +11% YoY growth
+  - Industrial Lasers: +6% YoY growth
 
-### ⚠️ SEMI-STATIC DATA (Updated periodically)
-- Analyst ratings: Buy consensus from 17 analysts
-- Price targets: $102.81 average, $136 high, $80 low
-- Recent analyst actions from major firms
+### ⚠️ QUARTERLY UPDATED DATA
+- **Market Intelligence**: COHR Q2 2025 earnings performance
+- **Analyst ratings**: Buy consensus from multiple analysts
+- **Price targets**: Research-compiled from major firms
 
-### ❌ EXAMPLE/STATIC DATA  
-- Support/resistance levels (calculated as price percentages)
-- Competitive positioning table
-- Industry market trend statistics
+### ❌ HIDDEN/PLANNED DATA
+- **Competitive positioning** (hidden until Sprint 2)
+- **AI-powered insights** (planned for Sprint 4)
 
-## Known Issues & Next Steps
+## Development Progress & Roadmap
 
-### Immediate Priorities
-1. **Real Analyst Data**: Integrate Financial Modeling Prep or Finnhub API for consensus ratings
-2. **Support/Resistance**: Replace calculated levels with real technical analysis
-3. **News Relevance**: Improve COHR-specific news filtering
-4. **Environment Variables**: Ensure all API keys properly configured in Vercel
+### ✅ COMPLETED SPRINTS
+**Sprint 1: Real Technical Analysis** ✅
+- Implemented Yahoo Finance historical data integration
+- Real support/resistance from swing highs/lows
+- Enhanced technical indicators (RSI, MACD, Volume)
+- Moving averages as dynamic support/resistance levels
 
-### Technical Debt
-- Add proper error handling UI
-- Implement loading states for all data sections
-- Add retry logic for failed API calls
-- Consider adding data caching strategy
+**Sprint 3: Market Intelligence** ✅  
+- COHR business segment performance data
+- Q2 2025 earnings-based market intelligence
+- Data transparency features with source verification
+- Quarterly update cycle aligned with earnings
 
-### Future Enhancements
-- Real-time WebSocket data feeds
-- Portfolio tracking capabilities
-- Multiple stock symbol support
-- User authentication and preferences
+### 🚧 NEXT PRIORITIES (Sprint 2: Competitive Intelligence)
+1. **Competitive positioning section** (currently hidden)
+2. **Peer company performance comparison**
+3. **Relative stock performance vs competitors**
+4. **Industry positioning and market share data**
+
+### 🔮 FUTURE ENHANCEMENTS (Sprint 4: AI Integration)
+- OpenAI-powered news sentiment analysis
+- AI-generated investment insights
+- Interactive Q&A about COHR performance
+- Automated earnings analysis and alerts
+
+### 🔧 TECHNICAL IMPROVEMENTS
+- Server-side caching for API responses
+- Enhanced error handling UI
+- Loading state improvements
+- Performance optimization
 
 ## Development Workflow
 
@@ -174,25 +210,23 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - Optimize JavaScript bundle size
 - Consider lazy loading for non-critical components
 
-## Financial Modeling Prep (FMP) API Reference
+## Yahoo Finance API Integration
 
 ### Key Endpoints Used
-- **Company News**: `https://financialmodelingprep.com/api/v3/stock_news?tickers={symbol}&limit={limit}&apikey={key}`
-- **Analyst Recommendations**: `https://financialmodelingprep.com/api/v3/analyst-stock-recommendations/{symbol}?apikey={key}`
-- **Price Targets**: `https://financialmodelingprep.com/api/v3/price-target?symbol={symbol}&apikey={key}`
-- **Upgrades/Downgrades**: `https://financialmodelingprep.com/api/v3/upgrades-downgrades?symbol={symbol}&apikey={key}`
-- **Analyst Estimates**: `https://financialmodelingprep.com/api/v3/analyst-estimates/{symbol}?apikey={key}`
+- **Stock Data**: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules=price,summaryDetail,defaultKeyStatistics`
+- **Historical Data**: `https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={start}&period2={end}&interval=1d`
+- **Analyst Data**: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules=recommendationTrend,financialData,upgradeDowngradeHistory`
+- **News Search**: `https://query1.finance.yahoo.com/v1/finance/search?q={symbol}`
 
-### Additional FMP Endpoints (For Future Use)
-- **Stock Search**: `https://financialmodelingprep.com/stable/search-symbol?query={query}&apikey={key}`
-- **Company Name Search**: `https://financialmodelingprep.com/stable/search-name?query={query}&apikey={key}`
-- **CIK Search**: `https://financialmodelingprep.com/stable/search-cik?cik={cik}&apikey={key}`
-- **CUSIP Search**: `https://financialmodelingprep.com/stable/search-cusip?cusip={cusip}&apikey={key}`
-- **Stock Screener**: `https://financialmodelingprep.com/stable/company-screener?apikey={key}`
-- **Company Symbols List**: `https://financialmodelingprep.com/stable/stock-list?apikey={key}`
-- **Earnings Transcript**: `https://financialmodelingprep.com/stable/earnings-transcript-list?apikey={key}`
+### Data Processing Pipeline
+1. **Historical Analysis**: 1-2 years of OHLCV data for technical analysis
+2. **Support/Resistance**: Swing high/low detection with strength scoring
+3. **Moving Averages**: Dynamic support/resistance calculation
+4. **News Intelligence**: COHR-specific article filtering and summary extraction
+5. **Earnings Integration**: COHR Q2 2025 business segment performance
 
-### FMP Free Tier Limitations
-- Analyst endpoints (recommendations, price targets) require paid tier
-- Free tier includes company news and basic financial data
-- Rate limits apply based on subscription level
+### API Reliability Measures
+- User-Agent headers for consistent access
+- Fallback strategies for each endpoint
+- Graceful error handling with cached data
+- Rate limiting and timeout protection

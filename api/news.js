@@ -21,9 +21,43 @@ export default async function handler(req, res) {
     try {
       let newsData = [];
       
-      console.log(`Loading news for ${symbol} - using RSS feeds and curated content for better COHR relevance`);
+      // Method 1: Try Yahoo Finance News API for company-specific news
+      try {
+        const yahooNewsResponse = await fetch(
+          `https://query1.finance.yahoo.com/v2/finance/news?symbols=${symbol}`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+          }
+        );
+        
+        if (yahooNewsResponse.ok) {
+          const yahooNewsData = await yahooNewsResponse.json();
+          
+          if (yahooNewsData && yahooNewsData.Content && yahooNewsData.Content.result) {
+            const yahooArticles = yahooNewsData.Content.result
+              .slice(0, limit)
+              .map(item => ({
+                title: item.title,
+                description: item.summary || 'Click to read full article',
+                url: item.link,
+                publishedAt: new Date(item.providerPublishTime * 1000).toISOString(),
+                source: { name: item.publisher },
+                relevance: 'high'
+              }));
+            
+            newsData = yahooArticles;
+            console.log(`Yahoo Finance loaded ${newsData.length} COHR-specific articles`);
+          }
+        }
+      } catch (error) {
+        console.log('Yahoo Finance news API failed:', error.message);
+      }
+      
+      console.log(`Loading additional news for ${symbol} - Yahoo returned ${newsData.length} articles`);
   
-      // Method 1: Try RSS2JSON with Bloomberg for financial news
+      // Method 2: Try RSS2JSON with Bloomberg for additional financial news
       if (newsData.length < limit) {
         try {
           const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bloomberg.com/markets/news.rss';
@@ -63,7 +97,7 @@ export default async function handler(req, res) {
         }
       }
   
-      // Method 2: Try TechCrunch RSS if we still need more news
+      // Method 3: Try TechCrunch RSS if we still need more news
       if (newsData.length < limit) {
         try {
           const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://techcrunch.com/feed/';
@@ -158,8 +192,8 @@ export default async function handler(req, res) {
         totalResults: newsData.length,
         symbol: symbol.toUpperCase(),
         lastUpdated: new Date().toISOString(),
-        dataSources: ['Bloomberg RSS', 'TechCrunch RSS', 'Curated COHR Content'],
-        note: 'Using RSS feeds and curated content for better COHR relevance than free API tiers'
+        dataSources: ['Yahoo Finance News', 'Bloomberg RSS', 'TechCrunch RSS', 'Curated COHR Content'],
+        note: 'Primary source: Yahoo Finance company-specific news, with RSS feeds as fallback'
       };
   
       res.status(200).json(response);

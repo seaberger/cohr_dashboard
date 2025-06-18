@@ -484,6 +484,52 @@
             color: #e74c3c !important;
         }
 
+        /* Enhanced Support/Resistance Styling */
+        .level-values-enhanced {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .level-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+        }
+
+        .level-item.resistance .level-detail {
+            border-left-color: #e74c3c;
+        }
+
+        .level-item.support .level-detail {
+            border-left-color: #27ae60;
+        }
+
+        .level-price {
+            font-weight: 600;
+            font-size: 0.95em;
+            color: #2c3e50;
+        }
+
+        .level-source {
+            font-size: 0.8em;
+            color: #666;
+            flex: 1;
+            text-align: center;
+            margin: 0 8px;
+        }
+
+        .level-strength {
+            font-size: 0.8em;
+            color: #888;
+            font-weight: 500;
+        }
+
         @media (max-width: 968px) {
             .dashboard {
                 grid-template-columns: 1fr;
@@ -849,12 +895,24 @@
 
         async function loadTechnicalIndicators(price) {
             try {
-                const response = await fetch(`${API_BASE}/api/technical?symbol=COHR&price=${price}`);
-                if (!response.ok) throw new Error('Failed to fetch technical data');
-                const data = await response.json();
+                // Try enhanced technical analysis first
+                const enhancedResponse = await fetch(`${API_BASE}/api/technical-enhanced?symbol=COHR&period=1y`);
                 
-                updateTechnicalIndicators(data);
-                updateSupportResistance(data);
+                if (enhancedResponse.ok) {
+                    const enhancedData = await enhancedResponse.json();
+                    updateEnhancedTechnicalIndicators(enhancedData);
+                    updateEnhancedSupportResistance(enhancedData);
+                    console.log('Using enhanced technical analysis with real historical data');
+                } else {
+                    // Fallback to basic technical analysis
+                    const response = await fetch(`${API_BASE}/api/technical?symbol=COHR&price=${price}`);
+                    if (!response.ok) throw new Error('Failed to fetch technical data');
+                    const data = await response.json();
+                    
+                    updateTechnicalIndicators(data);
+                    updateSupportResistance(data);
+                    console.log('Using basic technical analysis (fallback)');
+                }
                 
             } catch (error) {
                 console.error('Technical indicators error:', error);
@@ -938,6 +996,67 @@
                 <div class="level-item support">
                     <span class="level-label">Support</span>
                     <span class="level-values">${supportValues}</span>
+                </div>
+            `;
+        }
+
+        // Enhanced technical analysis display functions
+        function updateEnhancedTechnicalIndicators(data) {
+            const indicators = data.indicators;
+            const container = document.getElementById('technicalIndicators');
+            
+            container.innerHTML = `
+                <div class="indicator-item">
+                    <span class="indicator-label">${indicators.rsi.description}</span>
+                    <span class="indicator-value">${indicators.rsi.value}</span>
+                    <span class="indicator-signal ${indicators.rsi.class}">${indicators.rsi.signal}</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">${indicators.macd.description}</span>
+                    <span class="indicator-value">${indicators.macd.value}</span>
+                    <span class="indicator-signal ${indicators.macd.class}">${indicators.macd.signal}</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">${indicators.volume.description}</span>
+                    <span class="indicator-value">${indicators.volume.value}</span>
+                    <span class="indicator-signal ${indicators.volume.class}">${indicators.volume.signal}</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">Trend Analysis</span>
+                    <span class="indicator-value">${data.analysis.trend.direction}</span>
+                    <span class="indicator-signal ${data.analysis.trend.class}">${data.analysis.trend.momentum}</span>
+                </div>
+            `;
+        }
+
+        function updateEnhancedSupportResistance(data) {
+            const container = document.getElementById('supportResistanceLevels');
+            
+            // Enhanced display with level details
+            const resistanceHTML = data.levels.resistance.slice(0, 3).map(level => 
+                `<div class="level-detail">
+                    <span class="level-price">$${level.price}</span>
+                    <span class="level-source">${level.source}</span>
+                    <span class="level-strength">${(level.strength * 100).toFixed(0)}% strong</span>
+                </div>`
+            ).join('');
+            
+            const supportHTML = data.levels.support.slice(0, 3).map(level => 
+                `<div class="level-detail">
+                    <span class="level-price">$${level.price}</span>
+                    <span class="level-source">${level.source}</span>
+                    <span class="level-strength">${(level.strength * 100).toFixed(0)}% strong</span>
+                </div>`
+            ).join('');
+            
+            container.innerHTML = `
+                <div class="level-item resistance">
+                    <span class="level-label">Resistance Levels</span>
+                    <div class="level-values-enhanced">${resistanceHTML}</div>
+                </div>
+                <div class="level-item support">
+                    <span class="level-label">Support Levels</span>
+                    <div class="level-values-enhanced">${supportHTML}</div>
                 </div>
             `;
         }

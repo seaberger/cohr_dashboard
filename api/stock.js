@@ -20,32 +20,65 @@ export default async function handler(req, res) {
     try {
       let stockData = null;
   
-      // Method 1: Try Finnhub API
+      // Method 1: Try Yahoo Finance API (real-time quotes)
       try {
-        const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || 'sandbox_c39p461r01qghv5ktobgc39p461r01qghv5ktoc0';
-        const finnhubResponse = await fetch(
-          `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`
+        const yahooResponse = await fetch(
+          `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
         );
-        const finnhubData = await finnhubResponse.json();
+        const yahooData = await yahooResponse.json();
   
-        if (finnhubData.c && finnhubData.c > 0) {
+        if (yahooData.quoteSummary?.result?.[0]?.price) {
+          const priceData = yahooData.quoteSummary.result[0].price;
           stockData = {
-            price: finnhubData.c,
-            change: finnhubData.d,
-            changePercent: finnhubData.dp,
-            high: finnhubData.h,
-            low: finnhubData.l,
-            open: finnhubData.o,
-            previousClose: finnhubData.pc,
-            source: 'Finnhub',
+            price: priceData.regularMarketPrice?.raw || 0,
+            change: priceData.regularMarketChange?.raw || 0,
+            changePercent: priceData.regularMarketChangePercent?.raw || 0,
+            high: priceData.regularMarketDayHigh?.raw || 0,
+            low: priceData.regularMarketDayLow?.raw || 0,
+            open: priceData.regularMarketOpen?.raw || 0,
+            previousClose: priceData.regularMarketPreviousClose?.raw || 0,
+            volume: priceData.regularMarketVolume?.raw || 0,
+            source: 'Yahoo Finance',
             timestamp: new Date().toISOString()
           };
         }
       } catch (error) {
-        console.log('Finnhub failed:', error.message);
+        console.log('Yahoo Finance failed:', error.message, error.stack);
       }
   
-      // Method 2: Try Alpha Vantage API (if Finnhub fails)
+      // Method 2: Try Finnhub API (if Yahoo fails)
+      if (!stockData) {
+        try {
+          const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || 'sandbox_c39p461r01qghv5ktobgc39p461r01qghv5ktoc0';
+          const finnhubResponse = await fetch(
+            `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`
+          );
+          const finnhubData = await finnhubResponse.json();
+    
+          if (finnhubData.c && finnhubData.c > 0) {
+            stockData = {
+              price: finnhubData.c,
+              change: finnhubData.d,
+              changePercent: finnhubData.dp,
+              high: finnhubData.h,
+              low: finnhubData.l,
+              open: finnhubData.o,
+              previousClose: finnhubData.pc,
+              source: 'Finnhub',
+              timestamp: new Date().toISOString()
+            };
+          }
+        } catch (error) {
+          console.log('Finnhub failed:', error.message);
+        }
+      }
+  
+      // Method 3: Try Alpha Vantage API (if others fail)
       if (!stockData) {
         try {
           const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -76,7 +109,7 @@ export default async function handler(req, res) {
         }
       }
   
-      // Method 3: Try IEX Cloud (if others fail)
+      // Method 4: Try IEX Cloud (if others fail)
       if (!stockData) {
         try {
           const IEX_TOKEN = process.env.IEX_API_KEY || 'pk_test_c4f40a8a0b2346b8baa6b4e7b4e7b4e7';
@@ -105,7 +138,10 @@ export default async function handler(req, res) {
         }
       }
   
-      // Method 4: Try Polygon.io (if others fail)
+      // Method 5: Polygon.io - DISABLED: uses /prev endpoint which returns yesterday's data
+      // To re-enable with real-time data, replace the URL with:
+      // `https://api.polygon.io/v1/last/stocks/${symbol}?apikey=${POLYGON_API_KEY}`
+      /*
       if (!stockData) {
         try {
           const POLYGON_API_KEY = process.env.POLYGON_API_KEY || 'demo';
@@ -138,6 +174,7 @@ export default async function handler(req, res) {
           console.log('Polygon.io failed:', error.message);
         }
       }
+      */
   
       // Fallback data if all APIs fail
       if (!stockData) {

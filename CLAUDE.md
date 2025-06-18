@@ -41,7 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 /
 ├── index.html                    # Main dashboard with enhanced features
 ├── api/                          # Vercel serverless functions
-│   ├── stock.js                 # Multi-source stock data with fallbacks
+│   ├── stock.js                 # Yahoo Finance real-time quotes (chart API)
 │   ├── news.js                  # Yahoo Finance news with article summaries
 │   ├── analyst.js               # Yahoo Finance analyst consensus data
 │   ├── technical.js             # Basic technical indicators (fallback)
@@ -51,6 +51,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   └── market-trends.js         # COHR business segment performance
 ├── lib/                          # Technical analysis libraries
 │   └── technicalAnalysis.js     # Support/resistance calculation functions
+├── testing/                      # Test scripts and utilities
 ├── backups/                      # Original design files
 ├── docs/                         # Project documentation
 ├── DEVELOPMENT_ROADMAP.md        # 4-sprint development plan
@@ -70,7 +71,7 @@ All endpoints support CORS and have 30-second timeout limits:
 - `GET /api/market-trends` - COHR business segment performance (Q2 2025 earnings)
 
 ### Data Flow Architecture
-1. **Stock Data**: Alpha Vantage primary → fallback APIs → demo data
+1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → fallback APIs → demo data
 2. **News Data**: Yahoo Finance search API → article summary extraction
 3. **Analyst Data**: Yahoo Finance quoteSummary → fallback to research data
 4. **Technical Analysis**: Yahoo Finance historical data → real support/resistance calculation
@@ -94,7 +95,7 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 ```
 
 ### API Fallback Strategy
-- **Stock Data**: Alpha Vantage → Finnhub → IEX → Polygon → Demo data
+- **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → IEX → Demo data
 - **News Data**: Yahoo Finance search → article summary extraction → curated fallback
 - **Analyst Data**: Yahoo Finance quoteSummary → research-compiled consensus data
 - **Technical Analysis**: Yahoo Finance historical → basic calculated indicators → demo data
@@ -104,7 +105,7 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 ## Current Data Sources Status
 
 ### ✅ LIVE & REAL DATA
-- **Stock price, change, market cap** (Alpha Vantage)
+- **Stock price, change, market cap** (Yahoo Finance chart API - real-time)
 - **TradingView interactive charts** with technical overlays
 - **Real technical analysis** (Yahoo Finance historical data)
   - Support/resistance from actual swing highs/lows
@@ -213,7 +214,7 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 ## Yahoo Finance API Integration
 
 ### Key Endpoints Used
-- **Stock Data**: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules=price,summaryDetail,defaultKeyStatistics`
+- **Stock Data**: `https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={start}&period2={end}&interval=1m&includePrePost=true`
 - **Historical Data**: `https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={start}&period2={end}&interval=1d`
 - **Analyst Data**: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}?modules=recommendationTrend,financialData,upgradeDowngradeHistory`
 - **News Search**: `https://query1.finance.yahoo.com/v1/finance/search?q={symbol}`
@@ -230,3 +231,8 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - Fallback strategies for each endpoint
 - Graceful error handling with cached data
 - Rate limiting and timeout protection
+
+### Recent Updates (January 2025)
+- **Fixed live stock price display**: Switched from quoteSummary to chart API endpoint
+- **Chart API advantages**: No authentication required, real-time data during market hours
+- **Polygon.io disabled**: Was using /prev endpoint returning yesterday's data

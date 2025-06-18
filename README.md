@@ -1,7 +1,8 @@
 # COHR Investor Dashboard
 
 **Status**: 🟢 **LIVE & DEPLOYED** | **Last Updated**: January 2025  
-**Development Stage**: Sprint 3 Complete (Technical Analysis ✅, Market Intelligence ✅)
+**Development Stage**: Sprint 3 Complete (Technical Analysis ✅, Market Intelligence ✅)  
+**Recent Fix**: ✅ Live stock price display now working with Yahoo Finance chart API
 
 A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, COHR business segment performance, and intelligent financial news. Built with Vercel serverless architecture for professional-grade financial analysis.
 
@@ -14,7 +15,7 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 ## 🚀 Key Features
 
 ### ✅ **LIVE & REAL DATA**
-- **Real-time Stock Prices** - Alpha Vantage API with intelligent fallbacks
+- **Real-time Stock Prices** - Yahoo Finance chart API with intelligent fallbacks
 - **Interactive Charts** - TradingView widget with professional technical overlays
 - **Historical Technical Analysis** - Yahoo Finance 1-2 year historical data
   - Real support/resistance from swing highs/lows
@@ -47,7 +48,7 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 /
 ├── index.html                    # Enhanced dashboard with real data
 ├── api/                          # Vercel serverless functions
-│   ├── stock.js                 # Multi-source stock data
+│   ├── stock.js                 # Yahoo Finance real-time quotes
 │   ├── news.js                  # Yahoo Finance news with summaries
 │   ├── analyst.js               # Yahoo Finance analyst consensus
 │   ├── technical.js             # Basic technical indicators (fallback)
@@ -76,7 +77,7 @@ All endpoints include CORS support and 30-second timeout limits:
 - **`GET /api/market-trends`** - COHR business segment performance (Q2 2025)
 
 ### **Enhanced Data Flow**
-1. **Stock Data**: Alpha Vantage → fallback APIs → demo data
+1. **Stock Data**: Yahoo Finance chart API → fallback APIs → demo data
 2. **News Data**: Yahoo Finance search → article summary extraction → curated fallback
 3. **Analyst Data**: Yahoo Finance quoteSummary → research-compiled data
 4. **Technical Analysis**: Yahoo Finance historical → real support/resistance calculation
@@ -86,7 +87,7 @@ All endpoints include CORS support and 30-second timeout limits:
 ## 📊 Data Quality & Sources
 
 ### **✅ LIVE & REAL DATA**
-- **Stock prices and market data** (Alpha Vantage)
+- **Stock prices and market data** (Yahoo Finance chart API - real-time)
 - **Interactive charts** (TradingView with professional overlays)
 - **Real technical analysis** (Yahoo Finance historical data)
   - Support/resistance from actual swing highs/lows
@@ -127,9 +128,9 @@ All endpoints include CORS support and 30-second timeout limits:
 
 3. **Environment Setup**
    ```bash
-   # Create .env file with your API keys
-   ALPHA_VANTAGE_API_KEY=your_key_here
-   NEWS_API_KEY=your_key_here
+   # Create .env file with your API keys (optional for enhanced features)
+   ALPHA_VANTAGE_API_KEY=your_key_here  # Fallback stock data
+   NEWS_API_KEY=your_key_here           # Additional news sources
    ```
 
 4. **Deploy to Vercel**

@@ -20,35 +20,49 @@ export default async function handler(req, res) {
     try {
       let stockData = null;
   
-      // Method 1: Try Yahoo Finance API (real-time quotes)
+      // Method 1: Try Yahoo Finance Chart API (real-time quotes)
       try {
+        // Use chart API to get current price - it doesn't require authentication
+        const now = Math.floor(Date.now() / 1000);
+        const fiveMinutesAgo = now - 300;
+        
         const yahooResponse = await fetch(
-          `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price`,
+          `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${fiveMinutesAgo}&period2=${now}&interval=1m&includePrePost=true`,
           {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
           }
         );
+        
+        if (!yahooResponse.ok) {
+          throw new Error(`Yahoo Finance API error: ${yahooResponse.status}`);
+        }
+        
         const yahooData = await yahooResponse.json();
   
-        if (yahooData.quoteSummary?.result?.[0]?.price) {
-          const priceData = yahooData.quoteSummary.result[0].price;
+        if (yahooData.chart?.result?.[0]?.meta) {
+          const meta = yahooData.chart.result[0].meta;
+          const price = meta.regularMarketPrice;
+          const previousClose = meta.chartPreviousClose || meta.previousClose;
+          const change = price - previousClose;
+          const changePercent = (change / previousClose) * 100;
+          
           stockData = {
-            price: priceData.regularMarketPrice?.raw || 0,
-            change: priceData.regularMarketChange?.raw || 0,
-            changePercent: priceData.regularMarketChangePercent?.raw || 0,
-            high: priceData.regularMarketDayHigh?.raw || 0,
-            low: priceData.regularMarketDayLow?.raw || 0,
-            open: priceData.regularMarketOpen?.raw || 0,
-            previousClose: priceData.regularMarketPreviousClose?.raw || 0,
-            volume: priceData.regularMarketVolume?.raw || 0,
+            price: price,
+            change: change,
+            changePercent: changePercent,
+            high: meta.regularMarketDayHigh || price,
+            low: meta.regularMarketDayLow || price,
+            open: meta.regularMarketOpen || price,
+            previousClose: previousClose,
+            volume: meta.regularMarketVolume || 0,
             source: 'Yahoo Finance',
             timestamp: new Date().toISOString()
           };
         }
       } catch (error) {
-        console.log('Yahoo Finance failed:', error.message, error.stack);
+        console.log('Yahoo Finance failed:', error.message);
       }
   
       // Method 2: Try Finnhub API (if Yahoo fails)

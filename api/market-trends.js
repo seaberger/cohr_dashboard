@@ -1,4 +1,7 @@
 // Market Intelligence API for optical networking and photonics industry
+// Enhanced with LLM analysis of SEC filings for dynamic updates
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,7 +18,31 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
   
+    const { symbol = 'COHR', useLLM = 'true' } = req.query;
+  
     try {
+      // Try to get LLM-analyzed data first (if enabled)
+      if (useLLM === 'true') {
+        try {
+          console.log('Attempting to fetch LLM-analyzed segment data...');
+          const llmResponse = await fetch(`${getBaseUrl(req)}/api/analyze-segments?symbol=${symbol}`);
+          
+          if (llmResponse.ok) {
+            const llmData = await llmResponse.json();
+            console.log('Successfully retrieved LLM analysis');
+            return res.status(200).json({
+              ...llmData,
+              dataSource: 'LLM Analysis',
+              analysisMethod: 'Google Gemini 2.5 Flash'
+            });
+          } else {
+            console.log('LLM analysis failed, falling back to static data');
+          }
+        } catch (error) {
+          console.log('LLM analysis error:', error.message);
+          console.log('Falling back to static Q2 2025 data');
+        }
+      }
       // COHR-Specific Market Data (Based on Q2 2025 Earnings)
       const marketData = {
         // AI Datacenter/Datacom - COHR's fastest growing segment
@@ -79,7 +106,7 @@ export default async function handler(req, res) {
         dataQuality: "High", // Based on actual COHR earnings reports
         lastUpdated: new Date().toISOString(),
         sources: [
-          "Coherent Corp Q2 2025 Earnings Report",
+          "Coherent Corp Q2 2025 Earnings Report (Fallback Data)",
           "COHR SEC 10-Q Filing Q2 2025", 
           "Coherent Corp Investor Relations",
           "Yahoo Finance Earnings Call Transcript",
@@ -87,11 +114,11 @@ export default async function handler(req, res) {
         ],
         confidence: "95%", // High confidence - actual company data
         updateFrequency: "Quarterly", // Updated when COHR reports earnings
-        dataType: "Company-Specific Performance" // Based on actual COHR results
+        dataType: "Company-Specific Performance (Static Fallback)" // Based on actual COHR results
       };
 
       // Calculate some dynamic insights
-      const insights = generateMarketInsights(marketData);
+      const insights = generateMarketInsights();
       
       const response = {
         status: "success",
@@ -103,6 +130,8 @@ export default async function handler(req, res) {
           competitiveAdvantages: ["Vertical integration", "R&D leadership", "Broad portfolio"],
           growthCatalysts: ["AI datacenter buildout", "5G infrastructure", "800G adoption"]
         },
+        dataSource: "Static Fallback Data",
+        warning: "Using Q2 2025 fallback data - LLM analysis unavailable",
         generatedAt: new Date().toISOString()
       };
 
@@ -118,18 +147,26 @@ export default async function handler(req, res) {
     }
 }
 
-function generateMarketInsights(data) {
-  const currentYear = new Date().getFullYear();
-  
+function getBaseUrl(req) {
+  // Handle both local development and production
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  const protocol = req.headers['x-forwarded-proto'] || 'http';
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  return `${protocol}://${host}`;
+}
+
+function generateMarketInsights() {
   return {
-    marketGrowth: `The optical transceiver market is experiencing robust ${data.opticalTransceiverMarket.cagr} CAGR growth, driven primarily by AI datacenter expansion and 5G infrastructure deployment.`,
+    marketGrowth: `The optical transceiver market is experiencing robust growth, driven primarily by AI datacenter expansion and 5G infrastructure deployment.`,
     
-    keyOpportunity: `With 5G subscriptions projected to grow from ${data.fiveGAdoption.globalSubscriptions2024}B to ${data.fiveGAdoption.projectedSubscriptions2030}B by 2030, network infrastructure demand remains strong.`,
+    keyOpportunity: `Network infrastructure demand remains strong with 5G expansion and AI datacenter buildout creating sustained growth opportunities.`,
     
-    technologyShift: `The industry is transitioning through speed generations: ${data.speedTransitions.timeframe}, creating upgrade cycles for optical component suppliers.`,
+    technologyShift: `The industry is transitioning through speed generations (100G→400G→800G→1.6T), creating upgrade cycles for optical component suppliers.`,
     
-    regionalOutlook: `North America leads with ${data.regionalMarkets.northAmerica.marketShare} market share, while Asia-Pacific shows the fastest growth potential.`,
+    regionalOutlook: `North America leads in market share, while Asia-Pacific shows the fastest growth potential driven by datacenter expansion.`,
     
-    endMarketAnalysis: `Datacom represents ${data.endMarkets.datacom.share} of demand, reflecting the AI/cloud computing boom driving optical networking needs.`
+    endMarketAnalysis: `Datacom represents the largest segment of demand, reflecting the AI/cloud computing boom driving optical networking needs.`
   };
 }

@@ -1,6 +1,7 @@
 {
     "name": "cohr-investor-dashboard",
     "version": "1.0.0",
+    "type": "module",
     "description": "Professional investor dashboard for Coherent Corp (COHR) with real-time data and technical analysis",
     "main": "index.html",
     "scripts": {

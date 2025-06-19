@@ -696,9 +696,14 @@
         <div class="card" style="grid-column: 1 / -1;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="color: #2c3e50; margin: 0;" id="marketTrendsTitle">Industry & Market Trends</h2>
-                <button id="dataSourcesBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666;">
-                    📊 Data Sources
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button id="refreshMarketTrendsBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666;">
+                        🔄 Refresh
+                    </button>
+                    <button id="dataSourcesBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666;">
+                        📊 Data Sources
+                    </button>
+                </div>
             </div>
             
             <!-- Data Sources Panel (initially hidden) -->
@@ -866,6 +871,7 @@
         function setupDataSourcesPanel() {
             const button = document.getElementById('dataSourcesBtn');
             const panel = document.getElementById('dataSourcesPanel');
+            const refreshButton = document.getElementById('refreshMarketTrendsBtn');
             
             button.addEventListener('click', () => {
                 if (panel.style.display === 'none') {
@@ -874,6 +880,41 @@
                 } else {
                     panel.style.display = 'none';
                     button.textContent = '📊 Data Sources';
+                }
+            });
+
+            // Add refresh functionality
+            refreshButton.addEventListener('click', async () => {
+                try {
+                    refreshButton.textContent = '⏳ Refreshing...';
+                    refreshButton.disabled = true;
+                    
+                    // Force refresh by adding timestamp to break cache
+                    const response = await fetch(`${API_BASE}/api/market-trends?refresh=true&t=${Date.now()}`);
+                    if (!response.ok) throw new Error('Failed to refresh market trends');
+                    
+                    const data = await response.json();
+                    updateMarketTrends(data.marketIntelligence);
+                    updateDataSources(data.marketIntelligence || data);
+                    
+                    // Update title based on data source
+                    const titleElement = document.getElementById('marketTrendsTitle');
+                    if (data.dataSource === 'LLM Analysis') {
+                        const quarter = data.filing?.quarter || 'Latest';
+                        titleElement.innerHTML = 
+                            `COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Analyzed)</span>`;
+                    } else if (data.dataSource === 'Static Fallback Data') {
+                        titleElement.innerHTML = 
+                            'COHR Business Segment Performance <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Q2 2025 Fallback</span>';
+                    }
+
+                    console.log('✅ Market trends refreshed successfully');
+                    
+                } catch (error) {
+                    console.error('Failed to refresh market trends:', error);
+                } finally {
+                    refreshButton.textContent = '🔄 Refresh';
+                    refreshButton.disabled = false;
                 }
             });
         }
@@ -1232,11 +1273,28 @@
                 const data = await response.json();
                 
                 updateMarketTrends(data.marketIntelligence);
-                updateDataSources(data.marketIntelligence);
+                updateDataSources(data.marketIntelligence || data);
                 
-                // Update title to show COHR-specific data
-                document.getElementById('marketTrendsTitle').innerHTML = 
-                    'COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Q2 2025 Earnings</span>';
+                // Update title based on data source
+                const titleElement = document.getElementById('marketTrendsTitle');
+                if (data.dataSource === 'LLM Analysis') {
+                    const quarter = data.filing?.quarter || 'Latest';
+                    titleElement.innerHTML = 
+                        `COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Analyzed)</span>`;
+                } else if (data.dataSource === 'Static Fallback Data') {
+                    titleElement.innerHTML = 
+                        'COHR Business Segment Performance <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Q2 2025 Fallback</span>';
+                } else {
+                    titleElement.innerHTML = 
+                        'COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Q2 2025 Earnings</span>';
+                }
+
+                // Show LLM analysis indicator if available
+                if (data.analysisMethod === 'Google Gemini 2.5 Flash') {
+                    console.log('✅ Using LLM-analyzed data from latest SEC filing');
+                } else if (data.warning) {
+                    console.log('⚠️ ' + data.warning);
+                }
                 
             } catch (error) {
                 console.error('Market trends error:', error);

@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 
 // SEC EDGAR API configuration
 const SEC_API_BASE = 'https://data.sec.gov';
-const USER_AGENT = 'COHR Dashboard/1.0 (cohr-dashboard@example.com)'; // Update with your email
+const USER_AGENT = 'COHR-Dashboard/1.0 (sean.bergman.dev@gmail.com)';
 
 // Simple in-memory cache
 const cache = new Map();
@@ -90,7 +90,16 @@ export default async function handler(req, res) {
 
 async function getCompanyCIK(symbol) {
   try {
-    // Use SEC's company tickers file
+    // Hardcode known CIKs for reliability
+    const knownCIKs = {
+      'COHR': '0000820318'  // Coherent Corp
+    };
+
+    if (knownCIKs[symbol.toUpperCase()]) {
+      return knownCIKs[symbol.toUpperCase()];
+    }
+
+    // Fallback to SEC's company tickers file
     const response = await fetch('https://www.sec.gov/files/company_tickers.json', {
       headers: {
         'User-Agent': USER_AGENT,
@@ -147,8 +156,10 @@ async function getRecentFilings(cik, formType) {
           form: recentFilings.form[i],
           filingDate: recentFilings.filingDate[i],
           acceptanceDateTime: recentFilings.acceptanceDateTime[i],
-          accessionNumber: recentFilings.accessionNumber[i].replace(/-/g, ''),
-          primaryDocument: recentFilings.primaryDocument[i]
+          accessionNumber: recentFilings.accessionNumber[i],
+          accessionNumberClean: recentFilings.accessionNumber[i].replace(/-/g, ''),
+          primaryDocument: recentFilings.primaryDocument[i],
+          cik: cik
         });
       }
     }
@@ -165,8 +176,13 @@ async function getRecentFilings(cik, formType) {
 
 async function getFilingContent(filing) {
   try {
-    // Construct the URL for the filing document
-    const url = `https://www.sec.gov/Archives/edgar/data/${filing.accessionNumber}/${filing.primaryDocument}`;
+    // Remove leading zeros from CIK for URL path
+    const cikForUrl = filing.cik.replace(/^0+/, '');
+    
+    // Construct the correct URL for the filing document
+    const url = `https://www.sec.gov/Archives/edgar/data/${cikForUrl}/${filing.accessionNumberClean}/${filing.primaryDocument}`;
+    
+    console.log(`Fetching filing from: ${url}`);
     
     const response = await fetch(url, {
       headers: {
@@ -176,7 +192,7 @@ async function getFilingContent(filing) {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch filing content: ${response.status}`);
+      throw new Error(`Failed to fetch filing content: ${response.status} from ${url}`);
     }
 
     const html = await response.text();

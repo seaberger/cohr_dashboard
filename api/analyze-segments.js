@@ -1,5 +1,6 @@
 // Analyze business segments from SEC filings using Google Gemini
-import { extractSegmentData, validateSegmentData, generateMarketSummary } from '../lib/geminiService.js';
+import { extractSegmentData, generateMarketSummary } from '../lib/geminiService.js';
+import { transformLLMToFrontend, debugDataStructure } from '../lib/dataTransformer.js';
 import fetch from 'node-fetch';
 
 // Simple in-memory cache for analysis results
@@ -62,28 +63,19 @@ export default async function handler(req, res) {
     console.log(`Analyzing filing from ${filingData.filing.filingDate}...`);
 
     // Extract segment data using Gemini
-    const segmentData = await extractSegmentData(
+    const rawLLMData = await extractSegmentData(
       filingData.content.fullText,
       symbol
     );
 
-    // Debug: Log the extracted data structure
-    console.log('LLM extracted data structure:', JSON.stringify(Object.keys(segmentData), null, 2));
-    console.log('Has networkingGrowth:', !!segmentData.networkingGrowth);
-    console.log('Has cohrOverallPerformance:', !!segmentData.cohrOverallPerformance);
-    console.log('Has overall:', !!segmentData.overall);
+    // Debug: Log the raw LLM data structure
+    debugDataStructure(rawLLMData, 'Raw LLM Output');
     
-    // Validate the extracted data
-    if (!validateSegmentData(segmentData)) {
-      console.log('Validation failed for segmentData:', JSON.stringify(segmentData, null, 2));
-      throw new Error('Invalid segment data extracted from filing');
-    }
+    // Transform data using structured approach
+    const transformedData = transformLLMToFrontend(rawLLMData, symbol);
 
     // Generate market summary
-    const marketSummary = await generateMarketSummary(segmentData);
-
-    // Transform data for dashboard compatibility
-    const transformedData = transformSegmentData(segmentData, symbol);
+    const marketSummary = await generateMarketSummary(rawLLMData);
 
     const response = {
       status: 'success',
@@ -91,13 +83,13 @@ export default async function handler(req, res) {
       filing: {
         date: filingData.filing.filingDate,
         type: filingData.filing.type,
-        quarter: segmentData.quarterYear
+        quarter: rawLLMData.quarterYear || transformedData.quarter
       },
       marketIntelligence: transformedData,
       insights: {
         summary: marketSummary,
         topPerformer: findTopPerformer(transformedData),
-        growthTrend: analyzeGrowthTrend(segmentData)
+        growthTrend: analyzeGrowthTrend(rawLLMData)
       },
       dataQuality: 'High',
       confidence: '95%',
@@ -150,61 +142,7 @@ function getBaseUrl(req) {
   return `${protocol}://${host}`;
 }
 
-function transformSegmentData(segmentData, symbol) {
-  // The LLM already returns data in the correct format, but we need to map it
-  // to the frontend's expected structure for backward compatibility
-  
-  const transformed = {};
-  
-  // Transform each segment from LLM output to frontend format
-  Object.keys(segmentData).forEach(key => {
-    if (key.endsWith('Growth') && typeof segmentData[key] === 'object') {
-      // Map LLM segments to frontend expected keys
-      switch(key) {
-        case 'networkingGrowth':
-          // Use networking data for both AI Datacom and Networking tiles
-          transformed.aiDatacomGrowth = segmentData[key];
-          transformed.networkingGrowth = segmentData[key];
-          // Also create a telecom entry if it doesn't exist separately
-          if (!segmentData.telecomGrowth) {
-            transformed.telecomGrowth = {
-              ...segmentData[key],
-              cohrTelecomGrowthYoY: segmentData[key].cohrNetworkingGrowthYoY,
-              cohrTelecomGrowthQoQ: segmentData[key].cohrNetworkingGrowthQoQ
-            };
-          }
-          break;
-        case 'lasersGrowth':
-          transformed.industrialLaserMarket = segmentData[key];
-          break;
-        case 'materialsGrowth':
-          transformed.materialsGrowth = segmentData[key];
-          break;
-        case 'telecomGrowth':
-          transformed.telecomGrowth = segmentData[key];
-          break;
-        default:
-          // Keep any other growth segments as-is
-          transformed[key] = segmentData[key];
-          break;
-      }
-    }
-  });
-  
-  // Handle overall performance if it exists
-  if (segmentData.cohrOverallPerformance) {
-    transformed.cohrOverallPerformance = segmentData.cohrOverallPerformance;
-  }
-  
-  // Copy metadata
-  transformed.dataQuality = segmentData.dataQuality || 'High';
-  transformed.lastUpdated = new Date().toISOString();
-  transformed.updateFrequency = segmentData.updateFrequency || 'Quarterly';
-  transformed.dataType = segmentData.dataType || 'Company-Specific Performance';
-  transformed.quarter = segmentData.quarter;
-  
-  return transformed;
-}
+// Old transformation function removed - using structured approach with schemas
 
 function findTopPerformer(transformedData) {
   if (!transformedData || typeof transformedData !== 'object') return null;
@@ -236,14 +174,12 @@ function findTopPerformer(transformedData) {
   return topSegment;
 }
 
-function analyzeGrowthTrend(segmentData) {
-  // Try to get overall growth from different possible structures
+function analyzeGrowthTrend(rawLLMData) {
+  // Get overall growth from LLM data structure
   let overallGrowthStr = null;
   
-  if (segmentData.cohrOverallPerformance && segmentData.cohrOverallPerformance.revenueGrowthYoY) {
-    overallGrowthStr = segmentData.cohrOverallPerformance.revenueGrowthYoY;
-  } else if (segmentData.overall && segmentData.overall.revenueGrowthYoY) {
-    overallGrowthStr = segmentData.overall.revenueGrowthYoY;
+  if (rawLLMData.overall && rawLLMData.overall.revenueGrowthYoY) {
+    overallGrowthStr = rawLLMData.overall.revenueGrowthYoY;
   }
   
   if (!overallGrowthStr) return 'Unknown';

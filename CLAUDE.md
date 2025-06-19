@@ -8,8 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Status**: ✅ **DEPLOYED AND LIVE** on Vercel  
 **Live URL**: Available in Vercel dashboard  
-**Last Updated**: January 2025  
-**Development Stage**: Sprint 3 Complete (Technical Analysis ✅, Market Intelligence ✅)
+**Last Updated**: June 2025  
+**Development Stage**: Sprint 3 Complete + LLM Integration ✅ (Dynamic SEC Filing Analysis)
 
 ## Commands
 
@@ -48,14 +48,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── technical-real.js        # Real historical technical analysis
 │   ├── technical-enhanced.js    # Advanced technical analysis (ES6 issues)
 │   ├── historical.js            # Yahoo Finance historical OHLCV data
-│   └── market-trends.js         # COHR business segment performance
-├── lib/                          # Technical analysis libraries
-│   └── technicalAnalysis.js     # Support/resistance calculation functions
+│   ├── market-trends.js         # Enhanced with LLM analysis + Q2 2025 fallback
+│   ├── sec-filings.js           # SEC EDGAR filing fetcher
+│   └── analyze-segments.js      # Google Gemini 2.5 Flash LLM analysis
+├── lib/                          # Technical analysis libraries  
+│   ├── technicalAnalysis.js     # Support/resistance calculation functions
+│   └── geminiService.js         # Google Gemini 2.5 Flash LLM utilities
 ├── testing/                      # Test scripts and utilities
+│   └── test-llm-integration.js  # LLM API testing script
 ├── backups/                      # Original design files
 ├── docs/                         # Project documentation
-├── DEVELOPMENT_ROADMAP.md        # 4-sprint development plan
-├── package.json                  # Dependencies (node-fetch, cors)
+│   └── LLM_INTEGRATION.md       # Comprehensive LLM integration guide
+├── DEVELOPMENT_ROADMAP.md        # 4-sprint development plan  
+├── package.json                  # Dependencies (node-fetch, @google/generative-ai)
 ├── vercel.json                   # Deployment configuration
 └── .env                          # API keys (local only, gitignored)
 ```
@@ -68,15 +73,18 @@ All endpoints support CORS and have 30-second timeout limits:
 - `GET /api/technical?symbol=COHR&price={price}` - Basic technical indicators (fallback)
 - `GET /api/technical-real?symbol=COHR&period=1y` - Real historical technical analysis
 - `GET /api/historical?symbol=COHR&period=1y` - Historical OHLCV data
-- `GET /api/market-trends` - COHR business segment performance (Q2 2025 earnings)
+- `GET /api/market-trends?useLLM=true` - Dynamic market intelligence (LLM + fallback)
+- `GET /api/sec-filings?symbol=COHR&type=10-Q` - Latest SEC filing fetcher
+- `GET /api/analyze-segments?symbol=COHR` - LLM analysis of business segments
 
 ### Data Flow Architecture
 1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → fallback APIs → demo data
 2. **News Data**: Yahoo Finance search API → article summary extraction
 3. **Analyst Data**: Yahoo Finance quoteSummary → fallback to research data
 4. **Technical Analysis**: Yahoo Finance historical data → real support/resistance calculation
-5. **Market Intelligence**: COHR Q2 2025 earnings data → business segment performance
-6. **Frontend**: 5-minute auto-refresh, enhanced technical analysis, data transparency
+5. **Market Intelligence**: SEC EDGAR API → Google Gemini 2.5 Flash → dynamic analysis → Q2 2025 fallback
+6. **LLM Pipeline**: SEC filing text → Gemini analysis → structured JSON → frontend tiles
+7. **Frontend**: 5-minute auto-refresh, LLM indicators, manual refresh, data transparency
 
 ## Environment Variables
 
@@ -84,6 +92,7 @@ All endpoints support CORS and have 30-second timeout limits:
 ```
 ALPHA_VANTAGE_API_KEY=your_key_here     # Primary stock data source
 NEWS_API_KEY=your_key_here              # Financial news articles
+GEMINI_API_KEY=your_key_here            # Google Gemini 2.5 Flash for LLM analysis
 ```
 
 ### Optional (Configuration)
@@ -99,7 +108,8 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - **News Data**: Yahoo Finance search → article summary extraction → curated fallback
 - **Analyst Data**: Yahoo Finance quoteSummary → research-compiled consensus data
 - **Technical Analysis**: Yahoo Finance historical → basic calculated indicators → demo data
-- **Market Intelligence**: COHR earnings data → cached Q2 2025 performance
+- **Market Intelligence**: SEC EDGAR + Gemini LLM → Q2 2025 static fallback
+- **LLM Analysis**: Latest SEC filing analysis → cached results → static Q2 2025 data
 - **Error Handling**: Graceful degradation, comprehensive fallback strategies
 
 ## Current Data Sources Status
@@ -114,20 +124,30 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - **COHR-specific news articles** (Yahoo Finance search API)
 - **Article summaries** (extracted from meta descriptions)
 - **Analyst consensus data** (Yahoo Finance quoteSummary)
-- **COHR business segment performance** (Q2 2025 earnings data)
-  - AI Datacom: +79% YoY growth
-  - Networking: +56% YoY growth
-  - Telecom: +11% YoY growth
-  - Industrial Lasers: +6% YoY growth
+- **Dynamic business segment performance** (Google Gemini 2.5 Flash + SEC EDGAR)
+  - **Q3 2025 Real Data**: $1.5B revenue (+24% YoY)
+  - Networking: +45% YoY growth (AI datacenter demand)
+  - Materials: -1% YoY (improved from Q2's -4%)
+  - Lasers: +4% YoY growth (display & semiconductor equipment)
+  - **Smart Fallback**: Q2 2025 data if LLM analysis fails
 
-### ⚠️ QUARTERLY UPDATED DATA
-- **Market Intelligence**: COHR Q2 2025 earnings performance
-- **Analyst ratings**: Buy consensus from multiple analysts
+### ⚠️ QUARTERLY UPDATED DATA (Fallback Only)
+- **Static Q2 2025 data**: Used only when LLM analysis fails
+- **Analyst ratings**: Buy consensus from multiple analysts  
 - **Price targets**: Research-compiled from major firms
+
+### 🤖 LLM INTEGRATION STATUS
+- **Google Gemini 2.5 Flash**: Deployed and analyzing latest SEC filings
+- **SEC EDGAR Integration**: Fetching 10-Q/10-K filings automatically
+- **Data Extraction**: Q3 2025 real segment performance extracted successfully
+- **Cost**: <$1/month with smart caching (24hr filing cache, 7-day analysis cache)
+- **Visual Indicators**: Green = LLM analyzed, Orange = Q2 fallback
+- **Manual Refresh**: Users can trigger latest filing analysis
+- **Error Handling**: Graceful fallback to Q2 2025 static data
 
 ### ❌ HIDDEN/PLANNED DATA
 - **Competitive positioning** (hidden until Sprint 2)
-- **AI-powered insights** (planned for Sprint 4)
+- **Multi-company support** (dynamic ticker selection planned)
 
 ## Development Progress & Roadmap
 
@@ -143,6 +163,14 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - Q2 2025 earnings-based market intelligence
 - Data transparency features with source verification
 - Quarterly update cycle aligned with earnings
+
+**LLM Integration: Dynamic SEC Filing Analysis** ✅ (June 2025)
+- Google Gemini 2.5 Flash integration for SEC filing analysis
+- Automatic fetching of latest 10-Q/10-K filings from SEC EDGAR
+- Real-time extraction of Q3 2025 business segment performance
+- Smart fallback to Q2 2025 data with visual indicators
+- Manual refresh functionality and enhanced error handling
+- Cost-effective implementation (<$1/month with caching)
 
 ### 🚧 NEXT PRIORITIES (Sprint 2: Competitive Intelligence)
 1. **Competitive positioning section** (currently hidden)

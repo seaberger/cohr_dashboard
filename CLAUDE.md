@@ -156,6 +156,14 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - Interactive Q&A about COHR performance
 - Automated earnings analysis and alerts
 
+### 🎯 MEDIUM PRIORITY ENHANCEMENTS
+- **Dynamic Ticker Selection** (Feature Request)
+  - Interactive search with auto-complete for any stock ticker/company name
+  - Dynamic market intelligence tiles based on selected company
+  - SEC filing analysis via LLM to generate relevant dashboard tiles
+  - ~10 days development effort across 3 phases
+  - See `/issues/dynamic-ticker-selection.md` for full details
+
 ### 🔧 TECHNICAL IMPROVEMENTS
 - Server-side caching for API responses
 - Enhanced error handling UI

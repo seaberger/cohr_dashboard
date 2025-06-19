@@ -284,7 +284,13 @@ Transform the COHR investor dashboard from a basic financial tool into a compreh
 - **ESG Analysis**: Environmental and governance scoring
 
 ### **Platform Expansion**
-- **Multi-Company Support**: Expand beyond COHR to sector analysis
+- **Dynamic Ticker Selection (Medium Priority)**: 
+  - Interactive search with auto-complete for any stock ticker
+  - Company name search with intelligent matching
+  - Dynamic market intelligence tiles based on selected company
+  - SEC filing analysis via LLM to generate relevant dashboard tiles
+  - See detailed feature request in `/issues/dynamic-ticker-selection.md`
+- **Multi-Company Support**: Expand beyond single ticker to sector analysis
 - **Mobile Application**: Native iOS/Android apps
 - **API Access**: Allow third-party integrations
 - **Premium Tiers**: Advanced features for professional investors

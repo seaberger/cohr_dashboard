@@ -9,7 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Status**: ✅ **DEPLOYED AND LIVE** on Vercel  
 **Live URL**: Available in Vercel dashboard  
 **Last Updated**: June 2025  
-**Development Stage**: Sprint 3 Complete + LLM Integration ✅ (Dynamic SEC Filing Analysis)
+**Development Stage**: Sprint 3 Complete + LLM Integration ✅ (Dynamic SEC Filing Analysis)  
+**Next Sprint**: Segment Tiles Enhancement (Issue #9) - Visual improvements & key insights
 
 ## Commands
 
@@ -172,7 +173,25 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - Manual refresh functionality and enhanced error handling
 - Cost-effective implementation (<$1/month with caching)
 
-### 🚧 NEXT PRIORITIES (Sprint 2: Competitive Intelligence)
+### 🚧 NEXT PRIORITIES (Segment Tiles Enhancement - Issue #9)
+1. **Visual & UX Improvements** 
+   - Color-coded growth indicators (green/red for positive/negative growth)
+   - Mobile-responsive CSS Grid layout with auto-fit columns
+   - Click-for-details modal showing raw segment data
+   - Improved typography and visual hierarchy
+2. **Data Structure Optimization**
+   - Standardized LLM response format for consistent rendering
+   - Canonical segment naming (legacy vs new segment structures)
+   - Session storage cache to prevent unnecessary refetching
+3. **Performance & Reliability**
+   - Timeout handling with Promise.race + retry button
+   - Edge function caching with s-maxage headers
+4. **Key Insights Integration**
+   - LLM-generated insights (growth drivers, risks, margin analysis)
+   - Insight cards with color-coded impact indicators
+   - Confidence scoring and source text attribution
+
+### 🔮 FUTURE PRIORITIES (Sprint 2: Competitive Intelligence)
 1. **Competitive positioning section** (currently hidden)
 2. **Peer company performance comparison**
 3. **Relative stock performance vs competitors**
@@ -272,3 +291,57 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - **Fixed live stock price display**: Switched from quoteSummary to chart API endpoint
 - **Chart API advantages**: No authentication required, real-time data during market hours
 - **Polygon.io disabled**: Was using /prev endpoint returning yesterday's data
+
+## Segment Tiles Enhancement Plan (Issue #9)
+
+### Current Status
+- **Live Q3 2025 data**: Individual segment growth rates from LLM analysis
+  - Networking: +45% YoY
+  - Materials: -1% YoY  
+  - Lasers: +4% YoY
+- **Google Gemini 2.5 Flash**: Successfully extracting structured data from SEC filings
+- **Schema validation**: Zod-based validation prevents data transformation errors
+
+### Planned Enhancements (5 Phases)
+
+**Phase 1: Visual & UX Improvements** (30 minutes)
+- Color-coded growth indicators using HSL background colors
+- Mobile-responsive CSS Grid with auto-fit columns
+- Click-for-details modal using HTML5 dialog element
+- Improved typography and visual hierarchy
+
+**Phase 2: Data Structure Optimization** (45 minutes)
+- Standardized LLM response format with canonical segment names
+- Session storage cache between page navigations
+- Enhanced data extraction with revenue in millions
+
+**Phase 3: Performance & Reliability** (30 minutes)
+- Promise.race timeout handling with retry buttons
+- Vercel Edge Function caching with s-maxage headers
+- Stale data indicators and loading states
+
+**Phase 4: Key Insights Integration** (2 hours)
+- LLM-generated insights extraction (growth drivers, risks, margin analysis)
+- Color-coded insight cards with impact indicators
+- Confidence scoring and source text attribution
+- Single JSON payload approach (no additional API calls)
+
+**Phase 5: Visual Enhancements** (1 hour)
+- Mini sparklines using Chart.js for trend context
+- Revenue magnitude indicators (visual weight based on segment size)
+- Quarter-over-quarter directional arrows
+
+### Implementation Approach
+- **No new heavy dependencies**: Vanilla JS, CSS Grid, HTML5 dialog
+- **Extend existing Gemini integration**: Single enhanced LLM call
+- **Backward compatibility**: Maintain current fallback mechanisms
+- **Mobile-first design**: Responsive grid layout for all devices
+
+### Expected Benefits
+- **Enhanced visual scanning**: Immediately identify growth vs decline segments
+- **Richer context**: Understand the "why" behind growth numbers
+- **Better mobile experience**: Responsive design for all devices
+- **Improved performance**: Smart caching reduces load times and API costs
+- **Professional appearance**: Color-coded, well-organized financial dashboard
+
+See GitHub Issue #9 for complete implementation details and progress tracking.

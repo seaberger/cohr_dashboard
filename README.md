@@ -1,10 +1,10 @@
 # COHR Investor Dashboard
 
-**Status**: 🟢 **LIVE & DEPLOYED** | **Last Updated**: January 2025  
-**Development Stage**: Sprint 3 Complete (Technical Analysis ✅, Market Intelligence ✅)  
-**Recent Fix**: ✅ Live stock price display now working with Yahoo Finance chart API
+**Status**: 🟢 **LIVE & DEPLOYED** | **Last Updated**: June 2025  
+**Development Stage**: Sprint 3 Complete + LLM Integration ✅ (Real Q3 2025 SEC Data)  
+**Recent Achievement**: ✅ Google Gemini 2.5 Flash integration for dynamic SEC filing analysis
 
-A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, COHR business segment performance, and intelligent financial news. Built with Vercel serverless architecture for professional-grade financial analysis.
+A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, **LLM-powered SEC filing analysis**, and intelligent financial news. Built with Vercel serverless architecture and Google Gemini 2.5 Flash for professional-grade financial analysis with real Q3 2025 business segment data.
 
 ## 🎯 Live Dashboard
 
@@ -21,24 +21,32 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
   - Real support/resistance from swing highs/lows
   - Moving averages (20, 50, 200-day) as dynamic levels
   - RSI, MACD calculated from actual price history
-- **COHR Business Intelligence** - Q2 2025 earnings segment performance
-  - AI Datacom: +79% YoY growth (all-time high)
-  - Networking: +56% YoY growth (record performance)
-  - Telecom: +11% YoY growth
-  - Industrial Lasers: +6% YoY growth
+- **LLM-Powered Business Intelligence** - Real Q3 2025 SEC filing analysis  
+  - **AI Datacom: +45% YoY** (from SEC 10-Q filing)
+  - **Networking: +45% YoY** (record performance)  
+  - **Materials: -1% YoY** (sequential improvement)
+  - **Lasers: +4% YoY** (steady growth)
+  - **Total Revenue: $1.5B** (+24% YoY growth)
+  - **Google Gemini 2.5 Flash** extracts data from latest SEC filings
+  - **Smart fallback** to Q2 2025 data if LLM analysis fails
+  - **Visual indicators** show data source (LLM vs fallback)
 - **COHR-Specific News** - Yahoo Finance search with article summaries
 - **Analyst Consensus** - Yahoo Finance quoteSummary API data
 - **Data Transparency** - Full source verification and methodology
 
-### 🔜 **PLANNED FEATURES (Next Sprints)**
-- **Competitive Intelligence** - Peer company performance comparison (Sprint 2)
-- **AI-Powered Insights** - OpenAI integration for sentiment analysis (Sprint 4)
+### 🔜 **NEXT FEATURES (Segment Tiles Enhancement)**
+- **Visual Improvements** - Color-coded growth indicators, mobile-responsive grid
+- **Key Insights Integration** - LLM-generated growth drivers, risks, margin analysis  
+- **Performance Enhancements** - Edge caching, timeout handling, better UX
+- **Future**: Competitive Intelligence, Advanced AI Integration
 
 ## 🏗️ Architecture
 
 ### **Tech Stack**
-- **Frontend**: Static HTML5 + Vanilla JavaScript
+- **Frontend**: Static HTML5 + Vanilla JavaScript  
 - **Backend**: Vercel Serverless Functions (Node.js)
+- **LLM Integration**: Google Gemini 2.5 Flash with SEC EDGAR API
+- **Schema Validation**: Zod for robust data transformation
 - **Deployment**: Vercel with GitHub integration
 - **Charts**: TradingView widget
 - **APIs**: Multi-source financial data with intelligent fallbacks
@@ -48,19 +56,27 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 /
 ├── index.html                    # Enhanced dashboard with real data
 ├── api/                          # Vercel serverless functions
-│   ├── stock.js                 # Yahoo Finance real-time quotes
+│   ├── stock.js                 # Yahoo Finance real-time quotes (chart API)
 │   ├── news.js                  # Yahoo Finance news with summaries
 │   ├── analyst.js               # Yahoo Finance analyst consensus
 │   ├── technical.js             # Basic technical indicators (fallback)
 │   ├── technical-real.js        # Real historical technical analysis
 │   ├── historical.js            # Yahoo Finance historical OHLCV
-│   └── market-trends.js         # COHR business segment performance
-├── lib/                          # Technical analysis libraries
-│   └── technicalAnalysis.js     # Support/resistance calculations
+│   ├── market-trends.js         # Enhanced with LLM analysis + Q2 2025 fallback
+│   ├── sec-filings.js           # SEC EDGAR filing fetcher
+│   └── analyze-segments.js      # Google Gemini 2.5 Flash LLM analysis
+├── lib/                          # Technical analysis & LLM utilities  
+│   ├── technicalAnalysis.js     # Support/resistance calculations
+│   ├── geminiService.js         # Google Gemini 2.5 Flash LLM utilities
+│   ├── schemas.js               # Zod schema validation for LLM data
+│   └── dataTransformer.js       # LLM data transformation pipeline
 ├── backups/                      # Original design files
 ├── docs/                         # Project documentation
+│   └── LLM_INTEGRATION.md       # Comprehensive LLM integration guide
+├── testing/                      # Test scripts and utilities
+│   └── test-llm-integration.js  # LLM API testing script
 ├── DEVELOPMENT_ROADMAP.md        # 4-sprint development plan
-├── package.json                  # Dependencies
+├── package.json                  # Dependencies (node-fetch, @google/generative-ai, zod)
 ├── vercel.json                   # Deployment config
 └── CLAUDE.md                     # Complete technical guide
 ```
@@ -74,15 +90,18 @@ All endpoints include CORS support and 30-second timeout limits:
 - **`GET /api/analyst?symbol=COHR&currentPrice={price}`** - Analyst consensus and price targets
 - **`GET /api/technical-real?symbol=COHR&period=1y`** - Real historical technical analysis
 - **`GET /api/historical?symbol=COHR&period=1y`** - Historical OHLCV data
-- **`GET /api/market-trends`** - COHR business segment performance (Q2 2025)
+- **`GET /api/market-trends?useLLM=true`** - Enhanced with LLM analysis + Q2 2025 fallback
+- **`GET /api/sec-filings?symbol=COHR&type=10-Q`** - Latest SEC filing fetcher
+- **`GET /api/analyze-segments?symbol=COHR`** - LLM analysis of business segments
 
-### **Enhanced Data Flow**
-1. **Stock Data**: Yahoo Finance chart API → fallback APIs → demo data
+### **Enhanced Data Flow (LLM-Powered)**
+1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → fallback APIs → demo data
 2. **News Data**: Yahoo Finance search → article summary extraction → curated fallback
-3. **Analyst Data**: Yahoo Finance quoteSummary → research-compiled data
+3. **Analyst Data**: Yahoo Finance quoteSummary → research-compiled consensus data
 4. **Technical Analysis**: Yahoo Finance historical → real support/resistance calculation
-5. **Market Intelligence**: COHR Q2 2025 earnings → business segment performance
-6. **Frontend**: 5-minute auto-refresh with enhanced technical analysis and data transparency
+5. **Market Intelligence**: SEC EDGAR API → Google Gemini 2.5 Flash → dynamic analysis → Q2 2025 fallback
+6. **LLM Pipeline**: SEC filing text → Gemini analysis → structured JSON → frontend tiles
+7. **Frontend**: 5-minute auto-refresh, LLM indicators, manual refresh, data transparency
 
 ## 📊 Data Quality & Sources
 
@@ -93,14 +112,23 @@ All endpoints include CORS support and 30-second timeout limits:
   - Support/resistance from actual swing highs/lows
   - Moving averages calculated from historical prices
   - RSI, MACD from real price data
-- **COHR business segment performance** (Q2 2025 earnings)
+- **Dynamic business segment performance** (Google Gemini 2.5 Flash + SEC EDGAR)
+  - **Q3 2025 Real Data**: $1.5B revenue (+24% YoY)
+  - Networking: +45% YoY growth (AI datacenter demand)
+  - Materials: -1% YoY (improved from Q2's -4%)
+  - Lasers: +4% YoY growth (display & semiconductor equipment)
+  - **Smart Fallback**: Q2 2025 data if LLM analysis fails
 - **COHR-specific news** (Yahoo Finance search API)
 - **Analyst consensus data** (Yahoo Finance quoteSummary)
 
-### **⚠️ QUARTERLY UPDATED DATA**
-- **Market Intelligence**: COHR Q2 2025 earnings performance
-- **Business segment growth**: Updated with each earnings report
-- **Data transparency**: Full source verification available
+### **🤖 LLM INTEGRATION STATUS**
+- **Google Gemini 2.5 Flash**: Deployed and analyzing latest SEC filings
+- **SEC EDGAR Integration**: Fetching 10-Q/10-K filings automatically
+- **Data Extraction**: Q3 2025 real segment performance extracted successfully
+- **Cost**: <$1/month with smart caching (24hr filing cache, 7-day analysis cache)
+- **Visual Indicators**: Green = LLM analyzed, Orange = Q2 fallback
+- **Manual Refresh**: Users can trigger latest filing analysis
+- **Error Handling**: Graceful fallback to Q2 2025 static data
 
 ### **❌ HIDDEN/PLANNED DATA**
 - **Competitive positioning** (hidden until Sprint 2 implementation)
@@ -128,9 +156,10 @@ All endpoints include CORS support and 30-second timeout limits:
 
 3. **Environment Setup**
    ```bash
-   # Create .env file with your API keys (optional for enhanced features)
-   ALPHA_VANTAGE_API_KEY=your_key_here  # Fallback stock data
-   NEWS_API_KEY=your_key_here           # Additional news sources
+   # Create .env file with your API keys
+   ALPHA_VANTAGE_API_KEY=your_key_here  # Primary stock data source
+   NEWS_API_KEY=your_key_here           # Financial news articles
+   GEMINI_API_KEY=your_key_here         # Google Gemini 2.5 Flash for LLM analysis
    ```
 
 4. **Deploy to Vercel**
@@ -186,8 +215,22 @@ All endpoints include CORS support and 30-second timeout limits:
 - [x] Data transparency features with source verification
 - [x] Quarterly update cycle aligned with earnings
 
+**LLM Integration: Dynamic SEC Filing Analysis** ✅ (June 2025)
+- [x] Google Gemini 2.5 Flash integration for SEC filing analysis
+- [x] Automatic fetching of latest 10-Q/10-K filings from SEC EDGAR
+- [x] Real-time extraction of Q3 2025 business segment performance
+- [x] Smart fallback to Q2 2025 data with visual indicators
+- [x] Manual refresh functionality and enhanced error handling
+- [x] Cost-effective implementation (<$1/month with caching)
+
 ### **🚧 NEXT PRIORITIES**
-**Sprint 2: Competitive Intelligence** (Next)
+**Segment Tiles Enhancement (Issue #9)** - Current Focus
+- [ ] Visual & UX improvements (color-coded growth indicators)
+- [ ] Mobile-responsive CSS Grid layout with click-for-details
+- [ ] LLM-generated key insights (growth drivers, risks, margin analysis)
+- [ ] Performance optimizations (caching, timeout handling)
+
+**Sprint 2: Competitive Intelligence** (Future)
 - [ ] Competitive positioning section (currently hidden)
 - [ ] Peer company performance comparison
 - [ ] Relative stock performance vs competitors

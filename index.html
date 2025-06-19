@@ -890,7 +890,7 @@
                     refreshButton.disabled = true;
                     
                     // Force refresh by adding timestamp to break cache
-                    const response = await fetch(`${API_BASE}/api/market-trends?refresh=true&t=${Date.now()}`);
+                    const response = await fetch(`${API_BASE}/api/market-trends?useLLM=true&refresh=true&clearCache=true&t=${Date.now()}`);
                     if (!response.ok) throw new Error('Failed to refresh market trends');
                     
                     const data = await response.json();
@@ -1268,7 +1268,7 @@
 
         async function loadMarketTrends() {
             try {
-                const response = await fetch(`${API_BASE}/api/market-trends`);
+                const response = await fetch(`${API_BASE}/api/market-trends?useLLM=true&t=${Date.now()}`);
                 if (!response.ok) throw new Error('Failed to fetch market trends');
                 const data = await response.json();
                 

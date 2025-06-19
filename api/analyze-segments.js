@@ -67,8 +67,15 @@ export default async function handler(req, res) {
       symbol
     );
 
+    // Debug: Log the extracted data structure
+    console.log('LLM extracted data structure:', JSON.stringify(Object.keys(segmentData), null, 2));
+    console.log('Has networkingGrowth:', !!segmentData.networkingGrowth);
+    console.log('Has cohrOverallPerformance:', !!segmentData.cohrOverallPerformance);
+    console.log('Has overall:', !!segmentData.overall);
+    
     // Validate the extracted data
     if (!validateSegmentData(segmentData)) {
+      console.log('Validation failed for segmentData:', JSON.stringify(segmentData, null, 2));
       throw new Error('Invalid segment data extracted from filing');
     }
 

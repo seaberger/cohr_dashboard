@@ -83,7 +83,7 @@ export default async function handler(req, res) {
       marketIntelligence: transformedData,
       insights: {
         summary: marketSummary,
-        topPerformer: findTopPerformer(segmentData.segments),
+        topPerformer: findTopPerformer(transformedData),
         growthTrend: analyzeGrowthTrend(segmentData)
       },
       dataQuality: 'High',
@@ -138,62 +138,87 @@ function getBaseUrl(req) {
 }
 
 function transformSegmentData(segmentData, symbol) {
+  // The LLM already returns data in the correct format, but we need to map it
+  // to the frontend's expected structure for backward compatibility
+  
   const transformed = {};
-
-  // Map segments to dashboard format
-  segmentData.segments.forEach(segment => {
-    const key = segment.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    transformed[`${key}Growth`] = {
-      [`${symbol.toLowerCase()}${capitalizeFirst(key)}GrowthYoY`]: segment.growthYoY,
-      [`${symbol.toLowerCase()}${capitalizeFirst(key)}GrowthQoQ`]: segment.growthQoQ || 'N/A',
-      keyDriver: segment.keyDriver,
-      status: segment.status,
-      revenue: segment.revenue
-    };
-  });
-
-  // Add overall performance
-  transformed[`${symbol.toLowerCase()}OverallPerformance`] = {
-    totalRevenue: segmentData.overall.totalRevenue,
-    revenueGrowthYoY: segmentData.overall.revenueGrowthYoY,
-    revenueGrowthQoQ: segmentData.overall.revenueGrowthQoQ || 'N/A',
-    grossMargin: segmentData.overall.grossMargin,
-    keyHighlight: segmentData.overall.keyHighlight
+  
+  // Map the LLM segments to expected frontend keys
+  const segmentMapping = {
+    'networkingGrowth': 'aiDatacomGrowth',  // Map networking to AI datacom for frontend
+    'lasersGrowth': 'industrialLaserMarket',
+    'materialsGrowth': 'materialsGrowth',
+    'telecomGrowth': 'telecomGrowth'
   };
-
-  // Add metadata
-  transformed.dataQuality = 'High';
+  
+  // Transform each segment from LLM output to frontend format
+  Object.keys(segmentData).forEach(key => {
+    if (key.endsWith('Growth') && typeof segmentData[key] === 'object') {
+      const mappedKey = segmentMapping[key] || key;
+      transformed[mappedKey] = segmentData[key];
+    }
+  });
+  
+  // Handle overall performance if it exists
+  if (segmentData.cohrOverallPerformance) {
+    transformed.cohrOverallPerformance = segmentData.cohrOverallPerformance;
+  }
+  
+  // Copy metadata
+  transformed.dataQuality = segmentData.dataQuality || 'High';
   transformed.lastUpdated = new Date().toISOString();
-  transformed.updateFrequency = 'Quarterly';
-  transformed.dataType = 'Company-Specific Performance';
-  transformed.quarter = segmentData.quarterYear;
-
+  transformed.updateFrequency = segmentData.updateFrequency || 'Quarterly';
+  transformed.dataType = segmentData.dataType || 'Company-Specific Performance';
+  transformed.quarter = segmentData.quarter;
+  
   return transformed;
 }
 
-function findTopPerformer(segments) {
-  if (!segments || segments.length === 0) return null;
+function findTopPerformer(transformedData) {
+  if (!transformedData || typeof transformedData !== 'object') return null;
 
-  let topSegment = segments[0];
-  let maxGrowth = parseFloat(segments[0].growthYoY);
+  let maxGrowth = -Infinity;
+  let topSegment = null;
 
-  segments.forEach(segment => {
-    const growth = parseFloat(segment.growthYoY);
-    if (growth > maxGrowth) {
-      maxGrowth = growth;
-      topSegment = segment;
+  // Look through all growth segments
+  Object.keys(transformedData).forEach(key => {
+    if (key.endsWith('Growth') && transformedData[key] && typeof transformedData[key] === 'object') {
+      const segment = transformedData[key];
+      // Find the YoY growth field
+      const yoyField = Object.keys(segment).find(field => field.includes('GrowthYoY'));
+      if (yoyField && segment[yoyField]) {
+        const growthStr = segment[yoyField].replace(/[+%]/g, '');
+        const growth = parseFloat(growthStr);
+        if (!isNaN(growth) && growth > maxGrowth) {
+          maxGrowth = growth;
+          topSegment = {
+            name: key.replace('Growth', '').replace(/([A-Z])/g, ' $1').trim(),
+            growth: segment[yoyField],
+            driver: segment.keyDriver || 'Strong performance'
+          };
+        }
+      }
     }
   });
 
-  return {
-    name: topSegment.name,
-    growth: topSegment.growthYoY,
-    driver: topSegment.keyDriver
-  };
+  return topSegment;
 }
 
 function analyzeGrowthTrend(segmentData) {
-  const overallGrowth = parseFloat(segmentData.overall.revenueGrowthYoY);
+  // Try to get overall growth from different possible structures
+  let overallGrowthStr = null;
+  
+  if (segmentData.cohrOverallPerformance && segmentData.cohrOverallPerformance.revenueGrowthYoY) {
+    overallGrowthStr = segmentData.cohrOverallPerformance.revenueGrowthYoY;
+  } else if (segmentData.overall && segmentData.overall.revenueGrowthYoY) {
+    overallGrowthStr = segmentData.overall.revenueGrowthYoY;
+  }
+  
+  if (!overallGrowthStr) return 'Unknown';
+  
+  const overallGrowth = parseFloat(overallGrowthStr.replace(/[+%]/g, ''));
+  
+  if (isNaN(overallGrowth)) return 'Unknown';
   
   if (overallGrowth > 20) {
     return 'Strong Growth';

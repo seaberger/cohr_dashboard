@@ -22,11 +22,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { symbol = 'COHR', refresh = 'false' } = req.query;
+  const { symbol = 'COHR', refresh = 'false', clearCache = 'false' } = req.query;
 
   try {
-    // Check cache first (unless refresh is requested)
+    // Clear cache if requested
     const cacheKey = symbol;
+    if (clearCache === 'true') {
+      analysisCache.delete(cacheKey);
+      console.log(`Cache cleared for ${symbol}`);
+    }
+    
+    // Check cache first (unless refresh is requested)
     if (refresh !== 'true') {
       const cachedAnalysis = analysisCache.get(cacheKey);
       if (cachedAnalysis && Date.now() - cachedAnalysis.timestamp < CACHE_DURATION) {

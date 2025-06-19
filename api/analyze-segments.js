@@ -143,19 +143,38 @@ function transformSegmentData(segmentData, symbol) {
   
   const transformed = {};
   
-  // Map the LLM segments to expected frontend keys
-  const segmentMapping = {
-    'networkingGrowth': 'aiDatacomGrowth',  // Map networking to AI datacom for frontend
-    'lasersGrowth': 'industrialLaserMarket',
-    'materialsGrowth': 'materialsGrowth',
-    'telecomGrowth': 'telecomGrowth'
-  };
-  
   // Transform each segment from LLM output to frontend format
   Object.keys(segmentData).forEach(key => {
     if (key.endsWith('Growth') && typeof segmentData[key] === 'object') {
-      const mappedKey = segmentMapping[key] || key;
-      transformed[mappedKey] = segmentData[key];
+      // Map LLM segments to frontend expected keys
+      switch(key) {
+        case 'networkingGrowth':
+          // Use networking data for both AI Datacom and Networking tiles
+          transformed.aiDatacomGrowth = segmentData[key];
+          transformed.networkingGrowth = segmentData[key];
+          // Also create a telecom entry if it doesn't exist separately
+          if (!segmentData.telecomGrowth) {
+            transformed.telecomGrowth = {
+              ...segmentData[key],
+              cohrTelecomGrowthYoY: segmentData[key].cohrNetworkingGrowthYoY,
+              cohrTelecomGrowthQoQ: segmentData[key].cohrNetworkingGrowthQoQ
+            };
+          }
+          break;
+        case 'lasersGrowth':
+          transformed.industrialLaserMarket = segmentData[key];
+          break;
+        case 'materialsGrowth':
+          transformed.materialsGrowth = segmentData[key];
+          break;
+        case 'telecomGrowth':
+          transformed.telecomGrowth = segmentData[key];
+          break;
+        default:
+          // Keep any other growth segments as-is
+          transformed[key] = segmentData[key];
+          break;
+      }
     }
   });
   

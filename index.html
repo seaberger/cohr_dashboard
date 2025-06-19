@@ -1312,7 +1312,15 @@
             console.log('UpdateMarketTrends received data keys:', Object.keys(data));
             console.log('Has aiDatacomGrowth:', !!data.aiDatacomGrowth);
             console.log('Has networkingGrowth:', !!data.networkingGrowth);
+            console.log('Has materialsGrowth:', !!data.materialsGrowth);
+            console.log('Has industrialLaserMarket:', !!data.industrialLaserMarket);
             console.log('Has cohrOverallPerformance:', !!data.cohrOverallPerformance);
+            
+            // Debug actual values
+            if (data.aiDatacomGrowth) console.log('aiDatacomGrowth:', data.aiDatacomGrowth.cohrDatacomGrowthYoY);
+            if (data.networkingGrowth) console.log('networkingGrowth:', data.networkingGrowth.cohrNetworkingGrowthYoY);
+            if (data.materialsGrowth) console.log('materialsGrowth:', data.materialsGrowth.cohrMaterialsGrowthYoY);
+            if (data.industrialLaserMarket) console.log('industrialLaserMarket:', data.industrialLaserMarket.cohrLaserGrowthYoY);
             
             // Safe data extraction with fallbacks
             const aiDatacom = data.aiDatacomGrowth?.cohrDatacomGrowthYoY || 
@@ -1332,6 +1340,10 @@
                          data.industrialLaserMarket?.cohrIndustrialGrowthYoY ||
                          '+6%';
             
+            const materials = data.materialsGrowth?.cohrMaterialsGrowthYoY || 
+                             data.materialsGrowth?.cohrMaterialGrowthYoY ||
+                             '-4%';
+            
             const totalRevenue = data.cohrOverallPerformance?.totalRevenueQ2 || 
                                 data.cohrOverallPerformance?.totalRevenue ||
                                 '$1.43B';
@@ -1345,7 +1357,7 @@
             const revenueLabel = isLLMData ? `${quarter} Total Revenue` : 'Q2 2025 Total Revenue';
             const marginLabel = isLLMData ? `${quarter} Gross Margin` : 'Q2 2025 Gross Margin';
             
-            console.log('Using values - AI Datacom:', aiDatacom, 'Networking:', networking);
+            console.log('Using values - AI Datacom:', aiDatacom, 'Networking:', networking, 'Laser:', laser, 'Materials:', materials);
             console.log('Quarter:', quarter, 'Is LLM data:', isLLMData);
             
             container.innerHTML = `
@@ -1364,6 +1376,10 @@
                 <div class="trend-card">
                     <div class="trend-value">${laser}</div>
                     <div class="trend-label">COHR Laser Growth (YoY)</div>
+                </div>
+                <div class="trend-card">
+                    <div class="trend-value">${materials}</div>
+                    <div class="trend-label">COHR Materials Growth (YoY)</div>
                 </div>
                 <div class="trend-card">
                     <div class="trend-value">${totalRevenue}</div>

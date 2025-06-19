@@ -1308,19 +1308,6 @@
         function updateMarketTrends(data) {
             const container = document.getElementById('marketTrendsContainer');
             
-            console.log('=== FRONTEND UPDATE DEBUG ===');
-            console.log('UpdateMarketTrends received data keys:', Object.keys(data));
-            console.log('Has aiDatacomGrowth:', !!data.aiDatacomGrowth);
-            console.log('Has networkingGrowth:', !!data.networkingGrowth);
-            console.log('Has materialsGrowth:', !!data.materialsGrowth);
-            console.log('Has industrialLaserMarket:', !!data.industrialLaserMarket);
-            console.log('Has cohrOverallPerformance:', !!data.cohrOverallPerformance);
-            
-            // Debug actual values
-            if (data.aiDatacomGrowth) console.log('aiDatacomGrowth:', data.aiDatacomGrowth.cohrDatacomGrowthYoY);
-            if (data.networkingGrowth) console.log('networkingGrowth:', data.networkingGrowth.cohrNetworkingGrowthYoY);
-            if (data.materialsGrowth) console.log('materialsGrowth:', data.materialsGrowth.cohrMaterialsGrowthYoY);
-            if (data.industrialLaserMarket) console.log('industrialLaserMarket:', data.industrialLaserMarket.cohrLaserGrowthYoY);
             
             // Safe data extraction with fallbacks
             const aiDatacom = data.aiDatacomGrowth?.cohrDatacomGrowthYoY || 
@@ -1357,8 +1344,6 @@
             const revenueLabel = isLLMData ? `${quarter} Total Revenue` : 'Q2 2025 Total Revenue';
             const marginLabel = isLLMData ? `${quarter} Gross Margin` : 'Q2 2025 Gross Margin';
             
-            console.log('Using values - AI Datacom:', aiDatacom, 'Networking:', networking, 'Laser:', laser, 'Materials:', materials);
-            console.log('Quarter:', quarter, 'Is LLM data:', isLLMData);
             
             container.innerHTML = `
                 <div class="trend-card">

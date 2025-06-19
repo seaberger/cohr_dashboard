@@ -1,7 +1,6 @@
 // Analyze business segments from SEC filings using Google Gemini
 import { extractSegmentData, generateMarketSummary } from '../lib/geminiService.js';
 import { transformLLMToFrontend, debugDataStructure } from '../lib/dataTransformer.js';
-import { detectSegmentStructure } from '../lib/schemas.js';
 import fetch from 'node-fetch';
 
 // Simple in-memory cache for analysis results
@@ -99,16 +98,7 @@ export default async function handler(req, res) {
         `${symbol} SEC ${filingData.filing.type} Filing`,
         `Filed on ${filingData.filing.filingDate}`,
         'Analyzed by Google Gemini 2.5 Flash'
-      ],
-      // Debug: include raw LLM segments for troubleshooting
-      debug: {
-        rawSegments: rawLLMData.segments?.map(s => ({
-          name: s.name,
-          revenue: s.revenue,
-          growthYoY: s.growthYoY
-        })) || [],
-        structureDetected: detectSegmentStructure(rawLLMData.segments || [])
-      }
+      ]
     };
 
     // Cache the analysis
@@ -211,6 +201,3 @@ function analyzeGrowthTrend(rawLLMData) {
   }
 }
 
-function capitalizeFirst(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}

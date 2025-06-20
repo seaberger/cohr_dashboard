@@ -1928,7 +1928,8 @@
                         drawSparkline(sparklineCanvas, metric.sparkline);
                     }
                     
-                    // Force visibility and styling
+                    // Reset opacity and visibility after update
+                    valueElement.style.opacity = '1';
                     tile.style.opacity = '1';
                     tile.style.visibility = 'visible';
                 } else {
@@ -1937,6 +1938,10 @@
                     arrowElement.textContent = '–';
                     arrowElement.className = 'metric-trend-arrow neutral';
                     changeElement.textContent = 'No data';
+                    
+                    // Reset opacity for N/A cases too
+                    valueElement.style.opacity = '1';
+                    tile.style.opacity = '1';
                 }
             });
         }

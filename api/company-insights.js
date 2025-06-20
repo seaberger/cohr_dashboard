@@ -104,44 +104,11 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Company insights extraction error:', error);
     
-    // Return fallback insights for COHR
-    if (symbol === 'COHR') {
-      const fallbackInsights = [
-        {
-          category: 'growth-driver',
-          headline: 'AI datacenter demand drives record networking performance',
-          detail: 'Hyperscaler pull-ins for 800G transceivers and coherent solutions drove networking segment to +45% YoY growth in Q3 2025.',
-          impact: 'positive',
-          confidence: 0.9,
-          sourceQuote: 'unprecedented AI datacenter demand'
-        },
-        {
-          category: 'risk',
-          headline: 'Materials segment continues to face headwinds',
-          detail: 'Materials revenue declined 1% YoY as smartphone laser demand remained weak despite some sequential improvement.',
-          impact: 'negative',
-          confidence: 0.85,
-          sourceQuote: 'handset weakness persisted'
-        }
-      ];
-      
-      return res.status(200).json({
-        status: 'fallback',
-        symbol,
-        companyInsights: fallbackInsights,
-        segmentPerformance: [],
-        warning: 'Using fallback insights due to extraction error',
-        error: error.message,
-        lastUpdated: new Date().toISOString(),
-        sources: ['Fallback Q3 2025 Insights'],
-        extractionType: 'fallback'
-      });
-    }
-
     res.status(500).json({
       error: 'Failed to extract company insights',
       message: error.message,
-      symbol
+      symbol,
+      details: 'Unable to analyze SEC filing data. Please try refreshing or check back later.'
     });
   }
 }

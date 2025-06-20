@@ -580,78 +580,217 @@
             margin-top: 4px;
         }
         
-        /* Company Insights Cards */
+        /* Company Insights Cards - Enhanced Professional Design */
+        .insights-section {
+            margin-top: 24px;
+        }
+        
         .insights-grid {
             display: grid;
-            gap: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .insights-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .insights-section h3 {
+                font-size: 1.1em !important;
+            }
+            
+            .insights-section p {
+                font-size: 0.85em !important;
+            }
+            
+            .insights-section > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+            }
+            
+            .refresh-text {
+                display: none !important;
+            }
+            
+            .insight-card {
+                padding: 16px;
+            }
+            
+            .insight-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 8px !important;
+            }
+            
+            .insight-category {
+                align-self: flex-start;
+            }
+            
+            .insight-headline {
+                font-size: 0.95em !important;
+            }
+            
+            .insight-footer {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            
+            .insight-source {
+                max-width: 100% !important;
+                white-space: normal !important;
+            }
         }
         
         .insight-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 16px;
+            background: #fafbfc;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 20px;
             position: relative;
-            border-left: 4px solid transparent;
             transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
         }
         
         .insight-card:hover {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #cbd6e2;
         }
         
-        .insight-card[data-impact="positive"] {
-            border-left-color: #27ae60;
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2980b9);
         }
         
-        .insight-card[data-impact="negative"] {
-            border-left-color: #e74c3c;
+        .insight-card[data-impact="positive"]::before {
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
         }
         
-        .insight-card[data-impact="neutral"] {
-            border-left-color: #3498db;
+        .insight-card[data-impact="negative"]::before {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+        
+        .insight-card[data-impact="neutral"]::before {
+            background: linear-gradient(90deg, #95a5a6, #7f8c8d);
         }
         
         .insight-header {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
         }
         
         .insight-category {
-            background: #334155;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
             color: white;
-            font-size: 0.7em;
-            padding: 2px 8px;
-            border-radius: 4px;
+            font-size: 0.65em;
+            padding: 4px 10px;
+            border-radius: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .insight-category.growth-driver {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+        
+        .insight-category.margin-impact {
+            background: linear-gradient(135deg, #16a085, #1abc9c);
+        }
+        
+        .insight-category.risk {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .insight-category.strategic-move {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .insight-category.capital-allocation {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+        }
+        
+        .insight-category.innovation {
+            background: linear-gradient(135deg, #e91e63, #ad1457);
+        }
+        
+        .insight-category.market-dynamics {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .insight-category.operations {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
         }
         
         .insight-headline {
             font-weight: 600;
             color: #2c3e50;
-            font-size: 0.95em;
+            font-size: 1em;
+            line-height: 1.3;
+            flex: 1;
         }
         
         .insight-detail {
             color: #555;
             font-size: 0.9em;
-            line-height: 1.4;
-            margin-bottom: 8px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            text-align: justify;
         }
         
         .insight-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
             font-size: 0.8em;
-            color: #999;
         }
         
         .insight-confidence {
-            font-weight: 500;
+            font-weight: 600;
+            color: #2c3e50;
+            padding: 3px 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+        }
+        
+        .insight-confidence.high {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        
+        .insight-confidence.medium {
+            background: #fef9e7;
+            color: #f39c12;
+        }
+        
+        .insight-confidence.low {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+        
+        .insight-source {
+            font-style: italic;
+            color: #7f8c8d;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         /* Enhanced Support/Resistance Styling */
@@ -961,10 +1100,21 @@
             <!-- Business Segments (legacy support) -->
             
             <!-- Company Insights Section -->
-            <div class="insights-section" style="margin-top: 24px;">
-                <h3 style="color: #2c3e50; margin: 0 0 16px 0; font-size: 1.1em;">Key Company Insights</h3>
+            <div class="insights-section" style="margin-top: 32px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="color: #2c3e50; margin: 0 0 4px 0; font-size: 1.2em; font-weight: 600;">Key Company Insights</h3>
+                        <p style="color: #7f8c8d; margin: 0; font-size: 0.9em;">AI-powered analysis from latest SEC filings</p>
+                    </div>
+                    <button id="refreshInsightsBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666; display: flex; align-items: center; gap: 6px;">
+                        🔄 <span class="refresh-text">Refresh</span>
+                    </button>
+                </div>
                 <div class="insights-grid" id="companyInsightsContainer">
-                    <!-- Insights will be dynamically populated -->
+                    <div style="text-align: center; padding: 40px 20px; color: #999;">
+                        <div style="font-size: 2em; margin-bottom: 16px;">🔍</div>
+                        <p>Loading company insights...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1214,6 +1364,7 @@
             const button = document.getElementById('dataSourcesBtn');
             const panel = document.getElementById('dataSourcesPanel');
             const refreshButton = document.getElementById('refreshMarketTrendsBtn');
+            const refreshInsightsButton = document.getElementById('refreshInsightsBtn');
             
             button.addEventListener('click', () => {
                 if (panel.style.display === 'none') {
@@ -1225,7 +1376,7 @@
                 }
             });
 
-            // Add refresh functionality
+            // Add refresh functionality for main metrics
             refreshButton.addEventListener('click', async () => {
                 try {
                     refreshButton.textContent = '⏳ Refreshing Financial Data...';
@@ -1248,6 +1399,28 @@
                     refreshButton.disabled = false;
                 }
             });
+            
+            // Add refresh functionality for insights only
+            if (refreshInsightsButton) {
+                refreshInsightsButton.addEventListener('click', async () => {
+                    try {
+                        refreshInsightsButton.innerHTML = '⏳ <span class="refresh-text">Refreshing...</span>';
+                        refreshInsightsButton.disabled = true;
+                        
+                        // Clear insights cache and reload
+                        sessionStorage.removeItem('cohr-company-insights');
+                        await loadCompanyInsights();
+
+                        console.log('✅ Company insights refreshed successfully');
+                        
+                    } catch (error) {
+                        console.error('Failed to refresh insights:', error);
+                    } finally {
+                        refreshInsightsButton.innerHTML = '🔄 <span class="refresh-text">Refresh</span>';
+                        refreshInsightsButton.disabled = false;
+                    }
+                });
+            }
         }
 
         function updateChart() {
@@ -1728,22 +1901,28 @@
                 console.error('❌ Universal metrics error:', error);
                 console.error('Error details:', error.message, error.stack);
                 
-                // Show error state with retry button
+                // Show professional error state
                 if (container) {
                     container.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 20px;">
-                            <p style="color: #e74c3c; margin-bottom: 16px;">
-                                Failed to load financial metrics: ${error.message}
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: #fef9e7; border: 1px solid #f39c12; border-radius: 8px;">
+                            <div style="font-size: 2em; margin-bottom: 16px;">⚠️</div>
+                            <h4 style="color: #e67e22; margin: 0 0 12px 0;">Financial Data Unavailable</h4>
+                            <p style="color: #8c7851; margin-bottom: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                                Unable to extract financial metrics from SEC filing data. This may be due to filing processing delays or temporary API issues.
                             </p>
-                            <button onclick="loadUniversalMetrics()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                                🔄 Retry Metrics
+                            <button onclick="loadUniversalMetrics()" style="background: #f39c12; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                🔄 Retry Load
                             </button>
-                            <p style="margin-top: 12px; font-size: 0.8em; color: #666;">
-                                Check console for detailed error information
+                            <p style="margin-top: 16px; font-size: 0.85em; color: #95a5a6;">
+                                Data integrity is our priority - no fallback data will be shown
                             </p>
                         </div>
                     `;
                 }
+                
+                // Update title to show error state
+                const titleElement = document.getElementById('marketTrendsTitle');
+                titleElement.innerHTML = 'Universal Financial Metrics <span style="font-size: 0.7em; color: #e74c3c;">●&nbsp;Data Error</span>';
             }
         }
 
@@ -1793,15 +1972,22 @@
             } catch (error) {
                 console.error('Company insights error:', error);
                 
-                // Show error state with retry button
+                // Show professional error state for insights
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 20px;">
-                        <p style="color: #e74c3c; margin-bottom: 16px;">
-                            ${error.message === 'Insights request timeout' ? 'Insights request timed out' : 'Failed to load company insights'}
+                    <div style="text-align: center; padding: 30px 20px; background: #fdf2f2; border: 1px solid #e74c3c; border-radius: 8px;">
+                        <div style="font-size: 1.8em; margin-bottom: 12px;">🔍</div>
+                        <h4 style="color: #c0392b; margin: 0 0 8px 0;">Insights Analysis Unavailable</h4>
+                        <p style="color: #a93226; margin-bottom: 16px; font-size: 0.9em;">
+                            ${error.message === 'Insights request timeout' 
+                                ? 'SEC filing analysis timed out. The system may be processing a large filing.' 
+                                : 'Unable to analyze SEC filing for business insights. This may be due to filing format issues or temporary processing delays.'}
                         </p>
-                        <button onclick="loadCompanyInsights()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                            🔄 Retry Insights
+                        <button onclick="loadCompanyInsights()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            🔄 Retry Analysis
                         </button>
+                        <p style="margin-top: 12px; font-size: 0.8em; color: #95a5a6;">
+                            No placeholder insights - only real data from SEC filings
+                        </p>
                     </div>
                 `;
             }
@@ -1813,12 +1999,9 @@
                 const quarter = data.filing?.quarter || 'Latest';
                 titleElement.innerHTML = 
                     `Universal Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Extracted)</span>`;
-            } else if (data.extractionType === 'fallback') {
-                titleElement.innerHTML = 
-                    'Universal Financial Metrics <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Q3 2025 Fallback</span>';
             } else {
                 titleElement.innerHTML = 
-                    'Universal Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Q3 2025</span>';
+                    'Universal Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Live Data</span>';
             }
         }
 
@@ -2006,34 +2189,51 @@
         function updateCompanyInsights(insights) {
             const container = document.getElementById('companyInsightsContainer');
             if (!insights || insights.length === 0) {
-                container.innerHTML = '<p style="color: #999; text-align: center;">No insights available</p>';
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No insights available</p>';
                 return;
             }
             
             const categoryIcons = {
                 'growth-driver': '🚀',
-                'risk': '⚠️',
-                'strategic-initiative': '🎯',
-                'competitive-advantage': '💪',
-                'guidance': '📊',
                 'margin-impact': '💰',
+                'risk': '⚠️',
+                'strategic-move': '🎯',
                 'capital-allocation': '🏗️',
-                'innovation': '🧪'
+                'innovation': '🧪',
+                'market-dynamics': '📊',
+                'operations': '🛠️'
             };
             
-            container.innerHTML = insights.map(insight => `
-                <div class="insight-card" data-impact="${insight.impact}">
-                    <div class="insight-header">
-                        <span class="insight-category">${insight.category}</span>
-                        <span class="insight-headline">${categoryIcons[insight.category] || '📌'} ${insight.headline}</span>
+            const getConfidenceClass = (confidence) => {
+                if (confidence >= 0.8) return 'high';
+                if (confidence >= 0.6) return 'medium';
+                return 'low';
+            };
+            
+            const getCategoryClass = (category) => {
+                return category.replace(/[^a-zA-Z0-9]/g, '-');
+            };
+            
+            container.innerHTML = insights.map(insight => {
+                const confidencePercent = Math.round(insight.confidence * 100);
+                const confidenceClass = getConfidenceClass(insight.confidence);
+                const categoryClass = getCategoryClass(insight.category);
+                const icon = categoryIcons[insight.category] || '📌';
+                
+                return `
+                    <div class="insight-card" data-impact="${insight.impact}">
+                        <div class="insight-header">
+                            <span class="insight-category ${categoryClass}">${insight.category}</span>
+                            <span class="insight-headline">${icon} ${insight.headline}</span>
+                        </div>
+                        <div class="insight-detail">${insight.detail}</div>
+                        <div class="insight-footer">
+                            <span class="insight-confidence ${confidenceClass}">${confidencePercent}%</span>
+                            ${insight.sourceQuote ? `<span class="insight-source">"${insight.sourceQuote}"</span>` : ''}
+                        </div>
                     </div>
-                    <div class="insight-detail">${insight.detail}</div>
-                    <div class="insight-footer">
-                        <span class="insight-confidence">Confidence: ${Math.round(insight.confidence * 100)}%</span>
-                        ${insight.sourceQuote ? `<span style="font-style: italic;">"${insight.sourceQuote}"</span>` : ''}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
         
         function updateLegacySegmentTiles(data) {

@@ -98,35 +98,11 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Universal metrics extraction error:', error);
     
-    // Return fallback data for COHR
-    if (symbol === 'COHR') {
-      const fallbackMetrics = {
-        revenue: { value: '$1,500M', growth: '+24%', trend: 'positive', sparkline: [1200, 1300, 1350, 1400, 1450, 1500, 1550, 1500] },
-        grossMarginPct: { value: '35.0%', change: '+5.0pp', trend: 'positive', sparkline: [30.0, 31.0, 32.0, 33.0, 34.0, 34.5, 35.2, 35.0] },
-        operatingMarginPct: { value: 'N/A', change: 'N/A', trend: 'neutral', sparkline: [] },
-        operatingIncome: { value: 'N/A', growth: 'N/A', trend: 'neutral', sparkline: [] },
-        operatingCashFlow: { value: 'N/A', growth: 'N/A', trend: 'neutral', sparkline: [] },
-        rndRatioPct: { value: '10.0%', change: '0.0pp', trend: 'neutral', sparkline: [9.5, 9.7, 9.8, 9.9, 10.0, 10.1, 10.0, 10.0] },
-        netIncome: { value: 'N/A', growth: 'N/A', trend: 'neutral', sparkline: [] },
-        epsDiluted: { value: 'N/A', growth: 'N/A', trend: 'neutral', sparkline: [] }
-      };
-      
-      return res.status(200).json({
-        status: 'fallback',
-        symbol,
-        universalMetrics: fallbackMetrics,
-        warning: 'Using fallback metrics due to extraction error',
-        error: error.message,
-        lastUpdated: new Date().toISOString(),
-        sources: ['Fallback Q3 2025 Data'],
-        extractionType: 'fallback'
-      });
-    }
-
     res.status(500).json({
       error: 'Failed to extract universal metrics',
       message: error.message,
-      symbol
+      symbol,
+      details: 'Unable to extract financial metrics from SEC filing data. Please try refreshing or check back later.'
     });
   }
 }

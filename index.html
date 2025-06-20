@@ -1025,20 +1025,47 @@
 
         // Initialize dashboard
         window.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 DOM loaded - initializing COHR dashboard');
+            
             // Clean up old cache keys from previous implementation
             sessionStorage.removeItem('cohr-market-trends');
             
             // Force display universal metrics and hide legacy segments
             const universalContainer = document.getElementById('universalMetricsContainer');
             const legacyContainer = document.getElementById('marketTrendsContainer');
+            
+            console.log('Container check:', {
+                universalExists: !!universalContainer,
+                legacyExists: !!legacyContainer,
+                universalDisplay: universalContainer?.style.display,
+                legacyDisplay: legacyContainer?.style.display
+            });
+            
             if (universalContainer) {
                 universalContainer.style.display = 'grid';
                 console.log('✅ Universal metrics container set to display: grid');
+                
+                // Add loading content if empty
+                if (universalContainer.children.length === 0) {
+                    universalContainer.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #666;">
+                            📊 Loading universal financial metrics...
+                        </div>
+                    `;
+                }
+            } else {
+                console.error('❌ Universal metrics container not found!');
             }
+            
             if (legacyContainer) {
                 legacyContainer.style.display = 'none';
                 console.log('✅ Legacy segment container hidden');
+            } else {
+                console.warn('⚠️ Legacy container not found');
             }
+            
+            // Debug functions available message
+            console.log('🛠️ Debug functions available: cohrDebug.checkContainers(), forceShowUniversalMetrics(), clearCaches()');
             
             initTradingView();
             loadAllData();
@@ -1664,12 +1691,44 @@
             }
         }
 
+        // Debug and utility functions
         function clearAllCaches() {
             // Clear all cache keys used by the application
             sessionStorage.removeItem('cohr-universal-metrics');
             sessionStorage.removeItem('cohr-company-insights');
             sessionStorage.removeItem('cohr-market-trends'); // Legacy
             console.log('All financial data caches cleared');
+        }
+
+        // Force display universal metrics function
+        function forceShowUniversalMetrics() {
+            const universalContainer = document.getElementById('universalMetricsContainer');
+            const legacyContainer = document.getElementById('marketTrendsContainer');
+            if (universalContainer) {
+                universalContainer.style.display = 'grid';
+                console.log('✅ Forced universal metrics to display: grid');
+            }
+            if (legacyContainer) {
+                legacyContainer.style.display = 'none';
+                console.log('✅ Forced legacy container to display: none');
+            }
+            console.log('Universal container classes:', universalContainer?.className);
+            console.log('Universal container style:', universalContainer?.style.cssText);
+        }
+
+        // Check container status function
+        function checkContainers() {
+            const universalContainer = document.getElementById('universalMetricsContainer');
+            const legacyContainer = document.getElementById('marketTrendsContainer');
+            console.log('=== CONTAINER DEBUG ===');
+            console.log('Universal container exists:', !!universalContainer);
+            console.log('Legacy container exists:', !!legacyContainer);
+            console.log('Universal container display:', universalContainer?.style.display);
+            console.log('Legacy container display:', legacyContainer?.style.display);
+            console.log('Universal container visible?', universalContainer?.offsetParent !== null);
+            console.log('Legacy container visible?', legacyContainer?.offsetParent !== null);
+            console.log('Universal container innerHTML length:', universalContainer?.innerHTML?.length || 0);
+            console.log('=== END DEBUG ===');
         }
 
         // Global debug functions for console access
@@ -1681,29 +1740,14 @@
                 clearAllCaches();
                 return Promise.all([loadUniversalMetrics(), loadCompanyInsights()]);
             },
-            forceShowUniversalMetrics: () => {
-                const universalContainer = document.getElementById('universalMetricsContainer');
-                const legacyContainer = document.getElementById('marketTrendsContainer');
-                if (universalContainer) {
-                    universalContainer.style.display = 'grid';
-                    console.log('✅ Forced universal metrics to display: grid');
-                }
-                if (legacyContainer) {
-                    legacyContainer.style.display = 'none';
-                    console.log('✅ Forced legacy container to display: none');
-                }
-                console.log('Universal container classes:', universalContainer?.className);
-                console.log('Universal container style:', universalContainer?.style.cssText);
-            },
-            checkContainers: () => {
-                const universalContainer = document.getElementById('universalMetricsContainer');
-                const legacyContainer = document.getElementById('marketTrendsContainer');
-                console.log('Universal container display:', universalContainer?.style.display);
-                console.log('Legacy container display:', legacyContainer?.style.display);
-                console.log('Universal container visible?', universalContainer?.offsetParent !== null);
-                console.log('Legacy container visible?', legacyContainer?.offsetParent !== null);
-            }
+            forceShowUniversalMetrics: forceShowUniversalMetrics,
+            checkContainers: checkContainers
         };
+
+        // Also create global functions for easier console access
+        window.clearCaches = clearAllCaches;
+        window.forceShowUniversalMetrics = forceShowUniversalMetrics;
+        window.checkContainers = checkContainers;
 
         // Legacy function removed - using separate loadUniversalMetrics and loadCompanyInsights
         

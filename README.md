@@ -14,6 +14,29 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 
 ## 🚀 Key Features
 
+### 📊 **Universal Financial Metrics** (NEW!)
+- **8 Key Financial KPIs** applicable to any public company:
+  - Total Revenue & Growth
+  - Gross Margin & Operating Margin  
+  - Free Cash Flow
+  - R&D Investment (% of revenue)
+  - Debt-to-Equity Ratio
+  - Return on Assets (ROA)
+  - EPS Growth
+- **Color-coded trend indicators** for quick visual scanning
+- **Mobile-responsive grid layout** that adapts to any screen size
+
+### 💡 **AI-Powered Company Insights** (NEW!)
+- **Dynamic insights extraction** from SEC filings:
+  - Growth drivers and catalysts
+  - Risk factors and headwinds
+  - Strategic initiatives
+  - Competitive advantages
+  - Management guidance highlights
+- **Impact indicators** (positive/negative/neutral)
+- **Confidence scoring** for each insight
+- **Source attribution** from filing text
+
 ### ✅ **LIVE & REAL DATA**
 - **Real-time Stock Prices** - Yahoo Finance chart API with intelligent fallbacks
 - **Interactive Charts** - TradingView widget with professional technical overlays

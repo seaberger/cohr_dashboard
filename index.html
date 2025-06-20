@@ -488,6 +488,133 @@
         .competitive-section {
             display: none;
         }
+        
+        /* Universal Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .metric-tile {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .metric-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-value {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .metric-label {
+            font-size: 0.85em;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Metric trend indicators */
+        .metric-tile[data-trend="positive"] {
+            background: linear-gradient(135deg, #f5fcf7 0%, #e8f6ec 100%);
+            border-color: #27ae60;
+        }
+        
+        .metric-tile[data-trend="negative"] {
+            background: linear-gradient(135deg, #fef5f5 0%, #fee8e8 100%);
+            border-color: #e74c3c;
+        }
+        
+        .metric-tile[data-trend="neutral"] {
+            background: linear-gradient(135deg, #f5f9fc 0%, #e8f2f8 100%);
+            border-color: #3498db;
+        }
+        
+        /* Company Insights Cards */
+        .insights-grid {
+            display: grid;
+            gap: 14px;
+        }
+        
+        .insight-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .insight-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .insight-card[data-impact="positive"] {
+            border-left-color: #27ae60;
+        }
+        
+        .insight-card[data-impact="negative"] {
+            border-left-color: #e74c3c;
+        }
+        
+        .insight-card[data-impact="neutral"] {
+            border-left-color: #3498db;
+        }
+        
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .insight-category {
+            background: #334155;
+            color: white;
+            font-size: 0.7em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .insight-headline {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+        }
+        
+        .insight-detail {
+            color: #555;
+            font-size: 0.9em;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        
+        .insight-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8em;
+            color: #999;
+        }
+        
+        .insight-confidence {
+            font-weight: 500;
+        }
 
         /* Enhanced Support/Resistance Styling */
         .level-values-enhanced {
@@ -695,7 +822,7 @@
         <!-- Market Trends -->
         <div class="card" style="grid-column: 1 / -1;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: #2c3e50; margin: 0;" id="marketTrendsTitle">Industry & Market Trends</h2>
+                <h2 style="color: #2c3e50; margin: 0;" id="marketTrendsTitle">Financial Performance & Insights</h2>
                 <div style="display: flex; gap: 8px;">
                     <button id="refreshMarketTrendsBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666;">
                         🔄 Refresh
@@ -714,22 +841,53 @@
                 </div>
             </div>
             
-            <div class="trends-grid" id="marketTrendsContainer">
-                <div class="trend-card">
-                    <div class="trend-value">Loading...</div>
-                    <div class="trend-label">Market Intelligence</div>
+            <!-- Universal Financial Metrics Grid -->
+            <div class="metrics-grid" id="universalMetricsContainer">
+                <!-- Metrics will be dynamically populated -->
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">Total Revenue</div>
                 </div>
-                <div class="trend-card">
-                    <div class="trend-value">Loading...</div>
-                    <div class="trend-label">Growth Trends</div>
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">Gross Margin</div>
                 </div>
-                <div class="trend-card">
-                    <div class="trend-value">Loading...</div>
-                    <div class="trend-label">Technology Adoption</div>
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">Operating Margin</div>
                 </div>
-                <div class="trend-card">
-                    <div class="trend-value">Loading...</div>
-                    <div class="trend-label">Market Drivers</div>
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">Free Cash Flow</div>
+                </div>
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">R&D Spend</div>
+                </div>
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">Debt/Equity</div>
+                </div>
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">Return on Assets</div>
+                </div>
+                <div class="metric-tile">
+                    <div class="metric-value">Loading...</div>
+                    <div class="metric-label">EPS Growth</div>
+                </div>
+            </div>
+            
+            <!-- Business Segments (legacy support) -->
+            <div class="trends-grid" id="marketTrendsContainer" style="display: none;">
+                <!-- Existing segment tiles will be populated here if no universal metrics -->
+            </div>
+            
+            <!-- Company Insights Section -->
+            <div class="insights-section" style="margin-top: 24px;">
+                <h3 style="color: #2c3e50; margin: 0 0 16px 0; font-size: 1.1em;">Key Company Insights</h3>
+                <div class="insights-grid" id="companyInsightsContainer">
+                    <!-- Insights will be dynamically populated -->
                 </div>
             </div>
         </div>
@@ -1268,9 +1426,40 @@
 
         async function loadMarketTrends() {
             try {
-                const response = await fetch(`${API_BASE}/api/market-trends?useLLM=true&t=${Date.now()}`);
+                // Check session storage cache first
+                const cacheKey = 'cohr-market-trends';
+                const cached = sessionStorage.getItem(cacheKey);
+                if (cached) {
+                    const cachedData = JSON.parse(cached);
+                    const cacheAge = Date.now() - cachedData.timestamp;
+                    // Use cache if less than 5 minutes old
+                    if (cacheAge < 5 * 60 * 1000) {
+                        console.log('Using cached market trends data');
+                        updateMarketTrends(cachedData.marketIntelligence);
+                        updateDataSources(cachedData.marketIntelligence || cachedData);
+                        return;
+                    }
+                }
+                
+                // Create timeout promise
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Request timeout')), 10000)
+                );
+                
+                // Fetch with timeout
+                const response = await Promise.race([
+                    fetch(`${API_BASE}/api/market-trends?useLLM=true&t=${Date.now()}`),
+                    timeoutPromise
+                ]);
+                
                 if (!response.ok) throw new Error('Failed to fetch market trends');
                 const data = await response.json();
+                
+                // Cache the successful response
+                sessionStorage.setItem(cacheKey, JSON.stringify({
+                    ...data,
+                    timestamp: Date.now()
+                }));
                 
                 updateMarketTrends(data.marketIntelligence);
                 updateDataSources(data.marketIntelligence || data);
@@ -1298,16 +1487,117 @@
                 
             } catch (error) {
                 console.error('Market trends error:', error);
-                renderFallbackMarketTrends();
                 
-                // Update data sources for fallback
+                // Show error state with retry button
+                const container = document.getElementById('universalMetricsContainer');
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 20px;">
+                        <p style="color: #e74c3c; margin-bottom: 16px;">
+                            ${error.message === 'Request timeout' ? 'Request timed out' : 'Failed to load market data'}
+                        </p>
+                        <button onclick="loadMarketTrends()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                            🔄 Retry
+                        </button>
+                    </div>
+                `;
+                
+                // Also render fallback data if available
+                renderFallbackMarketTrends();
                 updateDataSourcesFallback();
             }
         }
 
         function updateMarketTrends(data) {
-            const container = document.getElementById('marketTrendsContainer');
+            // Check if we have universal metrics (new structure)
+            if (data.universalMetrics) {
+                updateUniversalMetrics(data.universalMetrics);
+                updateCompanyInsights(data.companyInsights || []);
+                
+                // Hide legacy segment tiles
+                document.getElementById('marketTrendsContainer').style.display = 'none';
+                document.getElementById('universalMetricsContainer').style.display = 'grid';
+            } else {
+                // Fallback to legacy segment tiles
+                updateLegacySegmentTiles(data);
+                
+                // Show legacy tiles, hide universal metrics
+                document.getElementById('marketTrendsContainer').style.display = 'grid';
+                document.getElementById('universalMetricsContainer').style.display = 'none';
+            }
             
+            console.log('=== END FRONTEND UPDATE DEBUG ===');
+        }
+        
+        function updateUniversalMetrics(metrics) {
+            const container = document.getElementById('universalMetricsContainer');
+            if (!metrics) return;
+            
+            const metricConfigs = [
+                { key: 'revenue', label: 'Total Revenue', icon: '💰' },
+                { key: 'grossMargin', label: 'Gross Margin', icon: '📊' },
+                { key: 'operatingMargin', label: 'Operating Margin', icon: '📈' },
+                { key: 'fcf', label: 'Free Cash Flow', icon: '💵' },
+                { key: 'rdSpend', label: 'R&D Spend', icon: '🔬' },
+                { key: 'debtToEquity', label: 'Debt/Equity', icon: '⚖️' },
+                { key: 'roa', label: 'Return on Assets', icon: '📋' },
+                { key: 'epsGrowth', label: 'EPS Growth', icon: '📉' }
+            ];
+            
+            container.innerHTML = metricConfigs.map(config => {
+                const metric = metrics[config.key];
+                if (!metric || metric.value === 'N/A') {
+                    return `
+                        <div class="metric-tile" data-trend="neutral">
+                            <div class="metric-value">N/A</div>
+                            <div class="metric-label">${config.label}</div>
+                        </div>
+                    `;
+                }
+                
+                const changeText = metric.growth || metric.change || '';
+                const displayValue = `${metric.value}${changeText ? ' (' + changeText + ')' : ''}`;
+                
+                return `
+                    <div class="metric-tile" data-trend="${metric.trend}" title="Click for details">
+                        <div class="metric-value">${displayValue}</div>
+                        <div class="metric-label">${config.label}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function updateCompanyInsights(insights) {
+            const container = document.getElementById('companyInsightsContainer');
+            if (!insights || insights.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center;">No insights available</p>';
+                return;
+            }
+            
+            const categoryIcons = {
+                'growth-driver': '🚀',
+                'risk': '⚠️',
+                'strategic-initiative': '🎯',
+                'competitive-advantage': '💪',
+                'guidance': '📊'
+            };
+            
+            container.innerHTML = insights.map(insight => `
+                <div class="insight-card" data-impact="${insight.impact}">
+                    <div class="insight-header">
+                        <span class="insight-category">${insight.category}</span>
+                        <span class="insight-headline">${categoryIcons[insight.category] || '📌'} ${insight.headline}</span>
+                    </div>
+                    <div class="insight-detail">${insight.detail}</div>
+                    <div class="insight-footer">
+                        <span class="insight-confidence">Confidence: ${Math.round(insight.confidence * 100)}%</span>
+                        ${insight.sourceQuote ? `<span style="font-style: italic;">"${insight.sourceQuote}"</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateLegacySegmentTiles(data) {
+            const container = document.getElementById('marketTrendsContainer');
             
             // Safe data extraction with fallbacks
             const aiDatacom = data.aiDatacomGrowth?.cohrDatacomGrowthYoY || 
@@ -1344,7 +1634,6 @@
             const revenueLabel = isLLMData ? `${quarter} Total Revenue` : 'Q2 2025 Total Revenue';
             const marginLabel = isLLMData ? `${quarter} Gross Margin` : 'Q2 2025 Gross Margin';
             
-            
             container.innerHTML = `
                 <div class="trend-card">
                     <div class="trend-value">${aiDatacom}</div>
@@ -1375,8 +1664,6 @@
                     <div class="trend-label">${marginLabel}</div>
                 </div>
             `;
-            
-            console.log('=== END FRONTEND UPDATE DEBUG ===');
         }
 
         function renderFallbackMarketTrends() {

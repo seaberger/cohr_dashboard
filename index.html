@@ -1028,6 +1028,18 @@
             // Clean up old cache keys from previous implementation
             sessionStorage.removeItem('cohr-market-trends');
             
+            // Force display universal metrics and hide legacy segments
+            const universalContainer = document.getElementById('universalMetricsContainer');
+            const legacyContainer = document.getElementById('marketTrendsContainer');
+            if (universalContainer) {
+                universalContainer.style.display = 'grid';
+                console.log('✅ Universal metrics container set to display: grid');
+            }
+            if (legacyContainer) {
+                legacyContainer.style.display = 'none';
+                console.log('✅ Legacy segment container hidden');
+            }
+            
             initTradingView();
             loadAllData();
             setupChartControls();
@@ -1164,11 +1176,15 @@
         // Main data loading function
         async function loadAllData() {
             try {
+                console.log('🚀 loadAllData() called - using NEW split API approach');
+                
                 // Load stock data first
                 const stockData = await fetchStockData();
                 if (stockData) {
                     currentStockData = stockData;
                     updateStockHeader(stockData);
+                    
+                    console.log('📊 Loading financial data using split APIs...');
                     
                     // Load technical indicators, news, and financial data in parallel
                     await Promise.all([
@@ -1664,6 +1680,28 @@
             refreshAll: () => {
                 clearAllCaches();
                 return Promise.all([loadUniversalMetrics(), loadCompanyInsights()]);
+            },
+            forceShowUniversalMetrics: () => {
+                const universalContainer = document.getElementById('universalMetricsContainer');
+                const legacyContainer = document.getElementById('marketTrendsContainer');
+                if (universalContainer) {
+                    universalContainer.style.display = 'grid';
+                    console.log('✅ Forced universal metrics to display: grid');
+                }
+                if (legacyContainer) {
+                    legacyContainer.style.display = 'none';
+                    console.log('✅ Forced legacy container to display: none');
+                }
+                console.log('Universal container classes:', universalContainer?.className);
+                console.log('Universal container style:', universalContainer?.style.cssText);
+            },
+            checkContainers: () => {
+                const universalContainer = document.getElementById('universalMetricsContainer');
+                const legacyContainer = document.getElementById('marketTrendsContainer');
+                console.log('Universal container display:', universalContainer?.style.display);
+                console.log('Legacy container display:', legacyContainer?.style.display);
+                console.log('Universal container visible?', universalContainer?.offsetParent !== null);
+                console.log('Legacy container visible?', legacyContainer?.offsetParent !== null);
             }
         };
 

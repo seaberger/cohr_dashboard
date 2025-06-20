@@ -881,7 +881,7 @@
             
             <!-- Universal Financial Metrics Grid -->
             <div class="metrics-grid" id="universalMetricsContainer" style="display: grid;">
-                <!-- Top Row: Scale + Profitability -->
+                <!-- Top Row: Core Financial Metrics -->
                 <div class="metric-tile">
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
@@ -889,7 +889,7 @@
                     </div>
                     <div class="metric-label">Revenue</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">+26% YoY</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
                 <div class="metric-tile">
                     <div class="metric-header">
@@ -898,7 +898,7 @@
                     </div>
                     <div class="metric-label">Gross Margin</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">+5.0pp</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
                 <div class="metric-tile">
                     <div class="metric-header">
@@ -907,54 +907,54 @@
                     </div>
                     <div class="metric-label">Operating Margin</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">-0.5pp</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
                 <div class="metric-tile">
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
                     </div>
-                    <div class="metric-label">Free Cash Flow</div>
+                    <div class="metric-label">Operating Income</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">+45% YoY</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
                 
-                <!-- Second Row: Returns + Capital + Future -->
+                <!-- Second Row: Cash Flow & Profitability -->
                 <div class="metric-tile">
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">→</div>
                     </div>
-                    <div class="metric-label">R&D / Revenue</div>
+                    <div class="metric-label">Operating Cash Flow</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">8.2%</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
                 <div class="metric-tile">
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
                     </div>
-                    <div class="metric-label">ROIC</div>
+                    <div class="metric-label">R&D / Revenue</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">+2.1pp</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
                 <div class="metric-tile">
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↘</div>
                     </div>
-                    <div class="metric-label">Debt / Equity</div>
+                    <div class="metric-label">Net Income</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">-0.08</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
                 <div class="metric-tile">
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
                     </div>
-                    <div class="metric-label">Cash & ST Inv.</div>
+                    <div class="metric-label">Diluted EPS</div>
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
-                    <div class="metric-change">+$200M</div>
+                    <div class="metric-change">Loading...</div>
                 </div>
             </div>
             
@@ -1643,9 +1643,22 @@
                     }
                 }
                 
-                // Show loading state
+                // Show loading state - but preserve existing tiles if they exist
                 if (container) {
-                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; grid-column: 1 / -1;">📊 Loading financial metrics...</div>';
+                    const existingTiles = container.querySelectorAll('.metric-tile');
+                    if (existingTiles.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; grid-column: 1 / -1;">📊 Loading financial metrics...</div>';
+                        console.log('📊 Loading state displayed (no existing tiles)');
+                    } else {
+                        console.log('📊 Keeping existing tiles, updating in background');
+                        // Add a loading indicator without clearing tiles
+                        existingTiles.forEach(tile => {
+                            const valueEl = tile.querySelector('.metric-value');
+                            if (valueEl && !valueEl.textContent.includes('Loading')) {
+                                valueEl.style.opacity = '0.5';
+                            }
+                        });
+                    }
                 }
                 
                 console.log('🌐 Fetching from API...');
@@ -1680,16 +1693,32 @@
                 
                 if (data.universalMetrics) {
                     console.log('✅ Updating universal metrics display');
-                    updateUniversalMetrics(data.universalMetrics);
-                    updateMetricsTitle(data);
-                    updateDataSources(data);
                     
-                    // Ensure container visibility
+                    // Ensure container visibility BEFORE updating data
                     if (container) {
                         container.style.display = 'grid';
                         container.style.visibility = 'visible';
                         container.style.opacity = '1';
-                        console.log('✅ Universal metrics container forced visible');
+                        console.log('✅ Container prepared for metrics update');
+                    }
+                    
+                    updateUniversalMetrics(data.universalMetrics);
+                    updateMetricsTitle(data);
+                    updateDataSources(data);
+                    
+                    // Double-check container visibility after update
+                    if (container) {
+                        container.style.display = 'grid';
+                        container.style.visibility = 'visible';
+                        container.style.opacity = '1';
+                        
+                        // Count visible tiles
+                        const visibleTiles = container.querySelectorAll('.metric-tile');
+                        console.log(`✅ ${visibleTiles.length} metric tiles confirmed visible`);
+                        
+                        // Add persistence flag
+                        container.setAttribute('data-loaded', 'true');
+                        container.setAttribute('data-load-time', Date.now());
                     }
                 } else {
                     throw new Error('No universal metrics data in response');
@@ -1882,6 +1911,7 @@
                 const sparklineCanvas = tile.querySelector('.metric-sparkline');
                 
                 if (metric && metric.value !== 'N/A') {
+                    console.log(`📊 Updating ${config.label}: ${metric.value}`);
                     valueElement.textContent = metric.value;
                     
                     // Update trend arrow
@@ -1897,11 +1927,16 @@
                     if (metric.sparkline && sparklineCanvas) {
                         drawSparkline(sparklineCanvas, metric.sparkline);
                     }
+                    
+                    // Force visibility and styling
+                    tile.style.opacity = '1';
+                    tile.style.visibility = 'visible';
                 } else {
+                    console.log(`⚠️ ${config.label}: No data available`);
                     valueElement.textContent = 'N/A';
                     arrowElement.textContent = '–';
                     arrowElement.className = 'metric-trend-arrow neutral';
-                    changeElement.textContent = '';
+                    changeElement.textContent = 'No data';
                 }
             });
         }

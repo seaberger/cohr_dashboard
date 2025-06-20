@@ -959,9 +959,6 @@
             </div>
             
             <!-- Business Segments (legacy support) -->
-            <div class="trends-grid" id="marketTrendsContainer" style="display: none;">
-                <!-- Existing segment tiles will be populated here if no universal metrics -->
-            </div>
             
             <!-- Company Insights Section -->
             <div class="insights-section" style="margin-top: 24px;">
@@ -1000,30 +997,35 @@
 
         function debugForceShowUniversalMetrics() {
             const universalContainer = document.getElementById('universalMetricsContainer');
-            const legacyContainer = document.getElementById('marketTrendsContainer');
+            
+            console.log('🔧 FORCING UNIVERSAL METRICS DISPLAY...');
+            
             if (universalContainer) {
                 universalContainer.style.display = 'grid';
-                console.log('✅ Forced universal metrics to display: grid');
+                universalContainer.style.visibility = 'visible';
+                universalContainer.style.opacity = '1';
+                universalContainer.style.zIndex = '10';
+                universalContainer.style.position = 'relative';
+                console.log('✅ Universal metrics forced to display');
+            } else {
+                console.error('❌ Universal metrics container not found!');
             }
-            if (legacyContainer) {
-                legacyContainer.style.display = 'none';
-                console.log('✅ Forced legacy container to display: none');
-            }
-            console.log('Universal container classes:', universalContainer?.className);
-            console.log('Universal container style:', universalContainer?.style.cssText);
+            
+            // Force immediate re-check
+            setTimeout(() => {
+                console.log('🔍 Post-force container check:');
+                debugCheckContainers();
+            }, 100);
         }
 
         function debugCheckContainers() {
             const universalContainer = document.getElementById('universalMetricsContainer');
-            const legacyContainer = document.getElementById('marketTrendsContainer');
             console.log('=== CONTAINER DEBUG ===');
             console.log('Universal container exists:', !!universalContainer);
-            console.log('Legacy container exists:', !!legacyContainer);
             console.log('Universal container display:', universalContainer?.style.display);
-            console.log('Legacy container display:', legacyContainer?.style.display);
             console.log('Universal container visible?', universalContainer?.offsetParent !== null);
-            console.log('Legacy container visible?', legacyContainer?.offsetParent !== null);
             console.log('Universal container innerHTML length:', universalContainer?.innerHTML?.length || 0);
+            console.log('Universal container children count:', universalContainer?.children?.length || 0);
             console.log('=== END DEBUG ===');
         }
 
@@ -1081,38 +1083,26 @@
             // Clean up old cache keys from previous implementation
             sessionStorage.removeItem('cohr-market-trends');
             
-            // Force display universal metrics and hide legacy segments
+            // Ensure universal metrics container is visible
             const universalContainer = document.getElementById('universalMetricsContainer');
-            const legacyContainer = document.getElementById('marketTrendsContainer');
             
-            console.log('Container check:', {
+            console.log('Container setup:', {
                 universalExists: !!universalContainer,
-                legacyExists: !!legacyContainer,
-                universalDisplay: universalContainer?.style.display,
-                legacyDisplay: legacyContainer?.style.display
+                universalDisplay: universalContainer?.style.display
             });
             
             if (universalContainer) {
                 universalContainer.style.display = 'grid';
-                console.log('✅ Universal metrics container set to display: grid');
+                universalContainer.style.visibility = 'visible';
+                universalContainer.style.opacity = '1';
+                console.log('✅ Universal metrics container set to display');
                 
                 // Add loading content if empty
-                if (universalContainer.children.length === 0) {
-                    universalContainer.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #666;">
-                            📊 Loading universal financial metrics...
-                        </div>
-                    `;
+                if (universalContainer.children.length <= 8) { // 8 metric tiles expected
+                    console.log('📊 Universal metrics tiles ready for data');
                 }
             } else {
                 console.error('❌ Universal metrics container not found!');
-            }
-            
-            if (legacyContainer) {
-                legacyContainer.style.display = 'none';
-                console.log('✅ Legacy segment container hidden');
-            } else {
-                console.warn('⚠️ Legacy container not found');
             }
             
             // Debug functions available message
@@ -1664,29 +1654,17 @@
                 updateMetricsTitle(data);
                 updateDataSources(data);
                 
-                // Force show universal metrics container with high priority
+                // Ensure universal metrics container is visible
                 const universalContainer = document.getElementById('universalMetricsContainer');
-                const legacyContainer = document.getElementById('marketTrendsContainer');
                 
                 if (universalContainer) {
                     universalContainer.style.display = 'grid';
                     universalContainer.style.visibility = 'visible';
                     universalContainer.style.opacity = '1';
-                    console.log('✅ Universal metrics container forced to display');
+                    console.log('✅ Universal metrics container displaying successfully');
+                } else {
+                    console.error('❌ Universal metrics container not found after data load');
                 }
-                
-                if (legacyContainer) {
-                    legacyContainer.style.display = 'none';
-                    legacyContainer.style.visibility = 'hidden';
-                    console.log('✅ Legacy container forced to hide');
-                }
-                
-                // Additional timing-based override to catch any competing logic
-                setTimeout(() => {
-                    if (universalContainer) universalContainer.style.display = 'grid';
-                    if (legacyContainer) legacyContainer.style.display = 'none';
-                    console.log('🔄 Secondary container override applied');
-                }, 500);
                 
             } catch (error) {
                 console.error('Universal metrics error:', error);
@@ -2053,40 +2031,7 @@
             `;
         }
 
-        function renderFallbackMarketTrends() {
-            const container = document.getElementById('marketTrendsContainer');
-            
-            container.innerHTML = `
-                <div class="trend-card">
-                    <div class="trend-value">+79%</div>
-                    <div class="trend-label">COHR AI Datacom Growth (YoY)</div>
-                </div>
-                <div class="trend-card">
-                    <div class="trend-value">+56%</div>
-                    <div class="trend-label">COHR Networking Growth (YoY)</div>
-                </div>
-                <div class="trend-card">
-                    <div class="trend-value">+11%</div>
-                    <div class="trend-label">COHR Telecom Growth (YoY)</div>
-                </div>
-                <div class="trend-card">
-                    <div class="trend-value">+6%</div>
-                    <div class="trend-label">COHR Laser Growth (YoY)</div>
-                </div>
-                <div class="trend-card">
-                    <div class="trend-value">$1.43B</div>
-                    <div class="trend-label">Q2 2025 Total Revenue</div>
-                </div>
-                <div class="trend-card">
-                    <div class="trend-value">35.5%</div>
-                    <div class="trend-label">Q2 2025 Gross Margin</div>
-                </div>
-            `;
-            
-            // Update title to show COHR data
-            document.getElementById('marketTrendsTitle').innerHTML = 
-                'COHR Business Segment Performance <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Cached Q2 2025</span>';
-        }
+        // Legacy function removed - no longer needed with universal metrics
 
         function updateDataSources(data) {
             const container = document.getElementById('dataSourcesContent');

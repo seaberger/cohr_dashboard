@@ -1,5 +1,5 @@
 // Extract company insights from SEC filings using Google Gemini
-import { extractCompanyInsights } from '../lib/insightsExtractor.js';
+import { extractCompanyInsights, validateCompanyInsights } from '../lib/insightsExtractor.js';
 import fetch from 'node-fetch';
 
 // Simple in-memory cache for insights results
@@ -66,6 +66,11 @@ export default async function handler(req, res) {
       filingData.content.fullText,
       symbol
     );
+
+    // Validate and clean the insights data
+    if (!validateCompanyInsights(insightsData)) {
+      throw new Error('Invalid insights data structure returned from LLM');
+    }
 
     const response = {
       status: 'success',

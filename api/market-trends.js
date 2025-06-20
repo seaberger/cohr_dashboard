@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       if (useLLM === 'true') {
         try {
           console.log('Attempting to fetch LLM-analyzed segment data...');
-          const llmResponse = await fetch(`${getBaseUrl(req)}/api/analyze-segments?symbol=${symbol}`);
+          const llmResponse = await fetch(`${getBaseUrl(req)}/api/company-insights?symbol=${symbol}`);
           
           if (llmResponse.ok) {
             const llmData = await llmResponse.json();

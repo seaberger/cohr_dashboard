@@ -1025,6 +1025,9 @@
 
         // Initialize dashboard
         window.addEventListener('DOMContentLoaded', function() {
+            // Clean up old cache keys from previous implementation
+            sessionStorage.removeItem('cohr-market-trends');
+            
             initTradingView();
             loadAllData();
             setupChartControls();
@@ -1124,32 +1127,21 @@
             // Add refresh functionality
             refreshButton.addEventListener('click', async () => {
                 try {
-                    refreshButton.textContent = '⏳ Refreshing...';
+                    refreshButton.textContent = '⏳ Refreshing Financial Data...';
                     refreshButton.disabled = true;
                     
-                    // Force refresh by adding timestamp to break cache
-                    const response = await fetch(`${API_BASE}/api/market-trends?useLLM=true&refresh=true&clearCache=true&t=${Date.now()}`);
-                    if (!response.ok) throw new Error('Failed to refresh market trends');
+                    // Clear caches and force refresh both endpoints
+                    clearAllCaches();
                     
-                    const data = await response.json();
-                    updateMarketTrends(data.marketIntelligence);
-                    updateDataSources(data.marketIntelligence || data);
-                    
-                    // Update title based on data source
-                    const titleElement = document.getElementById('marketTrendsTitle');
-                    if (data.dataSource === 'LLM Analysis') {
-                        const quarter = data.filing?.quarter || 'Latest';
-                        titleElement.innerHTML = 
-                            `COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Analyzed)</span>`;
-                    } else if (data.dataSource === 'Static Fallback Data') {
-                        titleElement.innerHTML = 
-                            'COHR Business Segment Performance <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Q2 2025 Fallback</span>';
-                    }
+                    await Promise.all([
+                        loadUniversalMetrics(),
+                        loadCompanyInsights()
+                    ]);
 
-                    console.log('✅ Market trends refreshed successfully');
+                    console.log('✅ Universal metrics and insights refreshed successfully');
                     
                 } catch (error) {
-                    console.error('Failed to refresh market trends:', error);
+                    console.error('Failed to refresh financial data:', error);
                 } finally {
                     refreshButton.textContent = '🔄 Refresh';
                     refreshButton.disabled = false;
@@ -1505,34 +1497,47 @@
         }
 
         async function loadMarketTrends() {
+            // Load universal metrics and company insights separately
+            await Promise.all([
+                loadUniversalMetrics(),
+                loadCompanyInsights()
+            ]);
+        }
+
+        async function loadUniversalMetrics() {
+            const container = document.getElementById('universalMetricsContainer');
+            const cacheKey = 'cohr-universal-metrics';
+            
             try {
-                // Check session storage cache first
-                const cacheKey = 'cohr-market-trends';
-                const cached = sessionStorage.getItem(cacheKey);
-                if (cached) {
-                    const cachedData = JSON.parse(cached);
-                    const cacheAge = Date.now() - cachedData.timestamp;
-                    // Use cache if less than 5 minutes old
-                    if (cacheAge < 5 * 60 * 1000) {
-                        console.log('Using cached market trends data');
-                        updateMarketTrends(cachedData.marketIntelligence);
-                        updateDataSources(cachedData.marketIntelligence || cachedData);
+                // Check for cached data first
+                const cachedData = sessionStorage.getItem(cacheKey);
+                if (cachedData) {
+                    const parsed = JSON.parse(cachedData);
+                    const age = Date.now() - parsed.timestamp;
+                    
+                    // Use cache if less than 6 hours old
+                    if (age < 6 * 60 * 60 * 1000) {
+                        console.log('Using cached universal metrics data');
+                        updateUniversalMetrics(parsed.universalMetrics);
+                        updateMetricsTitle(parsed);
                         return;
                     }
                 }
                 
+                // Show loading state
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; grid-column: 1 / -1;">📊 Loading financial metrics...</div>';
+                
                 // Create timeout promise
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Request timeout')), 10000)
+                    setTimeout(() => reject(new Error('Metrics request timeout')), 20000)
                 );
                 
-                // Fetch with timeout
                 const response = await Promise.race([
-                    fetch(`${API_BASE}/api/market-trends?useLLM=true&t=${Date.now()}`),
+                    fetch(`${API_BASE}/api/universal-metrics?t=${Date.now()}`),
                     timeoutPromise
                 ]);
                 
-                if (!response.ok) throw new Error('Failed to fetch market trends');
+                if (!response.ok) throw new Error('Failed to fetch universal metrics');
                 const data = await response.json();
                 
                 // Cache the successful response
@@ -1541,87 +1546,141 @@
                     timestamp: Date.now()
                 }));
                 
-                updateMarketTrends(data.marketIntelligence);
-                updateDataSources(data.marketIntelligence || data);
+                updateUniversalMetrics(data.universalMetrics);
+                updateMetricsTitle(data);
+                updateDataSources(data);
                 
-                // Update title based on data source
-                const titleElement = document.getElementById('marketTrendsTitle');
-                if (data.dataSource === 'LLM Analysis') {
-                    const quarter = data.filing?.quarter || 'Latest';
-                    titleElement.innerHTML = 
-                        `COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Analyzed)</span>`;
-                } else if (data.dataSource === 'Static Fallback Data') {
-                    titleElement.innerHTML = 
-                        'COHR Business Segment Performance <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Q2 2025 Fallback</span>';
-                } else {
-                    titleElement.innerHTML = 
-                        'COHR Business Segment Performance <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Q2 2025 Earnings</span>';
-                }
-
-                // Show LLM analysis indicator if available
-                if (data.analysisMethod === 'Google Gemini 2.5 Flash') {
-                    console.log('✅ Using LLM-analyzed data from latest SEC filing');
-                } else if (data.warning) {
-                    console.log('⚠️ ' + data.warning);
-                }
+                // Show universal metrics container
+                document.getElementById('universalMetricsContainer').style.display = 'grid';
+                document.getElementById('marketTrendsContainer').style.display = 'none';
                 
             } catch (error) {
-                console.error('Market trends error:', error);
+                console.error('Universal metrics error:', error);
                 
                 // Show error state with retry button
-                const container = document.getElementById('universalMetricsContainer');
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 20px;">
                         <p style="color: #e74c3c; margin-bottom: 16px;">
-                            ${error.message === 'Request timeout' ? 'Request timed out' : 'Failed to load market data'}
+                            ${error.message === 'Metrics request timeout' ? 'Metrics request timed out' : 'Failed to load financial metrics'}
                         </p>
-                        <button onclick="loadMarketTrends()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                            🔄 Retry
+                        <button onclick="loadUniversalMetrics()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                            🔄 Retry Metrics
                         </button>
                     </div>
                 `;
-                
-                // Also render fallback data if available
-                renderFallbackMarketTrends();
-                updateDataSourcesFallback();
             }
         }
 
-        function updateMarketTrends(data) {
-            // Check if we have universal metrics (new structure)
-            if (data.universalMetrics) {
-                updateUniversalMetrics(data.universalMetrics);
-                updateCompanyInsights(data.companyInsights || []);
-                
-                // Hide legacy segment tiles
-                document.getElementById('marketTrendsContainer').style.display = 'none';
-                document.getElementById('universalMetricsContainer').style.display = 'grid';
-            } else {
-                // Fallback to legacy segment tiles
-                updateLegacySegmentTiles(data);
-                
-                // Show legacy tiles, hide universal metrics
-                document.getElementById('marketTrendsContainer').style.display = 'grid';
-                document.getElementById('universalMetricsContainer').style.display = 'none';
-            }
+        async function loadCompanyInsights() {
+            const container = document.getElementById('companyInsightsContainer');
+            const cacheKey = 'cohr-company-insights';
             
-            console.log('=== END FRONTEND UPDATE DEBUG ===');
+            try {
+                // Check for cached data first
+                const cachedData = sessionStorage.getItem(cacheKey);
+                if (cachedData) {
+                    const parsed = JSON.parse(cachedData);
+                    const age = Date.now() - parsed.timestamp;
+                    
+                    // Use cache if less than 12 hours old
+                    if (age < 12 * 60 * 60 * 1000) {
+                        console.log('Using cached company insights data');
+                        updateCompanyInsights(parsed.companyInsights);
+                        return;
+                    }
+                }
+                
+                // Show loading state
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">💡 Loading company insights...</div>';
+                
+                // Create timeout promise
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Insights request timeout')), 25000)
+                );
+                
+                const response = await Promise.race([
+                    fetch(`${API_BASE}/api/company-insights?t=${Date.now()}`),
+                    timeoutPromise
+                ]);
+                
+                if (!response.ok) throw new Error('Failed to fetch company insights');
+                const data = await response.json();
+                
+                // Cache the successful response
+                sessionStorage.setItem(cacheKey, JSON.stringify({
+                    ...data,
+                    timestamp: Date.now()
+                }));
+                
+                updateCompanyInsights(data.companyInsights);
+                
+            } catch (error) {
+                console.error('Company insights error:', error);
+                
+                // Show error state with retry button
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="color: #e74c3c; margin-bottom: 16px;">
+                            ${error.message === 'Insights request timeout' ? 'Insights request timed out' : 'Failed to load company insights'}
+                        </p>
+                        <button onclick="loadCompanyInsights()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                            🔄 Retry Insights
+                        </button>
+                    </div>
+                `;
+            }
         }
+
+        function updateMetricsTitle(data) {
+            const titleElement = document.getElementById('marketTrendsTitle');
+            if (data.extractionType === 'focused-metrics') {
+                const quarter = data.filing?.quarter || 'Latest';
+                titleElement.innerHTML = 
+                    `Universal Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Extracted)</span>`;
+            } else if (data.extractionType === 'fallback') {
+                titleElement.innerHTML = 
+                    'Universal Financial Metrics <span style="font-size: 0.7em; color: #f39c12;">●&nbsp;Q3 2025 Fallback</span>';
+            } else {
+                titleElement.innerHTML = 
+                    'Universal Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Q3 2025</span>';
+            }
+        }
+
+        function clearAllCaches() {
+            // Clear all cache keys used by the application
+            sessionStorage.removeItem('cohr-universal-metrics');
+            sessionStorage.removeItem('cohr-company-insights');
+            sessionStorage.removeItem('cohr-market-trends'); // Legacy
+            console.log('All financial data caches cleared');
+        }
+
+        // Global debug functions for console access
+        window.cohrDebug = {
+            clearCaches: clearAllCaches,
+            loadMetrics: loadUniversalMetrics,
+            loadInsights: loadCompanyInsights,
+            refreshAll: () => {
+                clearAllCaches();
+                return Promise.all([loadUniversalMetrics(), loadCompanyInsights()]);
+            }
+        };
+
+        // Legacy function removed - using separate loadUniversalMetrics and loadCompanyInsights
         
         function updateUniversalMetrics(metrics) {
             if (!metrics) return;
             
             const metricConfigs = [
-                // Top Row: Scale + Profitability
+                // Top Row: Financial Performance
                 { key: 'revenue', index: 0, label: 'Revenue' },
-                { key: 'grossMargin', index: 1, label: 'Gross Margin' },
-                { key: 'operatingMargin', index: 2, label: 'Operating Margin' },
-                { key: 'freeCashFlow', index: 3, label: 'Free Cash Flow' },
-                // Second Row: Returns + Capital + Future
-                { key: 'rdRatio', index: 4, label: 'R&D / Revenue' },
-                { key: 'roic', index: 5, label: 'ROIC' },
-                { key: 'debtToEquity', index: 6, label: 'Debt / Equity' },
-                { key: 'cashAndInvestments', index: 7, label: 'Cash & ST Inv.' }
+                { key: 'grossMarginPct', index: 1, label: 'Gross Margin' },
+                { key: 'operatingMarginPct', index: 2, label: 'Operating Margin' },
+                { key: 'operatingIncome', index: 3, label: 'Operating Income' },
+                // Second Row: Cash Generation & Performance
+                { key: 'operatingCashFlow', index: 4, label: 'Operating Cash Flow' },
+                { key: 'rndRatioPct', index: 5, label: 'R&D / Revenue' },
+                { key: 'netIncome', index: 6, label: 'Net Income' },
+                { key: 'epsDiluted', index: 7, label: 'Diluted EPS' }
             ];
             
             const tiles = document.querySelectorAll('.metric-tile');

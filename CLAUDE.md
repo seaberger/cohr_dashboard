@@ -14,14 +14,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Current Sprint**: Enhanced Dynamic Insights Feed - Structured tagging & professional layout
 
 ### 🚧 **Current Feature Branch Status** (`feature/universal-financial-tiles`)
-- ✅ **Universal Financial Metrics**: 8 KPI tiles with sparklines working live
-  - Real data: $4.28B revenue (+26%), 35.0% gross margin (+5.0pp)
-  - Some metrics showing N/A (Operating Margin, FCF, ROIC, EPS Growth)
-  - Layout: 4x2 grid with organized rows (Scale+Profitability / Returns+Capital)
-- 🚧 **Next Implementation**: Enhanced Dynamic Insights Feed
-  - Tagged insight cards with structured grammar
-  - Evidence attribution and confidence scoring
-  - 8 insight categories: GROWTH-DRIVER, RISK, STRATEGIC-MOVE, etc.
+- ✅ **Split LLM Architecture**: Focused dual-endpoint approach implemented
+  - `/api/universal-metrics` - GAAP-focused financial metrics extraction
+  - `/api/company-insights` - Narrative analysis and business intelligence
+  - Independent caching, loading, and retry mechanisms
+- ✅ **Universal Financial Metrics**: 8 simplified GAAP-based KPI tiles
+  - Revenue, Gross Margin %, Operating Margin %, Operating Income
+  - Operating Cash Flow, R&D / Revenue %, Net Income, Diluted EPS
+  - Enhanced prompting for better extraction accuracy
+  - Layout: 4x2 grid with sparklines and trend arrows
+- ✅ **Enhanced Company Insights**: Structured business intelligence extraction
+  - 8 insight categories: GROWTH-DRIVER 🚀, RISK ⚠, STRATEGIC-MOVE 🎯, etc.
+  - Evidence attribution with SEC filing quotes
+  - Confidence scoring and impact classification
 
 ## Commands
 
@@ -62,10 +67,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── historical.js            # Yahoo Finance historical OHLCV data
 │   ├── market-trends.js         # Enhanced with LLM analysis + Q2 2025 fallback
 │   ├── sec-filings.js           # SEC EDGAR filing fetcher
-│   └── analyze-segments.js      # Google Gemini 2.5 Flash Lite LLM analysis
-├── lib/                          # Technical analysis libraries  
+│   ├── universal-metrics.js     # Focused GAAP metrics extraction (NEW)
+│   └── company-insights.js      # Business intelligence extraction (RENAMED)
+├── lib/                          # Technical analysis & LLM utilities  
 │   ├── technicalAnalysis.js     # Support/resistance calculation functions
-│   └── geminiService.js         # Google Gemini 2.5 Flash Lite LLM utilities
+│   ├── geminiService.js         # Google Gemini 2.5 Flash Lite LLM utilities
+│   ├── metricsExtractor.js      # Specialized GAAP metrics extraction (NEW)
+│   ├── insightsExtractor.js     # Company insights extraction (NEW)
+│   ├── schemas.js               # Zod schema validation for LLM data
+│   └── dataTransformer.js       # LLM data transformation pipeline
 ├── testing/                      # Test scripts and utilities
 │   └── test-llm-integration.js  # LLM API testing script
 ├── backups/                      # Original design files
@@ -87,16 +97,18 @@ All endpoints support CORS and have 30-second timeout limits:
 - `GET /api/historical?symbol=COHR&period=1y` - Historical OHLCV data
 - `GET /api/market-trends?useLLM=true` - Dynamic market intelligence (LLM + fallback)
 - `GET /api/sec-filings?symbol=COHR&type=10-Q` - Latest SEC filing fetcher
-- `GET /api/analyze-segments?symbol=COHR` - LLM analysis of business segments
+- `GET /api/universal-metrics?symbol=COHR` - ✨ NEW: Focused GAAP metrics extraction
+- `GET /api/company-insights?symbol=COHR` - ✨ NEW: Business intelligence & insights
 
 ### Data Flow Architecture
 1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → fallback APIs → demo data
 2. **News Data**: Yahoo Finance search API → article summary extraction
 3. **Analyst Data**: Yahoo Finance quoteSummary → fallback to research data
 4. **Technical Analysis**: Yahoo Finance historical data → real support/resistance calculation
-5. **Market Intelligence**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → dynamic analysis → Q2 2025 fallback
-6. **LLM Pipeline**: SEC filing text → Gemini analysis → structured JSON → frontend tiles
-7. **Frontend**: 5-minute auto-refresh, LLM indicators, manual refresh, data transparency
+5. **Universal Metrics**: ✨ SEC EDGAR API → Focused GAAP extraction → structured financial KPIs
+6. **Company Insights**: ✨ SEC EDGAR API → Business intelligence analysis → tagged insights
+7. **Market Intelligence**: Legacy fallback system for segment data
+8. **Frontend**: Split loading (metrics + insights), independent caching, granular retry buttons
 
 ## Environment Variables
 

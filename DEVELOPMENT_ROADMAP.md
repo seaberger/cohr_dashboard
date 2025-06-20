@@ -30,11 +30,17 @@ Transform the COHR investor dashboard from a basic financial tool into a compreh
 
 ### ✅ **Recently Completed** 
 - **Issue #9**: ✅ Universal Financial Metrics (Complete - December 2025)
-  - 8 KPI tiles with organized layout (Scale + Profitability / Returns + Capital)
+  - Split LLM Architecture: Focused dual-endpoint approach
+  - 8 simplified GAAP-based KPI tiles with enhanced extraction
   - Canvas-based sparklines showing 8-quarter trends
   - Trend arrows (↗↘→) with semantic colors
   - Responsive grid layout (4-col → 2-col → 1-col)
-  - Enhanced LLM prompting for better metric extraction
+  - Independent caching and retry mechanisms
+- **Split LLM Implementation**: ✅ Dual-Endpoint Architecture (Complete - December 2025)
+  - `/api/universal-metrics` - Focused GAAP metrics extraction
+  - `/api/company-insights` - Business intelligence and narrative analysis
+  - Enhanced prompting for improved accuracy and reliability
+  - Granular error handling with individual retry buttons
 - **Issue #4**: ✅ Support & Resistance Technical Analysis (Complete - real swing highs/lows)
 - **Issue #3**: ✅ Industry & Market Trends (Complete - LLM-powered Q3 2025 data)
 
@@ -296,12 +302,12 @@ Transform the COHR investor dashboard from a basic financial tool into a compreh
 - **ESG Analysis**: Environmental and governance scoring
 
 ### **Platform Expansion**
-- **Segment Tiles Enhancement (Next Sprint Priority)**: 
-  - Visual improvements with color-coded growth indicators
-  - Mobile-responsive grid layout with click-for-details
-  - LLM-generated key insights (growth drivers, risks, margin analysis)
-  - Performance optimizations with caching and timeout handling
-  - See GitHub Issue #9 for complete implementation plan
+- **Split LLM Architecture (COMPLETED)**: ✅
+  - Focused dual-endpoint approach implemented
+  - Enhanced GAAP metrics extraction accuracy
+  - Business intelligence insights with structured tagging
+  - Independent caching and granular retry mechanisms
+  - See GitHub Issue #9 implementation complete
 - **Dynamic Ticker Selection (Medium Priority)**: 
   - Interactive search with auto-complete for any stock ticker
   - Company name search with intelligent matching

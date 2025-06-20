@@ -51,10 +51,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── historical.js            # Yahoo Finance historical OHLCV data
 │   ├── market-trends.js         # Enhanced with LLM analysis + Q2 2025 fallback
 │   ├── sec-filings.js           # SEC EDGAR filing fetcher
-│   └── analyze-segments.js      # Google Gemini 2.5 Flash LLM analysis
+│   └── analyze-segments.js      # Google Gemini 2.5 Flash Lite LLM analysis
 ├── lib/                          # Technical analysis libraries  
 │   ├── technicalAnalysis.js     # Support/resistance calculation functions
-│   └── geminiService.js         # Google Gemini 2.5 Flash LLM utilities
+│   └── geminiService.js         # Google Gemini 2.5 Flash Lite LLM utilities
 ├── testing/                      # Test scripts and utilities
 │   └── test-llm-integration.js  # LLM API testing script
 ├── backups/                      # Original design files
@@ -83,7 +83,7 @@ All endpoints support CORS and have 30-second timeout limits:
 2. **News Data**: Yahoo Finance search API → article summary extraction
 3. **Analyst Data**: Yahoo Finance quoteSummary → fallback to research data
 4. **Technical Analysis**: Yahoo Finance historical data → real support/resistance calculation
-5. **Market Intelligence**: SEC EDGAR API → Google Gemini 2.5 Flash → dynamic analysis → Q2 2025 fallback
+5. **Market Intelligence**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → dynamic analysis → Q2 2025 fallback
 6. **LLM Pipeline**: SEC filing text → Gemini analysis → structured JSON → frontend tiles
 7. **Frontend**: 5-minute auto-refresh, LLM indicators, manual refresh, data transparency
 
@@ -93,7 +93,7 @@ All endpoints support CORS and have 30-second timeout limits:
 ```
 ALPHA_VANTAGE_API_KEY=your_key_here     # Primary stock data source
 NEWS_API_KEY=your_key_here              # Financial news articles
-GEMINI_API_KEY=your_key_here            # Google Gemini 2.5 Flash for LLM analysis
+GEMINI_API_KEY=your_key_here            # Google Gemini 2.5 Flash Lite for LLM analysis
 ```
 
 ### Optional (Configuration)
@@ -125,7 +125,7 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - **COHR-specific news articles** (Yahoo Finance search API)
 - **Article summaries** (extracted from meta descriptions)
 - **Analyst consensus data** (Yahoo Finance quoteSummary)
-- **Dynamic business segment performance** (Google Gemini 2.5 Flash + SEC EDGAR)
+- **Dynamic business segment performance** (Google Gemini 2.5 Flash Lite + SEC EDGAR)
   - **Q3 2025 Real Data**: $1.5B revenue (+24% YoY)
   - Networking: +45% YoY growth (AI datacenter demand)
   - Materials: -1% YoY (improved from Q2's -4%)
@@ -138,7 +138,7 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - **Price targets**: Research-compiled from major firms
 
 ### 🤖 LLM INTEGRATION STATUS
-- **Google Gemini 2.5 Flash**: Deployed and analyzing latest SEC filings
+- **Google Gemini 2.5 Flash Lite**: Deployed and analyzing latest SEC filings
 - **SEC EDGAR Integration**: Fetching 10-Q/10-K filings automatically
 - **Data Extraction**: Q3 2025 real segment performance extracted successfully
 - **Cost**: <$1/month with smart caching (24hr filing cache, 7-day analysis cache)
@@ -166,7 +166,7 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - Quarterly update cycle aligned with earnings
 
 **LLM Integration: Dynamic SEC Filing Analysis** ✅ (June 2025)
-- Google Gemini 2.5 Flash integration for SEC filing analysis
+- Google Gemini 2.5 Flash Lite integration for SEC filing analysis
 - Automatic fetching of latest 10-Q/10-K filings from SEC EDGAR
 - Real-time extraction of Q3 2025 business segment performance
 - Smart fallback to Q2 2025 data with visual indicators
@@ -299,7 +299,7 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
   - Networking: +45% YoY
   - Materials: -1% YoY  
   - Lasers: +4% YoY
-- **Google Gemini 2.5 Flash**: Successfully extracting structured data from SEC filings
+- **Google Gemini 2.5 Flash Lite**: Successfully extracting structured data from SEC filings
 - **Schema validation**: Zod-based validation prevents data transformation errors
 
 ### Planned Enhancements (5 Phases)

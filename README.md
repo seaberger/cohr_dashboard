@@ -1,10 +1,10 @@
 # COHR Investor Dashboard
 
-**Status**: 🟢 **LIVE & DEPLOYED** | **Last Updated**: June 2025  
-**Development Stage**: Sprint 3 Complete + LLM Integration ✅ (Real Q3 2025 SEC Data)  
-**Recent Achievement**: ✅ Google Gemini 2.5 Flash Lite integration for dynamic SEC filing analysis
+**Status**: 🟢 **LIVE & DEPLOYED** | **Last Updated**: December 2025  
+**Development Stage**: Major Features Complete - Company Insights Enhanced ✅  
+**Recent Achievement**: ✅ Professional Company Insights with investment-grade categorization & data integrity priority
 
-A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, **LLM-powered SEC filing analysis**, and intelligent financial news. Built with Vercel serverless architecture and Google Gemini 2.5 Flash Lite for professional-grade financial analysis with real Q3 2025 business segment data.
+A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, **LLM-powered SEC filing analysis**, and intelligent financial news. Built with Vercel serverless architecture and Google Gemini 2.5 Flash Lite for professional-grade financial analysis with investment-focused insights.
 
 ## 🎯 Live Dashboard
 
@@ -26,16 +26,19 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 - **Color-coded trend indicators** for quick visual scanning
 - **Mobile-responsive grid layout** that adapts to any screen size
 
-### 💡 **AI-Powered Company Insights** (NEW!)
-- **Dynamic insights extraction** from SEC filings:
-  - Growth drivers and catalysts
-  - Risk factors and headwinds
-  - Strategic initiatives
-  - Competitive advantages
-  - Management guidance highlights
-- **Impact indicators** (positive/negative/neutral)
-- **Confidence scoring** for each insight
-- **Source attribution** from filing text
+### 💡 **Professional Company Insights** (ENHANCED!)
+- **Investment-grade analysis** with 8 professional categories:
+  - **GROWTH-DRIVER** 🚀 - New revenue engines, secular tailwinds, market-share wins
+  - **MARGIN-IMPACT** 💰 - Cost take-outs, mix shift, pricing power, commodity swings
+  - **RISK** ⚠️ - Litigation, macro headwinds, regulatory changes, FX exposure
+  - **STRATEGIC-MOVE** 🎯 - M&A, divestitures, new reporting segments, major hires
+  - **CAPITAL-ALLOCATION** 🏗️ - Buybacks, dividends, debt pay-down/issuance, big cap-ex
+  - **INNOVATION** 🧪 - Patents, product launches, R&D milestones
+  - **MARKET-DYNAMICS** 📊 - Industry demand shifts, competitor actions, TAM changes
+  - **OPERATIONS** 🛠️ - Supply-chain issues, manufacturing yields, plant closures/expansions
+- **Color-coded confidence indicators** (high/medium/low)
+- **Professional card design** with enhanced mobile responsiveness
+- **Data integrity priority** - only real SEC filing data, no placeholder content
 
 ### ✅ **LIVE & REAL DATA**
 - **Real-time Stock Prices** - Yahoo Finance chart API with intelligent fallbacks
@@ -57,11 +60,11 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 - **Analyst Consensus** - Yahoo Finance quoteSummary API data
 - **Data Transparency** - Full source verification and methodology
 
-### 🔜 **NEXT FEATURES (Segment Tiles Enhancement)**
-- **Visual Improvements** - Color-coded growth indicators, mobile-responsive grid
-- **Key Insights Integration** - LLM-generated growth drivers, risks, margin analysis  
-- **Performance Enhancements** - Edge caching, timeout handling, better UX
-- **Future**: Competitive Intelligence, Advanced AI Integration
+### 🔜 **NEXT FEATURES**
+- **Performance Optimization** - Enhanced loading states, server-side caching
+- **User Experience Polish** - Improved animations, better error recovery
+- **Data Source Transparency** - Enhanced filing links, freshness indicators
+- **Advanced Features** - Export functionality, historical comparison tools
 
 ## 🏗️ Architecture
 
@@ -85,9 +88,9 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 │   ├── technical.js             # Basic technical indicators (fallback)
 │   ├── technical-real.js        # Real historical technical analysis
 │   ├── historical.js            # Yahoo Finance historical OHLCV
-│   ├── market-trends.js         # Enhanced with LLM analysis + Q2 2025 fallback
 │   ├── sec-filings.js           # SEC EDGAR filing fetcher
-│   └── analyze-segments.js      # Google Gemini 2.5 Flash Lite LLM analysis
+│   ├── universal-metrics.js     # Focused GAAP metrics extraction
+│   └── company-insights.js      # Business intelligence extraction
 ├── lib/                          # Technical analysis & LLM utilities  
 │   ├── technicalAnalysis.js     # Support/resistance calculations
 │   ├── geminiService.js         # Google Gemini 2.5 Flash Lite LLM utilities
@@ -113,18 +116,18 @@ All endpoints include CORS support and 30-second timeout limits:
 - **`GET /api/analyst?symbol=COHR&currentPrice={price}`** - Analyst consensus and price targets
 - **`GET /api/technical-real?symbol=COHR&period=1y`** - Real historical technical analysis
 - **`GET /api/historical?symbol=COHR&period=1y`** - Historical OHLCV data
-- **`GET /api/market-trends?useLLM=true`** - Enhanced with LLM analysis + Q2 2025 fallback
 - **`GET /api/sec-filings?symbol=COHR&type=10-Q`** - Latest SEC filing fetcher
-- **`GET /api/analyze-segments?symbol=COHR`** - LLM analysis of business segments
+- **`GET /api/universal-metrics?symbol=COHR`** - GAAP-focused financial metrics extraction
+- **`GET /api/company-insights?symbol=COHR`** - Business intelligence & insights analysis
 
 ### **Enhanced Data Flow (LLM-Powered)**
-1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → fallback APIs → demo data
-2. **News Data**: Yahoo Finance search → article summary extraction → curated fallback
+1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → professional error handling
+2. **News Data**: Yahoo Finance search → article summary extraction → transparent error states
 3. **Analyst Data**: Yahoo Finance quoteSummary → research-compiled consensus data
 4. **Technical Analysis**: Yahoo Finance historical → real support/resistance calculation
-5. **Market Intelligence**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → dynamic analysis → Q2 2025 fallback
-6. **LLM Pipeline**: SEC filing text → Gemini analysis → structured JSON → frontend tiles
-7. **Frontend**: 5-minute auto-refresh, LLM indicators, manual refresh, data transparency
+5. **Universal Metrics**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → GAAP metrics extraction
+6. **Company Insights**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → investment-grade categorization
+7. **Frontend**: 5-minute auto-refresh, independent refresh buttons, data integrity priority
 
 ## 📊 Data Quality & Sources
 
@@ -135,27 +138,29 @@ All endpoints include CORS support and 30-second timeout limits:
   - Support/resistance from actual swing highs/lows
   - Moving averages calculated from historical prices
   - RSI, MACD from real price data
-- **Dynamic business segment performance** (Google Gemini 2.5 Flash Lite + SEC EDGAR)
-  - **Q3 2025 Real Data**: $1.5B revenue (+24% YoY)
-  - Networking: +45% YoY growth (AI datacenter demand)
-  - Materials: -1% YoY (improved from Q2's -4%)
-  - Lasers: +4% YoY growth (display & semiconductor equipment)
-  - **Smart Fallback**: Q2 2025 data if LLM analysis fails
+- **Universal Financial Metrics** (Google Gemini 2.5 Flash Lite + SEC EDGAR)
+  - 8 GAAP-based KPIs with sparklines and trend arrows
+  - Real-time extraction from latest SEC filings
+  - Professional error handling when data unavailable
+- **Company Insights** (Investment-grade categorization)
+  - 8 professional categories for financial analysis
+  - Color-coded confidence scoring
+  - Only authentic SEC filing data - no placeholder content
 - **COHR-specific news** (Yahoo Finance search API)
 - **Analyst consensus data** (Yahoo Finance quoteSummary)
 
 ### **🤖 LLM INTEGRATION STATUS**
 - **Google Gemini 2.5 Flash Lite**: Deployed and analyzing latest SEC filings
 - **SEC EDGAR Integration**: Fetching 10-Q/10-K filings automatically
-- **Data Extraction**: Q3 2025 real segment performance extracted successfully
-- **Cost**: <$1/month with smart caching (24hr filing cache, 7-day analysis cache)
-- **Visual Indicators**: Green = LLM analyzed, Orange = Q2 fallback
-- **Manual Refresh**: Users can trigger latest filing analysis
-- **Error Handling**: Graceful fallback to Q2 2025 static data
+- **Split Architecture**: Focused endpoints for metrics and insights
+- **Cost**: <$1/month with smart caching strategies
+- **Data Integrity**: Professional error states when analysis fails
+- **Manual Refresh**: Independent refresh buttons for each section
+- **Investment Grade**: Prioritizes accuracy over availability
 
-### **❌ HIDDEN/PLANNED DATA**
-- **Competitive positioning** (hidden until Sprint 2 implementation)
-- **AI-powered insights** (planned for Sprint 4 with OpenAI integration)
+### **❌ PLANNED ENHANCEMENTS**
+- **Competitive positioning** (future Sprint 2 implementation)
+- **Advanced export features** (historical data comparison)
 
 ## 🚀 Quick Deployment
 
@@ -242,16 +247,24 @@ All endpoints include CORS support and 30-second timeout limits:
 - [x] Google Gemini 2.5 Flash Lite integration for SEC filing analysis
 - [x] Automatic fetching of latest 10-Q/10-K filings from SEC EDGAR
 - [x] Real-time extraction of Q3 2025 business segment performance
-- [x] Smart fallback to Q2 2025 data with visual indicators
 - [x] Manual refresh functionality and enhanced error handling
 - [x] Cost-effective implementation (<$1/month with caching)
 
+**Universal Financial Metrics & Company Insights Enhancement** ✅ (December 2025)
+- [x] Split LLM architecture with focused dual endpoints
+- [x] 8 universal GAAP-based financial metrics with sparklines and trend arrows
+- [x] Professional Company Insights with 8 investment-grade categories
+- [x] Enhanced card design with gradients and improved typography
+- [x] Color-coded confidence scoring and mobile responsiveness
+- [x] Data integrity priority - removed all hardcoded fallbacks
+- [x] Professional error handling with transparent failure states
+
 ### **🚧 NEXT PRIORITIES**
-**Segment Tiles Enhancement (Issue #9)** - Current Focus
-- [ ] Visual & UX improvements (color-coded growth indicators)
-- [ ] Mobile-responsive CSS Grid layout with click-for-details
-- [ ] LLM-generated key insights (growth drivers, risks, margin analysis)
-- [ ] Performance optimizations (caching, timeout handling)
+**Performance & Polish** - Current Focus
+- [ ] Performance optimization and enhanced loading states
+- [ ] Advanced user experience improvements
+- [ ] Data source transparency enhancements
+- [ ] Accessibility and keyboard navigation improvements
 
 **Sprint 2: Competitive Intelligence** (Future)
 - [ ] Competitive positioning section (currently hidden)

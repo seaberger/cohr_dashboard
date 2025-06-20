@@ -8,9 +8,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Status**: ✅ **DEPLOYED AND LIVE** on Vercel  
 **Live URL**: Available in Vercel dashboard  
-**Last Updated**: June 2025  
-**Development Stage**: Sprint 3 Complete + LLM Integration ✅ (Dynamic SEC Filing Analysis)  
-**Next Sprint**: Segment Tiles Enhancement (Issue #9) - Visual improvements & key insights
+**Feature Branch URL**: https://cohr-dashboard-git-feature-univer-6a9738-sean-bergmans-projects.vercel.app/  
+**Last Updated**: December 2025  
+**Development Stage**: Universal Financial Metrics ✅ (Issue #9 Complete)  
+**Current Sprint**: Enhanced Dynamic Insights Feed - Structured tagging & professional layout
+
+### 🚧 **Current Feature Branch Status** (`feature/universal-financial-tiles`)
+- ✅ **Universal Financial Metrics**: 8 KPI tiles with sparklines working live
+  - Real data: $4.28B revenue (+26%), 35.0% gross margin (+5.0pp)
+  - Some metrics showing N/A (Operating Margin, FCF, ROIC, EPS Growth)
+  - Layout: 4x2 grid with organized rows (Scale+Profitability / Returns+Capital)
+- 🚧 **Next Implementation**: Enhanced Dynamic Insights Feed
+  - Tagged insight cards with structured grammar
+  - Evidence attribution and confidence scoring
+  - 8 insight categories: GROWTH-DRIVER, RISK, STRATEGIC-MOVE, etc.
 
 ## Commands
 
@@ -116,6 +127,11 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 ## Current Data Sources Status
 
 ### ✅ LIVE & REAL DATA
+- **Universal Financial Metrics** (8 Key KPIs with sparklines) ✨ NEW
+  - **Top Row (Scale + Profitability)**: Revenue, Gross Margin, Operating Margin, FCF
+  - **Second Row (Returns + Capital)**: R&D/Revenue, ROIC, Debt/Equity, Cash & ST Investments
+  - **Visual enhancements**: Trend arrows (↗↘→), 8-quarter sparklines, responsive grid
+  - **Real Q3 2025 data**: $4.28B revenue (+26%), 35.0% gross margin (+5.0pp)
 - **Stock price, change, market cap** (Yahoo Finance chart API - real-time)
 - **TradingView interactive charts** with technical overlays
 - **Real technical analysis** (Yahoo Finance historical data)
@@ -125,12 +141,11 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - **COHR-specific news articles** (Yahoo Finance search API)
 - **Article summaries** (extracted from meta descriptions)
 - **Analyst consensus data** (Yahoo Finance quoteSummary)
-- **Dynamic business segment performance** (Google Gemini 2.5 Flash Lite + SEC EDGAR)
-  - **Q3 2025 Real Data**: $1.5B revenue (+24% YoY)
-  - Networking: +45% YoY growth (AI datacenter demand)
-  - Materials: -1% YoY (improved from Q2's -4%)
-  - Lasers: +4% YoY growth (display & semiconductor equipment)
-  - **Smart Fallback**: Q2 2025 data if LLM analysis fails
+- **Dynamic business insights** (Google Gemini 2.5 Flash Lite + SEC EDGAR) ✨ ENHANCED
+  - **Tagged insight cards**: GROWTH-DRIVER 🚀, RISK ⚠, STRATEGIC-MOVE 🎯, etc.
+  - **Evidence attribution**: SEC filing page references with inline footnotes
+  - **Confidence scoring**: 0-100% reliability indicators
+  - **Structured grammar**: One-sentence headline + context + evidence
 
 ### ⚠️ QUARTERLY UPDATED DATA (Fallback Only)
 - **Static Q2 2025 data**: Used only when LLM analysis fails

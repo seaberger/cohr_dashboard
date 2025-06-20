@@ -489,57 +489,95 @@
             display: none;
         }
         
-        /* Universal Metrics Grid */
+        /* Universal Metrics Grid - Two Row Layout */
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 16px;
         }
         
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         .metric-tile {
-            background: white;
-            border: 1px solid #e0e0e0;
+            background: #fafbfc;
+            border: 1px solid #e1e8ed;
             border-radius: 8px;
             padding: 16px;
             transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         
         .metric-tile:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-color: #cbd6e2;
         }
         
-        .metric-value {
-            font-size: 1.4em;
-            font-weight: 600;
-            color: #2c3e50;
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 8px;
         }
         
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+            line-height: 1.2;
+        }
+        
+        .metric-trend-arrow {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .metric-trend-arrow.positive {
+            color: #27ae60;
+        }
+        
+        .metric-trend-arrow.negative {
+            color: #e74c3c;
+        }
+        
+        .metric-trend-arrow.neutral {
+            color: #7f8c8d;
+        }
+        
         .metric-label {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: #7f8c8d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: 500;
         }
         
-        /* Metric trend indicators */
-        .metric-tile[data-trend="positive"] {
-            background: linear-gradient(135deg, #f5fcf7 0%, #e8f6ec 100%);
-            border-color: #27ae60;
+        .metric-sparkline {
+            height: 24px;
+            width: 100%;
+            margin-top: 8px;
         }
         
-        .metric-tile[data-trend="negative"] {
-            background: linear-gradient(135deg, #fef5f5 0%, #fee8e8 100%);
-            border-color: #e74c3c;
-        }
-        
-        .metric-tile[data-trend="neutral"] {
-            background: linear-gradient(135deg, #f5f9fc 0%, #e8f2f8 100%);
-            border-color: #3498db;
+        .metric-change {
+            font-size: 0.75em;
+            color: #95a5a6;
+            margin-top: 4px;
         }
         
         /* Company Insights Cards */
@@ -843,38 +881,80 @@
             
             <!-- Universal Financial Metrics Grid -->
             <div class="metrics-grid" id="universalMetricsContainer">
-                <!-- Metrics will be dynamically populated -->
+                <!-- Top Row: Scale + Profitability -->
                 <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
-                    <div class="metric-label">Total Revenue</div>
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">↗</div>
+                    </div>
+                    <div class="metric-label">Revenue</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">+26% YoY</div>
                 </div>
                 <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">↗</div>
+                    </div>
                     <div class="metric-label">Gross Margin</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">+5.0pp</div>
                 </div>
                 <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">→</div>
+                    </div>
                     <div class="metric-label">Operating Margin</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">-0.5pp</div>
                 </div>
                 <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">↗</div>
+                    </div>
                     <div class="metric-label">Free Cash Flow</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">+45% YoY</div>
+                </div>
+                
+                <!-- Second Row: Returns + Capital + Future -->
+                <div class="metric-tile">
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">→</div>
+                    </div>
+                    <div class="metric-label">R&D / Revenue</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">8.2%</div>
                 </div>
                 <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
-                    <div class="metric-label">R&D Spend</div>
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">↗</div>
+                    </div>
+                    <div class="metric-label">ROIC</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">+2.1pp</div>
                 </div>
                 <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
-                    <div class="metric-label">Debt/Equity</div>
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">↘</div>
+                    </div>
+                    <div class="metric-label">Debt / Equity</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">-0.08</div>
                 </div>
                 <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
-                    <div class="metric-label">Return on Assets</div>
-                </div>
-                <div class="metric-tile">
-                    <div class="metric-value">Loading...</div>
-                    <div class="metric-label">EPS Growth</div>
+                    <div class="metric-header">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-trend-arrow">↗</div>
+                    </div>
+                    <div class="metric-label">Cash & ST Inv.</div>
+                    <canvas class="metric-sparkline" width="100" height="24"></canvas>
+                    <div class="metric-change">+$200M</div>
                 </div>
             </div>
             
@@ -1529,41 +1609,113 @@
         }
         
         function updateUniversalMetrics(metrics) {
-            const container = document.getElementById('universalMetricsContainer');
             if (!metrics) return;
             
             const metricConfigs = [
-                { key: 'revenue', label: 'Total Revenue', icon: '💰' },
-                { key: 'grossMargin', label: 'Gross Margin', icon: '📊' },
-                { key: 'operatingMargin', label: 'Operating Margin', icon: '📈' },
-                { key: 'fcf', label: 'Free Cash Flow', icon: '💵' },
-                { key: 'rdSpend', label: 'R&D Spend', icon: '🔬' },
-                { key: 'debtToEquity', label: 'Debt/Equity', icon: '⚖️' },
-                { key: 'roa', label: 'Return on Assets', icon: '📋' },
-                { key: 'epsGrowth', label: 'EPS Growth', icon: '📉' }
+                // Top Row: Scale + Profitability
+                { key: 'revenue', index: 0, label: 'Revenue' },
+                { key: 'grossMargin', index: 1, label: 'Gross Margin' },
+                { key: 'operatingMargin', index: 2, label: 'Operating Margin' },
+                { key: 'freeCashFlow', index: 3, label: 'Free Cash Flow' },
+                // Second Row: Returns + Capital + Future
+                { key: 'rdRatio', index: 4, label: 'R&D / Revenue' },
+                { key: 'roic', index: 5, label: 'ROIC' },
+                { key: 'debtToEquity', index: 6, label: 'Debt / Equity' },
+                { key: 'cashAndInvestments', index: 7, label: 'Cash & ST Inv.' }
             ];
             
-            container.innerHTML = metricConfigs.map(config => {
+            const tiles = document.querySelectorAll('.metric-tile');
+            
+            metricConfigs.forEach(config => {
                 const metric = metrics[config.key];
-                if (!metric || metric.value === 'N/A') {
-                    return `
-                        <div class="metric-tile" data-trend="neutral">
-                            <div class="metric-value">N/A</div>
-                            <div class="metric-label">${config.label}</div>
-                        </div>
-                    `;
+                const tile = tiles[config.index];
+                if (!tile) return;
+                
+                const valueElement = tile.querySelector('.metric-value');
+                const arrowElement = tile.querySelector('.metric-trend-arrow');
+                const changeElement = tile.querySelector('.metric-change');
+                const sparklineCanvas = tile.querySelector('.metric-sparkline');
+                
+                if (metric && metric.value !== 'N/A') {
+                    valueElement.textContent = metric.value;
+                    
+                    // Update trend arrow
+                    const arrow = getTrendArrow(metric.trend);
+                    arrowElement.textContent = arrow.symbol;
+                    arrowElement.className = `metric-trend-arrow ${arrow.class}`;
+                    
+                    // Update change text
+                    const changeText = metric.growth || metric.change || '';
+                    changeElement.textContent = changeText;
+                    
+                    // Draw sparkline
+                    if (metric.sparkline && sparklineCanvas) {
+                        drawSparkline(sparklineCanvas, metric.sparkline);
+                    }
+                } else {
+                    valueElement.textContent = 'N/A';
+                    arrowElement.textContent = '–';
+                    arrowElement.className = 'metric-trend-arrow neutral';
+                    changeElement.textContent = '';
                 }
+            });
+        }
+        
+        function getTrendArrow(trend) {
+            switch (trend) {
+                case 'positive':
+                    return { symbol: '↗', class: 'positive' };
+                case 'negative':
+                    return { symbol: '↘', class: 'negative' };
+                default:
+                    return { symbol: '→', class: 'neutral' };
+            }
+        }
+        
+        function drawSparkline(canvas, data) {
+            if (!canvas || !data || data.length < 2) return;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Calculate bounds
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const range = max - min || 1;
+            const padding = 2;
+            
+            // Draw line
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            
+            data.forEach((value, index) => {
+                const x = (index / (data.length - 1)) * (width - 2 * padding) + padding;
+                const y = height - padding - ((value - min) / range) * (height - 2 * padding);
                 
-                const changeText = metric.growth || metric.change || '';
-                const displayValue = `${metric.value}${changeText ? ' (' + changeText + ')' : ''}`;
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.stroke();
+            
+            // Draw dots
+            ctx.fillStyle = '#3498db';
+            data.forEach((value, index) => {
+                const x = (index / (data.length - 1)) * (width - 2 * padding) + padding;
+                const y = height - padding - ((value - min) / range) * (height - 2 * padding);
                 
-                return `
-                    <div class="metric-tile" data-trend="${metric.trend}" title="Click for details">
-                        <div class="metric-value">${displayValue}</div>
-                        <div class="metric-label">${config.label}</div>
-                    </div>
-                `;
-            }).join('');
+                ctx.beginPath();
+                ctx.arc(x, y, 1.5, 0, 2 * Math.PI);
+                ctx.fill();
+            });
         }
         
         function updateCompanyInsights(insights) {

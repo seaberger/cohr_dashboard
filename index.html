@@ -1033,10 +1033,19 @@
         window.clearCaches = debugClearAllCaches;
         window.forceShowUniversalMetrics = debugForceShowUniversalMetrics;
         window.checkContainers = debugCheckContainers;
+        window.testLoadMetrics = () => {
+            console.log('🧪 Manual test load triggered');
+            if (typeof loadUniversalMetrics === 'function') {
+                return loadUniversalMetrics();
+            } else {
+                console.error('loadUniversalMetrics function not available yet');
+            }
+        };
         window.cohrDebug = {
             clearCaches: debugClearAllCaches,
             forceShowUniversalMetrics: debugForceShowUniversalMetrics,
-            checkContainers: debugCheckContainers
+            checkContainers: debugCheckContainers,
+            testLoadMetrics: window.testLoadMetrics
         };
 
         console.log('🛠️ Early debug functions loaded: checkContainers(), forceShowUniversalMetrics(), clearCaches()');
@@ -1612,6 +1621,10 @@
             const container = document.getElementById('universalMetricsContainer');
             const cacheKey = 'cohr-universal-metrics';
             
+            console.log('🚀 Starting loadUniversalMetrics()');
+            console.log('Container found:', !!container);
+            console.log('API_BASE:', API_BASE);
+            
             try {
                 // Check for cached data first
                 const cachedData = sessionStorage.getItem(cacheKey);
@@ -1621,28 +1634,43 @@
                     
                     // Use cache if less than 6 hours old
                     if (age < 6 * 60 * 60 * 1000) {
-                        console.log('Using cached universal metrics data');
+                        console.log('📦 Using cached universal metrics data');
                         updateUniversalMetrics(parsed.universalMetrics);
                         updateMetricsTitle(parsed);
                         return;
+                    } else {
+                        console.log('⏰ Cache expired, fetching fresh data');
                     }
                 }
                 
                 // Show loading state
-                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; grid-column: 1 / -1;">📊 Loading financial metrics...</div>';
+                if (container) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; grid-column: 1 / -1;">📊 Loading financial metrics...</div>';
+                }
+                
+                console.log('🌐 Fetching from API...');
+                const apiUrl = `${API_BASE}/api/universal-metrics?t=${Date.now()}`;
+                console.log('API URL:', apiUrl);
                 
                 // Create timeout promise
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Metrics request timeout')), 20000)
+                    setTimeout(() => reject(new Error('Metrics request timeout')), 30000)
                 );
                 
                 const response = await Promise.race([
-                    fetch(`${API_BASE}/api/universal-metrics?t=${Date.now()}`),
+                    fetch(apiUrl),
                     timeoutPromise
                 ]);
                 
-                if (!response.ok) throw new Error('Failed to fetch universal metrics');
+                console.log('📡 Response received:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`API returned ${response.status}: ${response.statusText}`);
+                }
+                
                 const data = await response.json();
+                console.log('📊 Data received:', data.status, data.symbol);
+                console.log('Universal metrics present:', !!data.universalMetrics);
                 
                 // Cache the successful response
                 sessionStorage.setItem(cacheKey, JSON.stringify({
@@ -1650,36 +1678,43 @@
                     timestamp: Date.now()
                 }));
                 
-                updateUniversalMetrics(data.universalMetrics);
-                updateMetricsTitle(data);
-                updateDataSources(data);
-                
-                // Ensure universal metrics container is visible
-                const universalContainer = document.getElementById('universalMetricsContainer');
-                
-                if (universalContainer) {
-                    universalContainer.style.display = 'grid';
-                    universalContainer.style.visibility = 'visible';
-                    universalContainer.style.opacity = '1';
-                    console.log('✅ Universal metrics container displaying successfully');
+                if (data.universalMetrics) {
+                    console.log('✅ Updating universal metrics display');
+                    updateUniversalMetrics(data.universalMetrics);
+                    updateMetricsTitle(data);
+                    updateDataSources(data);
+                    
+                    // Ensure container visibility
+                    if (container) {
+                        container.style.display = 'grid';
+                        container.style.visibility = 'visible';
+                        container.style.opacity = '1';
+                        console.log('✅ Universal metrics container forced visible');
+                    }
                 } else {
-                    console.error('❌ Universal metrics container not found after data load');
+                    throw new Error('No universal metrics data in response');
                 }
                 
             } catch (error) {
-                console.error('Universal metrics error:', error);
+                console.error('❌ Universal metrics error:', error);
+                console.error('Error details:', error.message, error.stack);
                 
                 // Show error state with retry button
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 20px;">
-                        <p style="color: #e74c3c; margin-bottom: 16px;">
-                            ${error.message === 'Metrics request timeout' ? 'Metrics request timed out' : 'Failed to load financial metrics'}
-                        </p>
-                        <button onclick="loadUniversalMetrics()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                            🔄 Retry Metrics
-                        </button>
-                    </div>
-                `;
+                if (container) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 20px;">
+                            <p style="color: #e74c3c; margin-bottom: 16px;">
+                                Failed to load financial metrics: ${error.message}
+                            </p>
+                            <button onclick="loadUniversalMetrics()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                                🔄 Retry Metrics
+                            </button>
+                            <p style="margin-top: 12px; font-size: 0.8em; color: #666;">
+                                Check console for detailed error information
+                            </p>
+                        </div>
+                    `;
+                }
             }
         }
 

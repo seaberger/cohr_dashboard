@@ -880,7 +880,7 @@
             </div>
             
             <!-- Universal Financial Metrics Grid -->
-            <div class="metrics-grid" id="universalMetricsContainer">
+            <div class="metrics-grid" id="universalMetricsContainer" style="display: grid;">
                 <!-- Top Row: Scale + Profitability -->
                 <div class="metric-tile">
                     <div class="metric-header">
@@ -1170,11 +1170,12 @@
                     currentStockData = stockData;
                     updateStockHeader(stockData);
                     
-                    // Load technical indicators, news, and market trends in parallel
+                    // Load technical indicators, news, and financial data in parallel
                     await Promise.all([
                         loadTechnicalIndicators(stockData.price),
                         loadNews(),
-                        loadMarketTrends()
+                        loadUniversalMetrics(),
+                        loadCompanyInsights()
                     ]);
                 }
                 
@@ -1497,7 +1498,8 @@
         }
 
         async function loadMarketTrends() {
-            // Load universal metrics and company insights separately
+            // Legacy function - now redirects to split approach
+            console.log('⚠️ loadMarketTrends() called - redirecting to split approach');
             await Promise.all([
                 loadUniversalMetrics(),
                 loadCompanyInsights()

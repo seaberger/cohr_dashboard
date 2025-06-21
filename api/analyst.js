@@ -418,30 +418,8 @@ export default async function handler(req, res) {
         }
       }
       
-      // Final fallback: Use research-based price targets if we have consensus but no targets
-      if (analystData && analystData.consensus.rating && !analystData.priceTarget.average) {
-        try {
-          console.log(`Using research-based price target estimate for ${symbol}`);
-          
-          // Based on current market research for COHR (as of Dec 2024)
-          const researchTarget = 102.81; // From TipRanks, Zacks, StockAnalysis average
-          const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
-          const upside = ((researchTarget - currentPrice) / currentPrice) * 100;
-          
-          analystData.priceTarget = {
-            average: parseFloat(researchTarget.toFixed(2)),
-            high: 136.00, // From Zacks research
-            low: 80.00,   // From StockAnalysis research  
-            upside: parseFloat(upside.toFixed(1)),
-            targetCount: analystData.consensus.analystCount
-          };
-          
-          analystData.source += ' + Research';
-          console.log(`Added research-based price target for ${symbol}: $${researchTarget}`);
-        } catch (error) {
-          console.log('Research price target fallback failed:', error.message);
-        }
-      }
+      // Maintain strict data integrity - no hardcoded price target fallbacks
+      // Price targets will show "N/A" if APIs fail, maintaining transparency
       
       // No hardcoded fallback data - maintain data integrity
       if (!analystData) {

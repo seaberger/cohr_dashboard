@@ -2106,9 +2106,14 @@
                     const changeText = metric.growth || metric.change || '';
                     changeElement.textContent = changeText;
                     
-                    // Draw sparkline
-                    if (metric.sparkline && sparklineCanvas) {
-                        drawSparkline(sparklineCanvas, metric.sparkline);
+                    // Draw sparkline - DISABLED until real data available (Issue #12)
+                    // if (metric.sparkline && sparklineCanvas) {
+                    //     drawSparkline(sparklineCanvas, metric.sparkline);
+                    // }
+                    
+                    // Hide sparkline canvas until we have real data
+                    if (sparklineCanvas) {
+                        sparklineCanvas.style.display = 'none';
                     }
                     
                     // Reset opacity and visibility after update

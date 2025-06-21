@@ -87,6 +87,7 @@ export default async function handler(req, res) {
         console.log('Using fallback data for COHR due to Finviz access issues');
         finvizTargetPrice = 96.06;
         finvizEpsNextQ = 0.91;
+        console.log(`✅ Fallback applied: Target=$${finvizTargetPrice}, EPS=$${finvizEpsNextQ}`);
       }
       
       // Secondary: Try Finnhub API for analyst consensus ratings

@@ -163,9 +163,11 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
   - RSI, MACD calculated from historical price data
 - **COHR-specific news articles** (Yahoo Finance search API)
 - **Article summaries** (extracted from meta descriptions)
-- **Analyst consensus data** (Finnhub → Yahoo Finance quoteSummary)
-  - **Price targets**: Finviz scraping (blocked in Vercel, fallback to $96.06 for COHR)
-  - **EPS estimates**: Finviz next Q EPS ($0.91 for COHR)
+- **Analyst consensus data** (Finnhub → Yahoo Finance quoteSummary) ⚠️ **PARTIAL**
+  - **Consensus ratings**: ✅ Working (Buy consensus, distribution bars)
+  - **Price targets**: ❌ **BLOCKED** - Finviz scraping fails in Vercel production
+  - **EPS estimates**: ❌ **BLOCKED** - Shows "No Data" despite fallback implementation
+  - **Status**: Critical user-facing data missing, development paused
 - **Dynamic business insights** (Google Gemini 2.5 Flash Lite + SEC EDGAR) ✨ ENHANCED
   - **Tagged insight cards**: GROWTH-DRIVER 🚀, RISK ⚠, STRATEGIC-MOVE 🎯, etc.
   - **Evidence attribution**: SEC filing page references with inline footnotes
@@ -246,17 +248,28 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 
 ### 🚧 NEXT PRIORITIES (Data Quality & Performance)
 
-**Primary Focus**: Data integrity improvements and performance optimization
+**⏸️ DEVELOPMENT STATUS**: Paused (January 2025 - User Travel Week)
 
-0. **Data Integrity Issues** (High Priority)
+**🚨 CRITICAL BLOCKING ISSUE**: Issue #14 - Finviz Scraping in Production
+- **Problem**: Price targets and EPS estimates not displaying in Vercel production
+- **Evidence**: Local ✅ works, Production ❌ shows "No Target"/"No Data"
+- **Root Cause**: Vercel AWS Lambda IPs blocked by Finviz anti-scraping
+- **Impact**: Critical user-facing data missing from analyst dashboard
+
+**Primary Focus**: Resolve Finviz blocking before resuming other enhancements
+
+0. **IMMEDIATE PRIORITY**: Issue #14 - Finviz Scraping Solution
+   - **Recommended**: Try Vercel Edge Runtime (different IP pool, free)
+   - **Backup Options**: 
+     - ScrapingBee/ScraperAPI ($29-99/month)
+     - GitHub Actions scheduled scraping with database
+     - Alternative paid analyst data API
+   - **Current Status**: Fallback hardcoded data implemented but not displaying
+
+1. **Data Integrity Issues** (High Priority - Post-Travel)
    - Issue #10: Remove hardcoded analyst fallback data
    - Issue #12: Implement real 8-quarter historical sparklines 
    - Issue #13: Comprehensive caching strategy for multi-user scale
-   - Issue #14: **Finviz Scraping Solution** - Implement permanent fix for serverless blocking
-     - Option 1: Use web scraping API service (ScrapingBee, ScraperAPI)
-     - Option 2: Move to Vercel Edge Runtime for different IP pool
-     - Option 3: GitHub Actions scheduled scraping with caching
-     - Option 4: Find alternative analyst data API (paid service)
    - Maintain transparent error handling over misleading data
 
 1. **Performance Optimization**

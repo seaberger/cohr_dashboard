@@ -25,20 +25,15 @@ export default async function handler(req, res) {
       
       if (FINNHUB_API_KEY) {
         try {
-          // Fetch analyst recommendations and price targets from Finnhub
-          const [recommendationResponse, priceTargetResponse] = await Promise.all([
-            fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
-            fetch(`https://finnhub.io/api/v1/stock/price-target?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
-          ]);
+          // Fetch analyst recommendations from Finnhub (free tier)
+          // Note: Price targets require paid plan, so we'll get those from fallback APIs
+          const recommendationResponse = await fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
           
-          if (recommendationResponse.ok && priceTargetResponse.ok) {
-            const [recommendations, priceTargets] = await Promise.all([
-              recommendationResponse.json(),
-              priceTargetResponse.json()
-            ]);
+          if (recommendationResponse.ok) {
+            const recommendations = await recommendationResponse.json();
             
-            // Process Finnhub recommendation data
-            let consensus = 'Hold';
+            // Process Finnhub recommendation data (consensus ratings)
+            let finnhubConsensus = null;
             let consensusScore = 0;
             let analystCount = 0;
             let distribution = null;
@@ -59,11 +54,11 @@ export default async function handler(req, res) {
                 consensusScore = ((strongBuy * 2) + (buy * 1) + (hold * 0) + (sell * -1) + (strongSell * -2)) / analystCount;
                 
                 // Determine consensus rating
-                if (consensusScore > 0.5) consensus = 'Strong Buy';
-                else if (consensusScore > 0.1) consensus = 'Buy';
-                else if (consensusScore < -0.5) consensus = 'Strong Sell';
-                else if (consensusScore < -0.1) consensus = 'Sell';
-                else consensus = 'Hold';
+                if (consensusScore > 0.5) finnhubConsensus = 'Strong Buy';
+                else if (consensusScore > 0.1) finnhubConsensus = 'Buy';
+                else if (consensusScore < -0.5) finnhubConsensus = 'Strong Sell';
+                else if (consensusScore < -0.1) finnhubConsensus = 'Sell';
+                else finnhubConsensus = 'Hold';
                 
                 distribution = {
                   strongBuy: strongBuy,
@@ -72,52 +67,34 @@ export default async function handler(req, res) {
                   sell: sell,
                   strongSell: strongSell
                 };
+                
+                console.log(`Finnhub recommendation data loaded for ${symbol} - ${analystCount} analysts, ${finnhubConsensus} consensus`);
               }
             }
             
-            // Process Finnhub price target data
-            let avgPriceTarget = null;
-            let highTarget = null;
-            let lowTarget = null;
-            let upside = null;
-            const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
-            
-            if (priceTargets && priceTargets.targetMean) {
-              avgPriceTarget = priceTargets.targetMean;
-              highTarget = priceTargets.targetHigh;
-              lowTarget = priceTargets.targetLow;
-              
-              if (avgPriceTarget) {
-                upside = ((avgPriceTarget - currentPrice) / currentPrice) * 100;
-              }
-            }
-            
-            // Only use Finnhub data if we have meaningful information
-            if (analystCount > 0 || avgPriceTarget !== null) {
+            // Store Finnhub consensus data for potential use
+            if (finnhubConsensus) {
               analystData = {
                 symbol: symbol.toUpperCase(),
                 consensus: {
-                  rating: consensus,
+                  rating: finnhubConsensus,
                   score: consensusScore,
                   analystCount: analystCount,
                   distribution: distribution
                 },
                 priceTarget: {
-                  average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
-                  high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
-                  low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
-                  upside: upside ? parseFloat(upside.toFixed(1)) : null,
-                  targetCount: analystCount
+                  average: null, // Will try to get from other sources
+                  high: null,
+                  low: null,
+                  upside: null,
+                  targetCount: 0
                 },
-                recentActivity: [], // Finnhub doesn't provide this in these endpoints
-                nextEarnings: null, // Can be added later with earnings calendar endpoint
-                source: 'Finnhub',
-                lastUpdated: new Date().toISOString()
+                recentActivity: [],
+                nextEarnings: null,
+                source: 'Finnhub + Yahoo Finance',
+                lastUpdated: new Date().toISOString(),
+                consensusOnly: true // Flag to indicate we need price targets from other sources
               };
-              
-              console.log(`Finnhub analyst data loaded for ${symbol} - ${analystCount} analysts, $${avgPriceTarget} target`);
-            } else {
-              console.log(`Finnhub returned no useful analyst data for ${symbol}`);
             }
           }
         } catch (error) {
@@ -214,30 +191,47 @@ export default async function handler(req, res) {
                 }));
             }
             
-            // Only use Yahoo data if we have meaningful information
-            if (analystCount > 0 || avgPriceTarget !== null) {
-              analystData = {
-                symbol: symbol.toUpperCase(),
-                consensus: {
-                  rating: consensus,
-                  score: consensusScore,
-                  analystCount: analystCount,
-                  distribution: distribution
-                },
-                priceTarget: {
+            // Merge Yahoo Finance price targets with existing Finnhub consensus data or create new data
+            if (avgPriceTarget !== null || analystCount > 0) {
+              if (analystData && analystData.consensusOnly) {
+                // We have Finnhub consensus data, add Yahoo price targets
+                analystData.priceTarget = {
                   average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
                   high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
                   low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
                   upside: upside ? parseFloat(upside.toFixed(1)) : null,
-                  targetCount: analystCount
-                },
-                recentActivity: recentActivity,
-                nextEarnings: null, // Yahoo doesn't provide this in this endpoint
-                source: 'Yahoo Finance',
-                lastUpdated: new Date().toISOString()
-              };
-              
-              console.log(`Yahoo Finance analyst data loaded for ${symbol} - ${analystCount} analysts, $${avgPriceTarget} target`);
+                  targetCount: avgPriceTarget ? Math.max(analystData.consensus.analystCount, analystCount) : analystData.consensus.analystCount
+                };
+                analystData.recentActivity = recentActivity;
+                analystData.source = 'Finnhub + Yahoo Finance';
+                delete analystData.consensusOnly;
+                
+                console.log(`Combined Finnhub consensus (${analystData.consensus.analystCount} analysts) + Yahoo price targets ($${avgPriceTarget})`);
+              } else if (!analystData) {
+                // No Finnhub data, use Yahoo data as fallback
+                analystData = {
+                  symbol: symbol.toUpperCase(),
+                  consensus: {
+                    rating: consensus,
+                    score: consensusScore,
+                    analystCount: analystCount,
+                    distribution: distribution
+                  },
+                  priceTarget: {
+                    average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
+                    high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
+                    low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
+                    upside: upside ? parseFloat(upside.toFixed(1)) : null,
+                    targetCount: analystCount
+                  },
+                  recentActivity: recentActivity,
+                  nextEarnings: null,
+                  source: 'Yahoo Finance',
+                  lastUpdated: new Date().toISOString()
+                };
+                
+                console.log(`Yahoo Finance analyst data loaded for ${symbol} - ${analystCount} analysts, $${avgPriceTarget} target`);
+              }
             } else {
               console.log(`Yahoo Finance returned no useful analyst data for ${symbol}`);
             }
@@ -377,6 +371,50 @@ export default async function handler(req, res) {
           
         } catch (error) {
           console.log('FMP analyst API failed:', error.message);
+        }
+      }
+      
+      // Additional fallback: Try to scrape price targets from Yahoo Finance analysis page
+      if (analystData && !analystData.priceTarget.average) {
+        try {
+          console.log(`Attempting to scrape price targets for ${symbol} from Yahoo Finance analysis page`);
+          
+          const analysisUrl = `https://finance.yahoo.com/quote/${symbol}/analysis`;
+          const response = await fetch(analysisUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+          });
+          
+          if (response.ok) {
+            const html = await response.text();
+            
+            // Look for price target data in the HTML (this is a simple pattern match)
+            const targetMatch = html.match(/Price Target.*?(\$[\d,]+\.?\d*)/i);
+            const highMatch = html.match(/High.*?(\$[\d,]+\.?\d*)/i);
+            const lowMatch = html.match(/Low.*?(\$[\d,]+\.?\d*)/i);
+            
+            if (targetMatch) {
+              const avgTarget = parseFloat(targetMatch[1].replace(/[$,]/g, ''));
+              const highTarget = highMatch ? parseFloat(highMatch[1].replace(/[$,]/g, '')) : null;
+              const lowTarget = lowMatch ? parseFloat(lowMatch[1].replace(/[$,]/g, '')) : null;
+              const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+              const upside = ((avgTarget - currentPrice) / currentPrice) * 100;
+              
+              analystData.priceTarget = {
+                average: parseFloat(avgTarget.toFixed(2)),
+                high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
+                low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
+                upside: parseFloat(upside.toFixed(1)),
+                targetCount: analystData.consensus.analystCount
+              };
+              
+              analystData.source += ' + Scraped';
+              console.log(`Scraped price target for ${symbol}: $${avgTarget}`);
+            }
+          }
+        } catch (error) {
+          console.log('Price target scraping failed:', error.message);
         }
       }
       

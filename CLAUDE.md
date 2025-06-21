@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Live URL**: Available in Vercel dashboard  
 **Feature Branch URL**: https://cohr-dashboard-git-feature-univer-6a9738-sean-bergmans-projects.vercel.app/  
 **Last Updated**: December 2025  
-**Development Stage**: Universal Financial Metrics ✅ **COMPLETE & WORKING**  
+**Development Stage**: Financial Metrics ✅ **COMPLETE & WORKING**  
 **Current Sprint**: Company Insights Enhancement - Professional layout & structured tagging
 
 ### ✅ **COMPLETED Feature** (`feature/universal-financial-tiles`)
@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `/api/company-insights` - Business intelligence extraction (12hr cache)
   - Independent loading, caching, and retry mechanisms
   - Real-time error handling and fallback strategies
-- ✅ **Universal Financial Metrics**: 8 GAAP-based KPI tiles **WORKING PERFECTLY**
+- ✅ **Financial Metrics**: 8 GAAP-based KPI tiles **WORKING PERFECTLY**
   - **Revenue** ($1.498M, +24% YoY) with trend arrows showing real growth direction
   - **Gross Margin** (35.0%, +5.0pp) showing margin expansion
   - **Operating Margin** (0.7%, +2.5pp) operational efficiency

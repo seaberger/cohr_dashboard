@@ -30,10 +30,10 @@ Transform the COHR investor dashboard from a basic financial tool into a compreh
 3. **Performance & Polish**: Optimization and user experience improvements (medium priority)
 4. **Advanced Features**: Enhanced functionality for power users (low priority)
 
-**Note**: Issue #1 (AI-Powered Analysis & Insights) is now largely complete through the Company Insights enhancement and Universal Financial Metrics implementation. The dashboard successfully provides AI-powered SEC filing analysis with professional investment-grade categorization.
+**Note**: Issue #1 (AI-Powered Analysis & Insights) is now largely complete through the Company Insights enhancement and Financial Metrics implementation. The dashboard successfully provides AI-powered SEC filing analysis with professional investment-grade categorization.
 
 ### ✅ **Recently Completed** 
-- **Issue #9**: ✅ Universal Financial Metrics (Complete - December 2025)
+- **Issue #9**: ✅ Financial Metrics (Complete - December 2025)
   - Split LLM Architecture: Focused dual-endpoint approach
   - 8 simplified GAAP-based KPI tiles with enhanced extraction
   - Trend arrows (↗↘→) with semantic colors showing real growth direction

@@ -1018,7 +1018,7 @@
                 </div>
             </div>
             
-            <!-- Universal Financial Metrics Grid -->
+            <!-- Financial Metrics Grid -->
             <div class="metrics-grid" id="universalMetricsContainer" style="display: grid;">
                 <!-- Top Row: Core Financial Metrics -->
                 <div class="metric-tile">
@@ -1922,7 +1922,7 @@
                 
                 // Update title to show error state
                 const titleElement = document.getElementById('marketTrendsTitle');
-                titleElement.innerHTML = 'Universal Financial Metrics <span style="font-size: 0.7em; color: #e74c3c;">●&nbsp;Data Error</span>';
+                titleElement.innerHTML = 'Financial Metrics <span style="font-size: 0.7em; color: #e74c3c;">●&nbsp;Data Error</span>';
             }
         }
 
@@ -1998,10 +1998,10 @@
             if (data.extractionType === 'focused-metrics') {
                 const quarter = data.filing?.quarter || 'Latest';
                 titleElement.innerHTML = 
-                    `Universal Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Extracted)</span>`;
+                    `Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;${quarter} (LLM Extracted)</span>`;
             } else {
                 titleElement.innerHTML = 
-                    'Universal Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Live Data</span>';
+                    'Financial Metrics <span style="font-size: 0.7em; color: #27ae60;">●&nbsp;Live Data</span>';
             }
         }
 

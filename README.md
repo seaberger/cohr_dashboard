@@ -14,7 +14,7 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 
 ## 🚀 Key Features
 
-### 📊 **Universal Financial Metrics** (NEW!)
+### 📊 **Financial Metrics** (NEW!)
 - **8 Key Financial KPIs** applicable to any public company:
   - Total Revenue & Growth
   - Gross Margin & Operating Margin  
@@ -139,7 +139,7 @@ All endpoints include CORS support and 30-second timeout limits:
   - Support/resistance from actual swing highs/lows
   - Moving averages calculated from historical prices
   - RSI, MACD from real price data
-- **Universal Financial Metrics** (Google Gemini 2.5 Flash Lite + SEC EDGAR)
+- **Financial Metrics** (Google Gemini 2.5 Flash Lite + SEC EDGAR)
   - 8 GAAP-based KPIs with trend arrows showing real growth direction
   - Real-time extraction from latest SEC filings
   - Data integrity priority: Historical sparklines disabled until real data available
@@ -252,7 +252,7 @@ All endpoints include CORS support and 30-second timeout limits:
 - [x] Manual refresh functionality and enhanced error handling
 - [x] Cost-effective implementation (<$1/month with caching)
 
-**Universal Financial Metrics & Company Insights Enhancement** ✅ (December 2025)
+**Financial Metrics & Company Insights Enhancement** ✅ (December 2025)
 - [x] Split LLM architecture with focused dual endpoints
 - [x] 8 universal GAAP-based financial metrics with trend arrows
 - [x] Professional Company Insights with 8 investment-grade categories

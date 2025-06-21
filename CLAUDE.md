@@ -139,7 +139,8 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 ### API Strategy & Error Handling
 - **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → IEX → Error state
 - **News Data**: Yahoo Finance search → article summary extraction → Error state
-- **Analyst Data**: Yahoo Finance quoteSummary → research-compiled consensus data → Error state
+- **Analyst Data**: Finviz scraping → Finnhub consensus → Yahoo Finance → FMP → Error state
+  - **Known Issue**: Finviz blocks Vercel serverless IPs, temporary hardcoded fallback for COHR
 - **Technical Analysis**: Yahoo Finance historical → basic calculated indicators → Error state
 - **Universal Metrics**: SEC EDGAR + Gemini LLM → Professional error state (NO fallback data)
 - **Company Insights**: SEC EDGAR + Gemini LLM → Professional error state (NO fallback data)
@@ -162,7 +163,9 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
   - RSI, MACD calculated from historical price data
 - **COHR-specific news articles** (Yahoo Finance search API)
 - **Article summaries** (extracted from meta descriptions)
-- **Analyst consensus data** (Yahoo Finance quoteSummary)
+- **Analyst consensus data** (Finnhub → Yahoo Finance quoteSummary)
+  - **Price targets**: Finviz scraping (blocked in Vercel, fallback to $96.06 for COHR)
+  - **EPS estimates**: Finviz next Q EPS ($0.91 for COHR)
 - **Dynamic business insights** (Google Gemini 2.5 Flash Lite + SEC EDGAR) ✨ ENHANCED
   - **Tagged insight cards**: GROWTH-DRIVER 🚀, RISK ⚠, STRATEGIC-MOVE 🎯, etc.
   - **Evidence attribution**: SEC filing page references with inline footnotes
@@ -232,6 +235,15 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - ✅ **Enhanced Error Handling**: User-friendly error messages with retry functionality, maintains investment-grade data quality standards
 - ✅ **Sparklines Data Integrity Fix**: Disabled hallucinated sparklines until real historical data available (Issue #12)
 
+**Analyst Consensus Integration** ✅ **COMPLETE** (January 2025)
+- ✅ **Integrated Analyst Card**: Single cohesive card replacing separate consensus/distribution tiles
+- ✅ **Enhanced UX Design**: Professional layout with target price, upside, next Q EPS sections
+- ✅ **Full Distribution Labels**: "Strong Buy", "Buy", "Hold", "Sell" instead of abbreviations
+- ✅ **Visual Distribution Bar**: Dynamic percentage-based bars showing analyst sentiment
+- ✅ **Finviz Integration**: Primary source for price targets ($96.06) and EPS estimates ($0.91)
+- ✅ **Fixed Consensus Bug**: Corrected calculation preventing "Strong Buy" with only 26% ratings
+- ⚠️ **Known Issue**: Finviz blocks Vercel serverless IPs, using temporary hardcoded fallback for COHR
+
 ### 🚧 NEXT PRIORITIES (Data Quality & Performance)
 
 **Primary Focus**: Data integrity improvements and performance optimization
@@ -240,6 +252,11 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
    - Issue #10: Remove hardcoded analyst fallback data
    - Issue #12: Implement real 8-quarter historical sparklines 
    - Issue #13: Comprehensive caching strategy for multi-user scale
+   - Issue #14: **Finviz Scraping Solution** - Implement permanent fix for serverless blocking
+     - Option 1: Use web scraping API service (ScrapingBee, ScraperAPI)
+     - Option 2: Move to Vercel Edge Runtime for different IP pool
+     - Option 3: GitHub Actions scheduled scraping with caching
+     - Option 4: Find alternative analyst data API (paid service)
    - Maintain transparent error handling over misleading data
 
 1. **Performance Optimization**

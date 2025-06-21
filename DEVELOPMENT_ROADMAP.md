@@ -13,7 +13,7 @@ Transform the COHR investor dashboard from a basic financial tool into a compreh
 
 ### ✅ **Completed & Working**
 - **Real-time stock data** (Yahoo Finance chart API integration)
-- **Live analyst data** (Yahoo Finance quoteSummary integration) 
+- **Live analyst data** (Finnhub consensus + Finviz price targets/EPS integration) 
 - **Relevant news** (Yahoo Finance company-specific articles)
 - **Interactive charts** (TradingView widgets)
 - **Working article links** with AI-extracted summaries
@@ -55,6 +55,12 @@ Transform the COHR investor dashboard from a basic financial tool into a compreh
 - **Issue #4**: ✅ Support & Resistance Technical Analysis (Complete - real swing highs/lows)
 - **Issue #3**: ✅ Industry & Market Trends (Complete - LLM-powered Q3 2025 data)
 - **Sparklines Data Integrity**: ✅ Disabled hallucinated sparklines pending real historical data (Issue #12)
+- **Analyst Consensus Integration**: ✅ Complete (January 2025)
+  - Integrated analyst card with consensus, distribution, price targets, and EPS
+  - Fixed consensus calculation bug (preventing incorrect "Strong Buy" ratings)
+  - Finviz integration for price targets ($96.06) and next Q EPS ($0.91)
+  - Enhanced UX with full labels and visual distribution bars
+  - ⚠️ Known Issue: Finviz blocks Vercel IPs, temporary COHR fallback implemented
 
 ## Current Data Integrity Focus
 
@@ -64,6 +70,7 @@ Transform the COHR investor dashboard from a basic financial tool into a compreh
 | **#10** | Remove hardcoded analyst fallback data | High | Low | **Immediate** |
 | **#12** | Implement real 8-quarter historical sparklines | High | High | **High** |
 | **#13** | Comprehensive caching strategy for multi-user scale | Medium | Medium | **Medium** |
+| **#14** | Fix Finviz scraping in serverless environment | High | Medium | **High** |
 
 ### **Legacy Priority Matrix Analysis**
 | Issue | Impact | Effort | Data Availability | Priority Score |

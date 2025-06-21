@@ -562,7 +562,7 @@
             background: rgba(255, 255, 255, 0.15);
             border-radius: 16px;
             backdrop-filter: blur(5px);
-            padding: 20px;
+            padding: 24px;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
@@ -570,7 +570,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .consensus-main {
@@ -581,7 +581,7 @@
             font-size: 1.8em;
             font-weight: bold;
             color: #fff;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             line-height: 1.2;
         }
 
@@ -593,45 +593,67 @@
         .target-info {
             text-align: right;
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .target-price-section,
+        .target-upside-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .target-label {
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .target-price {
             font-size: 1.4em;
             font-weight: 600;
             color: #fff;
-            margin-bottom: 4px;
         }
 
         .target-upside {
-            font-size: 0.9em;
+            font-size: 1.1em;
             font-weight: 500;
         }
 
         .distribution-section {
-            margin-top: 16px;
+            margin-top: 20px;
         }
 
         .distribution-numbers {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
+            justify-content: space-around;
+            margin-bottom: 12px;
+            gap: 8px;
         }
 
         .dist-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            flex: 1;
+            text-align: center;
         }
 
         .dist-count {
-            font-size: 1.1em;
+            font-size: 1.2em;
             font-weight: bold;
         }
 
         .dist-label {
-            font-size: 0.8em;
+            font-size: 0.75em;
             opacity: 0.8;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
         }
 
         .dist-item.strong-buy .dist-count {
@@ -682,16 +704,29 @@
         @media (max-width: 768px) {
             .consensus-header {
                 flex-direction: column;
-                gap: 16px;
+                gap: 20px;
                 text-align: center;
             }
 
             .target-info {
                 text-align: center;
+                flex-direction: row;
+                justify-content: center;
+                gap: 24px;
+            }
+
+            .target-price-section,
+            .target-upside-section {
+                align-items: center;
             }
 
             .distribution-numbers {
                 justify-content: space-around;
+                gap: 4px;
+            }
+
+            .dist-label {
+                font-size: 0.7em;
             }
         }
 
@@ -1092,8 +1127,14 @@
                         </div>
                     </div>
                     <div class="target-info">
-                        <div class="target-price" id="avgTarget">--</div>
-                        <div class="target-upside" id="upside">--</div>
+                        <div class="target-price-section">
+                            <div class="target-label">Target Price</div>
+                            <div class="target-price" id="avgTarget">--</div>
+                        </div>
+                        <div class="target-upside-section">
+                            <div class="target-label">Upside</div>
+                            <div class="target-upside" id="upside">--</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -1102,19 +1143,19 @@
                     <div class="distribution-numbers">
                         <span class="dist-item strong-buy">
                             <span class="dist-count" id="strongBuyCount">7</span>
-                            <span class="dist-label">SB</span>
+                            <span class="dist-label">Strong Buy</span>
                         </span>
                         <span class="dist-item buy">
                             <span class="dist-count" id="buyCount">15</span>
-                            <span class="dist-label">B</span>
+                            <span class="dist-label">Buy</span>
                         </span>
                         <span class="dist-item hold">
                             <span class="dist-count" id="holdCount">5</span>
-                            <span class="dist-label">H</span>
+                            <span class="dist-label">Hold</span>
                         </span>
                         <span class="dist-item sell">
                             <span class="dist-count" id="sellCount">0</span>
-                            <span class="dist-label">S</span>
+                            <span class="dist-label">Sell</span>
                         </span>
                     </div>
                     <div class="distribution-bar">
@@ -1983,6 +2024,9 @@
         }
 
         function updateAnalystDisplay(data) {
+            console.log('📊 Updating analyst display with data:', data);
+            console.log('💰 Price target data:', data.priceTarget);
+            
             // Update consensus rating
             const consensusElement = document.getElementById('consensus');
             consensusElement.textContent = data.consensus.rating;
@@ -1998,18 +2042,18 @@
                 avgTargetElement.textContent = `$${data.priceTarget.average}`;
                 avgTargetElement.className = 'target-price';
             } else {
-                avgTargetElement.textContent = 'N/A';
+                avgTargetElement.textContent = 'No Target';
                 avgTargetElement.className = 'target-price';
             }
             
             // Update upside potential
             const upsideElement = document.getElementById('upside');
-            if (data.priceTarget.upside !== null) {
+            if (data.priceTarget.upside !== null && data.priceTarget.upside !== undefined) {
                 const upside = data.priceTarget.upside;
                 upsideElement.textContent = `${upside >= 0 ? '+' : ''}${upside}%`;
                 upsideElement.className = `target-upside ${upside >= 0 ? 'positive-upside' : 'negative-upside'}`;
             } else {
-                upsideElement.textContent = 'N/A';
+                upsideElement.textContent = 'No Data';
                 upsideElement.className = 'target-upside';
             }
             
@@ -2103,10 +2147,10 @@
             
             analystCountElement.textContent = 'N/A';
             
-            avgTargetElement.textContent = 'Unavailable';
+            avgTargetElement.textContent = 'Data Error';
             avgTargetElement.className = 'target-price error-state';
             
-            upsideElement.textContent = 'N/A';
+            upsideElement.textContent = 'Error';
             upsideElement.className = 'target-upside error-state';
             
             // Hide the distribution section on error

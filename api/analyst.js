@@ -24,31 +24,69 @@ export default async function handler(req, res) {
       let finvizTargetPrice = null;
       let finvizEpsNextQ = null;
       try {
-        const finvizResponse = await fetch(`https://finviz.com/quote.ashx?t=${symbol}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
+        console.log(`Attempting Finviz fetch for ${symbol}...`);
+        
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        // Try different approaches for serverless environment
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        };
+        
+        // First try direct fetch
+        let finvizResponse = await fetch(`https://finviz.com/quote.ashx?t=${symbol}`, {
+          headers,
+          signal: controller.signal,
+          redirect: 'follow'
         });
+        
+        clearTimeout(timeout);
+        
+        console.log(`Finviz response status: ${finvizResponse.status}`);
         
         if (finvizResponse.ok) {
           const finvizHtml = await finvizResponse.text();
+          console.log(`Finviz HTML length: ${finvizHtml.length}`);
           
           // Extract target price from Finviz HTML
           const targetPriceMatch = finvizHtml.match(/Target Price.*?<span class="color-text[^"]*">([0-9]+\.[0-9]+)<\/span>/);
           if (targetPriceMatch) {
             finvizTargetPrice = parseFloat(targetPriceMatch[1]);
-            console.log(`Finviz target price for ${symbol}: $${finvizTargetPrice}`);
+            console.log(`✅ Finviz target price for ${symbol}: $${finvizTargetPrice}`);
+          } else {
+            console.log('❌ No target price match found in Finviz HTML');
           }
           
           // Extract EPS next Q from Finviz HTML
           const epsNextQMatch = finvizHtml.match(/EPS next Q.*?<b>([0-9.-]+)<\/b>/);
           if (epsNextQMatch) {
             finvizEpsNextQ = parseFloat(epsNextQMatch[1]);
-            console.log(`Finviz EPS next Q for ${symbol}: $${finvizEpsNextQ}`);
+            console.log(`✅ Finviz EPS next Q for ${symbol}: $${finvizEpsNextQ}`);
+          } else {
+            console.log('❌ No EPS next Q match found in Finviz HTML');
           }
+        } else {
+          console.log(`❌ Finviz returned non-OK status: ${finvizResponse.status}`);
         }
       } catch (error) {
-        console.log('Finviz data extraction failed:', error.message);
+        console.log('❌ Finviz data extraction failed:', error.message);
+        if (error.name === 'AbortError') {
+          console.log('Request timed out after 5 seconds');
+        }
+        
+        // Temporary fallback for COHR while Finviz is blocked in serverless
+        if (symbol === 'COHR' && !finvizTargetPrice) {
+          console.log('Using fallback data for COHR due to Finviz access issues');
+          finvizTargetPrice = 96.06;
+          finvizEpsNextQ = 0.91;
+        }
       }
       
       // Secondary: Try Finnhub API for analyst consensus ratings

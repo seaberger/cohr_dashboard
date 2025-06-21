@@ -132,6 +132,70 @@
             background: #2980b9 !important;
         }
 
+        .analyst-breakdown {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .breakdown-title {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .breakdown-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .breakdown-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .breakdown-label {
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .breakdown-item.strong-buy .breakdown-value {
+            color: #27ae60;
+        }
+
+        .breakdown-item.buy .breakdown-value {
+            color: #2ecc71;
+        }
+
+        .breakdown-item.hold .breakdown-value {
+            color: #f39c12;
+        }
+
+        .breakdown-item.sell .breakdown-value {
+            color: #e74c3c;
+        }
+
+        @media (max-width: 968px) {
+            .breakdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+        }
+
         .chart-card {
             grid-column: 1 / -1;
             min-height: 450px;
@@ -885,12 +949,39 @@
                     <div class="analyst-label">Consensus</div>
                 </div>
                 <div class="analyst-item">
+                    <div class="analyst-value" id="analystCount">--</div>
+                    <div class="analyst-label">Analysts</div>
+                </div>
+                <div class="analyst-item">
                     <div class="analyst-value" id="avgTarget">--</div>
                     <div class="analyst-label">Avg Target</div>
                 </div>
                 <div class="analyst-item">
                     <div class="analyst-value" id="upside">--</div>
                     <div class="analyst-label">Upside</div>
+                </div>
+            </div>
+            
+            <!-- Enhanced Analyst Breakdown -->
+            <div class="analyst-breakdown" id="analystBreakdown" style="display: none; margin-top: 16px;">
+                <div class="breakdown-title">Analyst Distribution</div>
+                <div class="breakdown-grid">
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" id="strongBuyCount">--</div>
+                        <div class="breakdown-label">Strong Buy</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" id="buyCount">--</div>
+                        <div class="breakdown-label">Buy</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" id="holdCount">--</div>
+                        <div class="breakdown-label">Hold</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="breakdown-value" id="sellCount">--</div>
+                        <div class="breakdown-label">Sell</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1756,6 +1847,11 @@
             consensusElement.textContent = data.consensus.rating;
             consensusElement.className = `analyst-value ${getConsensusClass(data.consensus.rating)}`;
             
+            // Update analyst count
+            const analystCountElement = document.getElementById('analystCount');
+            analystCountElement.textContent = data.consensus.analystCount || 'N/A';
+            analystCountElement.className = 'analyst-value';
+            
             // Update average price target
             const avgTargetElement = document.getElementById('avgTarget');
             if (data.priceTarget.average) {
@@ -1772,6 +1868,11 @@
                 upsideElement.className = `analyst-value ${upside >= 0 ? 'positive-upside' : 'negative-upside'}`;
             } else {
                 upsideElement.textContent = 'N/A';
+            }
+            
+            // Update analyst breakdown (if distribution data is available)
+            if (data.consensus.distribution && data.consensus.analystCount > 0) {
+                updateAnalystBreakdown(data.consensus.distribution);
             }
             
             // Add source indicator with improved transparency
@@ -1796,9 +1897,33 @@
             }
         }
 
+        function updateAnalystBreakdown(distribution) {
+            // Show the breakdown section
+            const breakdownSection = document.getElementById('analystBreakdown');
+            breakdownSection.style.display = 'block';
+            
+            // Update individual counts with color coding
+            const strongBuyElement = document.getElementById('strongBuyCount');
+            strongBuyElement.textContent = distribution.strongBuy || 0;
+            strongBuyElement.parentElement.className = 'breakdown-item strong-buy';
+            
+            const buyElement = document.getElementById('buyCount');
+            buyElement.textContent = distribution.buy || 0;
+            buyElement.parentElement.className = 'breakdown-item buy';
+            
+            const holdElement = document.getElementById('holdCount');
+            holdElement.textContent = distribution.hold || 0;
+            holdElement.parentElement.className = 'breakdown-item hold';
+            
+            const sellElement = document.getElementById('sellCount');
+            sellElement.textContent = (distribution.sell || 0) + (distribution.strongSell || 0);
+            sellElement.parentElement.className = 'breakdown-item sell';
+        }
+
         function updateAnalystDisplayError(errorData) {
             // Display professional error state for analyst data
             const consensusElement = document.getElementById('consensus');
+            const analystCountElement = document.getElementById('analystCount');
             const avgTargetElement = document.getElementById('avgTarget');
             const upsideElement = document.getElementById('upside');
             
@@ -1806,11 +1931,18 @@
             consensusElement.textContent = 'Data Error';
             consensusElement.className = 'analyst-value error-state';
             
+            analystCountElement.textContent = 'N/A';
+            analystCountElement.className = 'analyst-value error-state';
+            
             avgTargetElement.textContent = 'Unavailable';
             avgTargetElement.className = 'analyst-value error-state';
             
             upsideElement.textContent = 'N/A';
             upsideElement.className = 'analyst-value error-state';
+            
+            // Hide the breakdown section on error
+            const breakdownSection = document.getElementById('analystBreakdown');
+            breakdownSection.style.display = 'none';
             
             // Add retry button if we have error details
             if (errorData.details) {

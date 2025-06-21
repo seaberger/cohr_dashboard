@@ -599,7 +599,8 @@
         }
 
         .target-price-section,
-        .target-upside-section {
+        .target-upside-section,
+        .eps-next-section {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -622,6 +623,12 @@
         .target-upside {
             font-size: 1.1em;
             font-weight: 500;
+        }
+
+        .eps-next {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #fff;
         }
 
         .distribution-section {
@@ -712,11 +719,13 @@
                 text-align: center;
                 flex-direction: row;
                 justify-content: center;
-                gap: 24px;
+                gap: 16px;
+                flex-wrap: wrap;
             }
 
             .target-price-section,
-            .target-upside-section {
+            .target-upside-section,
+            .eps-next-section {
                 align-items: center;
             }
 
@@ -1135,6 +1144,10 @@
                             <div class="target-label">Upside</div>
                             <div class="target-upside" id="upside">--</div>
                         </div>
+                        <div class="eps-next-section" id="epsNextSection" style="display: none;">
+                            <div class="target-label">Next Q EPS</div>
+                            <div class="eps-next" id="epsNext">--</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -1473,11 +1486,25 @@
                 console.error('loadUniversalMetrics function not available yet');
             }
         };
+        window.testAnalystAPI = async () => {
+            console.log('🔬 Testing analyst API directly...');
+            try {
+                const response = await fetch(`${API_BASE}/api/analyst?symbol=COHR&currentPrice=81.07`);
+                const data = await response.json();
+                console.log('📊 Raw analyst API response:', data);
+                console.log('💰 Price target data:', data.priceTarget);
+                console.log('🎯 EPS data:', data.nextEarnings);
+                return data;
+            } catch (error) {
+                console.error('❌ Analyst API test failed:', error);
+            }
+        };
         window.cohrDebug = {
             clearCaches: debugClearAllCaches,
             forceShowUniversalMetrics: debugForceShowUniversalMetrics,
             checkContainers: debugCheckContainers,
-            testLoadMetrics: window.testLoadMetrics
+            testLoadMetrics: window.testLoadMetrics,
+            testAnalystAPI: window.testAnalystAPI
         };
 
         console.log('🛠️ Early debug functions loaded: checkContainers(), forceShowUniversalMetrics(), clearCaches()');
@@ -2055,6 +2082,21 @@
             } else {
                 upsideElement.textContent = 'No Data';
                 upsideElement.className = 'target-upside';
+            }
+            
+            // Update next earnings EPS (if available)
+            const epsNextElement = document.getElementById('epsNext');
+            const epsNextSection = document.getElementById('epsNextSection');
+            if (data.nextEarnings && data.nextEarnings.estimatedEPS) {
+                epsNextElement.textContent = `$${data.nextEarnings.estimatedEPS}`;
+                epsNextElement.className = 'eps-next';
+                epsNextSection.style.display = 'block';
+                console.log('📊 EPS Next Q displayed:', data.nextEarnings.estimatedEPS);
+            } else {
+                epsNextElement.textContent = 'No Data';
+                epsNextElement.className = 'eps-next';
+                epsNextSection.style.display = 'block'; // Still show it for consistency
+                console.log('⚠️ No EPS Next Q data available');
             }
             
             // Update analyst breakdown (if distribution data is available)

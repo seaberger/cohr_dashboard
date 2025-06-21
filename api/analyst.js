@@ -20,7 +20,38 @@ export default async function handler(req, res) {
     try {
       let analystData = null;
       
-      // Primary: Try Finnhub API for analyst data (60 req/min, excellent analyst coverage)
+      // Primary: Try Finviz for price targets and EPS estimates (most reliable, no API key needed)
+      let finvizTargetPrice = null;
+      let finvizEpsNextQ = null;
+      try {
+        const finvizResponse = await fetch(`https://finviz.com/quote.ashx?t=${symbol}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        
+        if (finvizResponse.ok) {
+          const finvizHtml = await finvizResponse.text();
+          
+          // Extract target price from Finviz HTML
+          const targetPriceMatch = finvizHtml.match(/Target Price.*?<span class="color-text[^"]*">([0-9]+\.[0-9]+)<\/span>/);
+          if (targetPriceMatch) {
+            finvizTargetPrice = parseFloat(targetPriceMatch[1]);
+            console.log(`Finviz target price for ${symbol}: $${finvizTargetPrice}`);
+          }
+          
+          // Extract EPS next Q from Finviz HTML
+          const epsNextQMatch = finvizHtml.match(/EPS next Q.*?<b>([0-9.-]+)<\/b>/);
+          if (epsNextQMatch) {
+            finvizEpsNextQ = parseFloat(epsNextQMatch[1]);
+            console.log(`Finviz EPS next Q for ${symbol}: $${finvizEpsNextQ}`);
+          }
+        }
+      } catch (error) {
+        console.log('Finviz data extraction failed:', error.message);
+      }
+      
+      // Secondary: Try Finnhub API for analyst consensus ratings
       const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
       
       if (FINNHUB_API_KEY) {
@@ -53,11 +84,15 @@ export default async function handler(req, res) {
                 // Calculate consensus score (-2 to +2 scale)
                 consensusScore = ((strongBuy * 2) + (buy * 1) + (hold * 0) + (sell * -1) + (strongSell * -2)) / analystCount;
                 
-                // Determine consensus rating
-                if (consensusScore > 0.5) finnhubConsensus = 'Strong Buy';
-                else if (consensusScore > 0.1) finnhubConsensus = 'Buy';
-                else if (consensusScore < -0.5) finnhubConsensus = 'Strong Sell';
-                else if (consensusScore < -0.1) finnhubConsensus = 'Sell';
+                // Determine consensus rating with more realistic thresholds
+                // For "Strong Buy": majority (>50%) must be Strong Buy recommendations
+                const strongBuyRatio = strongBuy / analystCount;
+                const positiveRatio = (strongBuy + buy) / analystCount;
+                
+                if (strongBuyRatio > 0.5) finnhubConsensus = 'Strong Buy';
+                else if (positiveRatio > 0.7) finnhubConsensus = 'Buy';
+                else if (positiveRatio > 0.4) finnhubConsensus = 'Hold';
+                else if (consensusScore < -0.3) finnhubConsensus = 'Sell';
                 else finnhubConsensus = 'Hold';
                 
                 distribution = {
@@ -138,10 +173,14 @@ export default async function handler(req, res) {
               if (analystCount > 0) {
                 consensusScore = ((strongBuy * 2) + (buy * 1) + (hold * 0) + (sell * -1) + (strongSell * -2)) / analystCount;
                 
-                if (consensusScore > 0.5) consensus = 'Strong Buy';
-                else if (consensusScore > 0.1) consensus = 'Buy';
-                else if (consensusScore < -0.5) consensus = 'Strong Sell';
-                else if (consensusScore < -0.1) consensus = 'Sell';
+                // Determine consensus rating with more realistic thresholds
+                const strongBuyRatio = strongBuy / analystCount;
+                const positiveRatio = (strongBuy + buy) / analystCount;
+                
+                if (strongBuyRatio > 0.5) consensus = 'Strong Buy';
+                else if (positiveRatio > 0.7) consensus = 'Buy';
+                else if (positiveRatio > 0.4) consensus = 'Hold';
+                else if (consensusScore < -0.3) consensus = 'Sell';
                 else consensus = 'Hold';
                 
                 distribution = {
@@ -191,24 +230,44 @@ export default async function handler(req, res) {
                 }));
             }
             
-            // Merge Yahoo Finance price targets with existing Finnhub consensus data or create new data
-            if (avgPriceTarget !== null || analystCount > 0) {
+            // Merge price targets prioritizing Finviz, then Yahoo Finance data
+            if (finvizTargetPrice !== null || avgPriceTarget !== null || analystCount > 0) {
+              // Calculate upside using Finviz target if available, otherwise Yahoo target
+              const targetPrice = finvizTargetPrice || avgPriceTarget;
+              const calculatedUpside = targetPrice ? ((targetPrice - currentPrice) / currentPrice) * 100 : null;
+              
               if (analystData && analystData.consensusOnly) {
-                // We have Finnhub consensus data, add Yahoo price targets
+                // We have Finnhub consensus data, but prioritize Yahoo distribution if available
+                // Recalculate consensus based on actual distribution data being used
+                if (analystCount > 0 && distribution) {
+                  // Use Yahoo Finance distribution and recalculate consensus to ensure consistency
+                  analystData.consensus = {
+                    rating: consensus,
+                    score: consensusScore,
+                    analystCount: analystCount,
+                    distribution: distribution
+                  };
+                  console.log(`Updated consensus from Yahoo distribution: ${consensus} (${analystCount} analysts)`);
+                }
+                
                 analystData.priceTarget = {
-                  average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
+                  average: targetPrice ? parseFloat(targetPrice.toFixed(2)) : null,
                   high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
                   low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
-                  upside: upside ? parseFloat(upside.toFixed(1)) : null,
-                  targetCount: avgPriceTarget ? Math.max(analystData.consensus.analystCount, analystCount) : analystData.consensus.analystCount
+                  upside: calculatedUpside ? parseFloat(calculatedUpside.toFixed(1)) : null,
+                  targetCount: analystData.consensus.analystCount
                 };
                 analystData.recentActivity = recentActivity;
-                analystData.source = 'Finnhub + Yahoo Finance';
+                analystData.nextEarnings = finvizEpsNextQ ? {
+                  estimatedEPS: finvizEpsNextQ,
+                  source: 'Finviz'
+                } : null;
+                analystData.source = finvizTargetPrice ? 'Finnhub + Finviz' : 'Finnhub + Yahoo Finance';
                 delete analystData.consensusOnly;
                 
-                console.log(`Combined Finnhub consensus (${analystData.consensus.analystCount} analysts) + Yahoo price targets ($${avgPriceTarget})`);
+                console.log(`Combined Finnhub consensus (${analystData.consensus.analystCount} analysts) + ${finvizTargetPrice ? 'Finviz' : 'Yahoo'} price targets ($${targetPrice})`);
               } else if (!analystData) {
-                // No Finnhub data, use Yahoo data as fallback
+                // No Finnhub data, create new data prioritizing Finviz for price targets
                 analystData = {
                   symbol: symbol.toUpperCase(),
                   consensus: {
@@ -218,20 +277,53 @@ export default async function handler(req, res) {
                     distribution: distribution
                   },
                   priceTarget: {
-                    average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
+                    average: targetPrice ? parseFloat(targetPrice.toFixed(2)) : null,
                     high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
                     low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
-                    upside: upside ? parseFloat(upside.toFixed(1)) : null,
+                    upside: calculatedUpside ? parseFloat(calculatedUpside.toFixed(1)) : null,
                     targetCount: analystCount
                   },
                   recentActivity: recentActivity,
-                  nextEarnings: null,
-                  source: 'Yahoo Finance',
+                  nextEarnings: finvizEpsNextQ ? {
+                    estimatedEPS: finvizEpsNextQ,
+                    source: 'Finviz'
+                  } : null,
+                  source: finvizTargetPrice ? 'Finviz + Yahoo Finance' : 'Yahoo Finance',
                   lastUpdated: new Date().toISOString()
                 };
                 
-                console.log(`Yahoo Finance analyst data loaded for ${symbol} - ${analystCount} analysts, $${avgPriceTarget} target`);
+                console.log(`${finvizTargetPrice ? 'Finviz + Yahoo' : 'Yahoo'} Finance analyst data loaded for ${symbol} - ${analystCount} analysts, $${targetPrice} target`);
               }
+            } else if (finvizTargetPrice !== null && !analystData) {
+              // Only Finviz price target available, no consensus data
+              const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+              const calculatedUpside = ((finvizTargetPrice - currentPrice) / currentPrice) * 100;
+              
+              analystData = {
+                symbol: symbol.toUpperCase(),
+                consensus: {
+                  rating: 'Hold', // Default when no consensus available
+                  score: 0,
+                  analystCount: 0,
+                  distribution: null
+                },
+                priceTarget: {
+                  average: parseFloat(finvizTargetPrice.toFixed(2)),
+                  high: null,
+                  low: null,
+                  upside: parseFloat(calculatedUpside.toFixed(1)),
+                  targetCount: 1 // Assuming at least one analyst for the target
+                },
+                recentActivity: [],
+                nextEarnings: finvizEpsNextQ ? {
+                  estimatedEPS: finvizEpsNextQ,
+                  source: 'Finviz'
+                } : null,
+                source: 'Finviz',
+                lastUpdated: new Date().toISOString()
+              };
+              
+              console.log(`Finviz-only analyst data loaded for ${symbol} - $${finvizTargetPrice} target`);
             } else {
               console.log(`Yahoo Finance returned no useful analyst data for ${symbol}`);
             }

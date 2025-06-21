@@ -557,6 +557,144 @@
             color: #e74c3c !important;
         }
 
+        /* Integrated Analyst Consensus Card */
+        .analyst-consensus-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .consensus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .consensus-main {
+            flex: 1;
+        }
+
+        .consensus-rating {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .consensus-meta {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9em;
+        }
+
+        .target-info {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .target-price {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .target-upside {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .distribution-section {
+            margin-top: 16px;
+        }
+
+        .distribution-numbers {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .dist-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dist-count {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .dist-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .dist-item.strong-buy .dist-count {
+            color: #27ae60;
+        }
+
+        .dist-item.buy .dist-count {
+            color: #2ecc71;
+        }
+
+        .dist-item.hold .dist-count {
+            color: #f39c12;
+        }
+
+        .dist-item.sell .dist-count {
+            color: #e74c3c;
+        }
+
+        .distribution-bar {
+            display: flex;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .bar-segment {
+            transition: all 0.3s ease;
+        }
+
+        .bar-segment.strong-buy {
+            background: #27ae60;
+        }
+
+        .bar-segment.buy {
+            background: #2ecc71;
+        }
+
+        .bar-segment.hold {
+            background: #f39c12;
+        }
+
+        .bar-segment.sell {
+            background: #e74c3c;
+        }
+
+        /* Mobile responsiveness for analyst card */
+        @media (max-width: 768px) {
+            .consensus-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .target-info {
+                text-align: center;
+            }
+
+            .distribution-numbers {
+                justify-content: space-around;
+            }
+        }
+
         /* Hide sections until implemented */
         .competitive-section {
             display: none;
@@ -943,44 +1081,47 @@
                 <div class="stock-meta" id="stockMeta">NASDAQ • Technology • Loading market cap...</div>
                 <div style="margin-top: 12px; font-size: 0.9em; opacity: 0.8;" id="lastUpdated">Last updated: --</div>
             </div>
-            <div class="analyst-grid">
-                <div class="analyst-item">
-                    <div class="analyst-value" id="consensus">--</div>
-                    <div class="analyst-label">Consensus</div>
-                </div>
-                <div class="analyst-item">
-                    <div class="analyst-value" id="analystCount">--</div>
-                    <div class="analyst-label">Analysts</div>
-                </div>
-                <div class="analyst-item">
-                    <div class="analyst-value" id="avgTarget">--</div>
-                    <div class="analyst-label">Avg Target</div>
-                </div>
-                <div class="analyst-item">
-                    <div class="analyst-value" id="upside">--</div>
-                    <div class="analyst-label">Upside</div>
-                </div>
-            </div>
-            
-            <!-- Enhanced Analyst Breakdown -->
-            <div class="analyst-breakdown" id="analystBreakdown" style="display: none; margin-top: 16px;">
-                <div class="breakdown-title">Analyst Distribution</div>
-                <div class="breakdown-grid">
-                    <div class="breakdown-item">
-                        <div class="breakdown-value" id="strongBuyCount">--</div>
-                        <div class="breakdown-label">Strong Buy</div>
+            <!-- Integrated Analyst Consensus Card -->
+            <div class="analyst-consensus-card">
+                <!-- Top Section: Consensus Summary -->
+                <div class="consensus-header">
+                    <div class="consensus-main">
+                        <div class="consensus-rating" id="consensus">--</div>
+                        <div class="consensus-meta">
+                            <span id="analystCount">--</span> analysts
+                        </div>
                     </div>
-                    <div class="breakdown-item">
-                        <div class="breakdown-value" id="buyCount">--</div>
-                        <div class="breakdown-label">Buy</div>
+                    <div class="target-info">
+                        <div class="target-price" id="avgTarget">--</div>
+                        <div class="target-upside" id="upside">--</div>
                     </div>
-                    <div class="breakdown-item">
-                        <div class="breakdown-value" id="holdCount">--</div>
-                        <div class="breakdown-label">Hold</div>
+                </div>
+                
+                <!-- Distribution Bar -->
+                <div class="distribution-section" id="distributionSection" style="display: none;">
+                    <div class="distribution-numbers">
+                        <span class="dist-item strong-buy">
+                            <span class="dist-count" id="strongBuyCount">7</span>
+                            <span class="dist-label">SB</span>
+                        </span>
+                        <span class="dist-item buy">
+                            <span class="dist-count" id="buyCount">15</span>
+                            <span class="dist-label">B</span>
+                        </span>
+                        <span class="dist-item hold">
+                            <span class="dist-count" id="holdCount">5</span>
+                            <span class="dist-label">H</span>
+                        </span>
+                        <span class="dist-item sell">
+                            <span class="dist-count" id="sellCount">0</span>
+                            <span class="dist-label">S</span>
+                        </span>
                     </div>
-                    <div class="breakdown-item">
-                        <div class="breakdown-value" id="sellCount">--</div>
-                        <div class="breakdown-label">Sell</div>
+                    <div class="distribution-bar">
+                        <div class="bar-segment strong-buy" id="strongBuyBar"></div>
+                        <div class="bar-segment buy" id="buyBar"></div>
+                        <div class="bar-segment hold" id="holdBar"></div>
+                        <div class="bar-segment sell" id="sellBar"></div>
                     </div>
                 </div>
             </div>
@@ -1845,19 +1986,20 @@
             // Update consensus rating
             const consensusElement = document.getElementById('consensus');
             consensusElement.textContent = data.consensus.rating;
-            consensusElement.className = `analyst-value ${getConsensusClass(data.consensus.rating)}`;
+            consensusElement.className = `consensus-rating ${getConsensusClass(data.consensus.rating)}`;
             
             // Update analyst count
             const analystCountElement = document.getElementById('analystCount');
             analystCountElement.textContent = data.consensus.analystCount || 'N/A';
-            analystCountElement.className = 'analyst-value';
             
             // Update average price target
             const avgTargetElement = document.getElementById('avgTarget');
             if (data.priceTarget.average) {
                 avgTargetElement.textContent = `$${data.priceTarget.average}`;
+                avgTargetElement.className = 'target-price';
             } else {
                 avgTargetElement.textContent = 'N/A';
+                avgTargetElement.className = 'target-price';
             }
             
             // Update upside potential
@@ -1865,14 +2007,22 @@
             if (data.priceTarget.upside !== null) {
                 const upside = data.priceTarget.upside;
                 upsideElement.textContent = `${upside >= 0 ? '+' : ''}${upside}%`;
-                upsideElement.className = `analyst-value ${upside >= 0 ? 'positive-upside' : 'negative-upside'}`;
+                upsideElement.className = `target-upside ${upside >= 0 ? 'positive-upside' : 'negative-upside'}`;
             } else {
                 upsideElement.textContent = 'N/A';
+                upsideElement.className = 'target-upside';
             }
             
             // Update analyst breakdown (if distribution data is available)
             if (data.consensus.distribution && data.consensus.analystCount > 0) {
                 updateAnalystBreakdown(data.consensus.distribution);
+                // Show the distribution section
+                const distributionSection = document.getElementById('distributionSection');
+                distributionSection.style.display = 'block';
+            } else {
+                // Hide distribution section if no data
+                const distributionSection = document.getElementById('distributionSection');
+                distributionSection.style.display = 'none';
             }
             
             // Add source indicator with improved transparency
@@ -1892,32 +2042,52 @@
                 const sourceSpan = document.createElement('span');
                 sourceSpan.style.fontSize = '0.7em';
                 sourceSpan.style.color = data.source === 'Finnhub' ? '#27ae60' : '#666';
+                sourceSpan.style.marginLeft = '8px';
                 sourceSpan.textContent = sourceIndicator;
                 consensusElement.appendChild(sourceSpan);
             }
         }
 
         function updateAnalystBreakdown(distribution) {
-            // Show the breakdown section
-            const breakdownSection = document.getElementById('analystBreakdown');
-            breakdownSection.style.display = 'block';
-            
-            // Update individual counts with color coding
+            // Update individual counts
             const strongBuyElement = document.getElementById('strongBuyCount');
             strongBuyElement.textContent = distribution.strongBuy || 0;
-            strongBuyElement.parentElement.className = 'breakdown-item strong-buy';
             
             const buyElement = document.getElementById('buyCount');
             buyElement.textContent = distribution.buy || 0;
-            buyElement.parentElement.className = 'breakdown-item buy';
             
             const holdElement = document.getElementById('holdCount');
             holdElement.textContent = distribution.hold || 0;
-            holdElement.parentElement.className = 'breakdown-item hold';
             
             const sellElement = document.getElementById('sellCount');
             sellElement.textContent = (distribution.sell || 0) + (distribution.strongSell || 0);
-            sellElement.parentElement.className = 'breakdown-item sell';
+            
+            // Update distribution bar visualization
+            const totalAnalysts = (distribution.strongBuy || 0) + (distribution.buy || 0) + 
+                                 (distribution.hold || 0) + (distribution.sell || 0) + (distribution.strongSell || 0);
+            
+            if (totalAnalysts > 0) {
+                const strongBuyBar = document.getElementById('strongBuyBar');
+                const buyBar = document.getElementById('buyBar');
+                const holdBar = document.getElementById('holdBar');
+                const sellBar = document.getElementById('sellBar');
+                
+                const strongBuyPercent = ((distribution.strongBuy || 0) / totalAnalysts) * 100;
+                const buyPercent = ((distribution.buy || 0) / totalAnalysts) * 100;
+                const holdPercent = ((distribution.hold || 0) / totalAnalysts) * 100;
+                const sellPercent = (((distribution.sell || 0) + (distribution.strongSell || 0)) / totalAnalysts) * 100;
+                
+                strongBuyBar.style.width = `${strongBuyPercent}%`;
+                buyBar.style.width = `${buyPercent}%`;
+                holdBar.style.width = `${holdPercent}%`;
+                sellBar.style.width = `${sellPercent}%`;
+                
+                // Hide bars with 0% width
+                strongBuyBar.style.display = strongBuyPercent > 0 ? 'block' : 'none';
+                buyBar.style.display = buyPercent > 0 ? 'block' : 'none';
+                holdBar.style.display = holdPercent > 0 ? 'block' : 'none';
+                sellBar.style.display = sellPercent > 0 ? 'block' : 'none';
+            }
         }
 
         function updateAnalystDisplayError(errorData) {
@@ -1927,22 +2097,21 @@
             const avgTargetElement = document.getElementById('avgTarget');
             const upsideElement = document.getElementById('upside');
             
-            // Set error display
+            // Set error display with proper classes
             consensusElement.textContent = 'Data Error';
-            consensusElement.className = 'analyst-value error-state';
+            consensusElement.className = 'consensus-rating error-state';
             
             analystCountElement.textContent = 'N/A';
-            analystCountElement.className = 'analyst-value error-state';
             
             avgTargetElement.textContent = 'Unavailable';
-            avgTargetElement.className = 'analyst-value error-state';
+            avgTargetElement.className = 'target-price error-state';
             
             upsideElement.textContent = 'N/A';
-            upsideElement.className = 'analyst-value error-state';
+            upsideElement.className = 'target-upside error-state';
             
-            // Hide the breakdown section on error
-            const breakdownSection = document.getElementById('analystBreakdown');
-            breakdownSection.style.display = 'none';
+            // Hide the distribution section on error
+            const distributionSection = document.getElementById('distributionSection');
+            distributionSection.style.display = 'none';
             
             // Add retry button if we have error details
             if (errorData.details) {

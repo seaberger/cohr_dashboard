@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - Independent loading, caching, and retry mechanisms
   - Real-time error handling and fallback strategies
 - ✅ **Universal Financial Metrics**: 8 GAAP-based KPI tiles **WORKING PERFECTLY**
-  - **Revenue** ($1.498M, +24% YoY) with sparklines and trend arrows
+  - **Revenue** ($1.498M, +24% YoY) with trend arrows showing real growth direction
   - **Gross Margin** (35.0%, +5.0pp) showing margin expansion
   - **Operating Margin** (0.7%, +2.5pp) operational efficiency
   - **Operating Income** ($10M, +131%) showing operational leverage
@@ -30,6 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **Diluted EPS** (per-share earnings performance)
   - Layout: 4x2 responsive grid with real-time data from Q3 2025 SEC filings
   - Fixed refresh persistence - tiles remain visible after page reload
+  - **Data Integrity**: Sparklines disabled until real historical data available (Issue #12)
   - Comprehensive debugging tools available: `checkContainers()`, `testLoadMetrics()`
 - ✅ **Enhanced Company Insights**: Structured business intelligence extraction working
   - 8 insight categories: GROWTH-DRIVER 🚀, RISK ⚠, STRATEGIC-MOVE 🎯, etc.
@@ -229,10 +230,17 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - ✅ **Investment-Grade LLM Prompts**: Focus on valuation-relevant insights, enhanced confidence criteria
 - ✅ **Data Integrity Priority**: Removed ALL hardcoded fallbacks, professional error states, transparent failure handling
 - ✅ **Enhanced Error Handling**: User-friendly error messages with retry functionality, maintains investment-grade data quality standards
+- ✅ **Sparklines Data Integrity Fix**: Disabled hallucinated sparklines until real historical data available (Issue #12)
 
-### 🚧 NEXT PRIORITIES (Performance & Polish)
+### 🚧 NEXT PRIORITIES (Data Quality & Performance)
 
-**Primary Focus**: Optimization and user experience improvements
+**Primary Focus**: Data integrity improvements and performance optimization
+
+0. **Data Integrity Issues** (High Priority)
+   - Issue #10: Remove hardcoded analyst fallback data
+   - Issue #12: Implement real 8-quarter historical sparklines 
+   - Issue #13: Comprehensive caching strategy for multi-user scale
+   - Maintain transparent error handling over misleading data
 
 1. **Performance Optimization**
    - Server-side caching for API responses (beyond current session storage)

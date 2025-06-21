@@ -20,7 +20,112 @@ export default async function handler(req, res) {
     try {
       let analystData = null;
       
-      // Try Yahoo Finance API for analyst data (free and often reliable)
+      // Primary: Try Finnhub API for analyst data (60 req/min, excellent analyst coverage)
+      const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
+      
+      if (FINNHUB_API_KEY) {
+        try {
+          // Fetch analyst recommendations and price targets from Finnhub
+          const [recommendationResponse, priceTargetResponse] = await Promise.all([
+            fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+            fetch(`https://finnhub.io/api/v1/stock/price-target?symbol=${symbol}&token=${FINNHUB_API_KEY}`)
+          ]);
+          
+          if (recommendationResponse.ok && priceTargetResponse.ok) {
+            const [recommendations, priceTargets] = await Promise.all([
+              recommendationResponse.json(),
+              priceTargetResponse.json()
+            ]);
+            
+            // Process Finnhub recommendation data
+            let consensus = 'Hold';
+            let consensusScore = 0;
+            let analystCount = 0;
+            let distribution = null;
+            
+            if (recommendations && recommendations.length > 0) {
+              // Get the most recent recommendation data
+              const latest = recommendations[0];
+              const strongBuy = latest.strongBuy || 0;
+              const buy = latest.buy || 0;
+              const hold = latest.hold || 0;
+              const sell = latest.sell || 0;
+              const strongSell = latest.strongSell || 0;
+              
+              analystCount = strongBuy + buy + hold + sell + strongSell;
+              
+              if (analystCount > 0) {
+                // Calculate consensus score (-2 to +2 scale)
+                consensusScore = ((strongBuy * 2) + (buy * 1) + (hold * 0) + (sell * -1) + (strongSell * -2)) / analystCount;
+                
+                // Determine consensus rating
+                if (consensusScore > 0.5) consensus = 'Strong Buy';
+                else if (consensusScore > 0.1) consensus = 'Buy';
+                else if (consensusScore < -0.5) consensus = 'Strong Sell';
+                else if (consensusScore < -0.1) consensus = 'Sell';
+                else consensus = 'Hold';
+                
+                distribution = {
+                  strongBuy: strongBuy,
+                  buy: buy,
+                  hold: hold,
+                  sell: sell,
+                  strongSell: strongSell
+                };
+              }
+            }
+            
+            // Process Finnhub price target data
+            let avgPriceTarget = null;
+            let highTarget = null;
+            let lowTarget = null;
+            let upside = null;
+            const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+            
+            if (priceTargets && priceTargets.targetMean) {
+              avgPriceTarget = priceTargets.targetMean;
+              highTarget = priceTargets.targetHigh;
+              lowTarget = priceTargets.targetLow;
+              
+              if (avgPriceTarget) {
+                upside = ((avgPriceTarget - currentPrice) / currentPrice) * 100;
+              }
+            }
+            
+            // Only use Finnhub data if we have meaningful information
+            if (analystCount > 0 || avgPriceTarget !== null) {
+              analystData = {
+                symbol: symbol.toUpperCase(),
+                consensus: {
+                  rating: consensus,
+                  score: consensusScore,
+                  analystCount: analystCount,
+                  distribution: distribution
+                },
+                priceTarget: {
+                  average: avgPriceTarget ? parseFloat(avgPriceTarget.toFixed(2)) : null,
+                  high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
+                  low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
+                  upside: upside ? parseFloat(upside.toFixed(1)) : null,
+                  targetCount: analystCount
+                },
+                recentActivity: [], // Finnhub doesn't provide this in these endpoints
+                nextEarnings: null, // Can be added later with earnings calendar endpoint
+                source: 'Finnhub',
+                lastUpdated: new Date().toISOString()
+              };
+              
+              console.log(`Finnhub analyst data loaded for ${symbol} - ${analystCount} analysts, $${avgPriceTarget} target`);
+            } else {
+              console.log(`Finnhub returned no useful analyst data for ${symbol}`);
+            }
+          }
+        } catch (error) {
+          console.log('Finnhub analyst API failed:', error.message);
+        }
+      }
+      
+      // Secondary: Try Yahoo Finance API for analyst data (free and often reliable)
       try {
         const yahooResponse = await fetch(
           `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=recommendationTrend,financialData,defaultKeyStatistics,upgradeDowngradeHistory`,
@@ -142,7 +247,7 @@ export default async function handler(req, res) {
         console.log('Yahoo Finance API failed:', error.message);
       }
       
-      // Fallback: Try FMP API if Yahoo didn't work and FMP key is available
+      // Tertiary: Try FMP API if Finnhub and Yahoo didn't work and FMP key is available
       const FMP_API_KEY = process.env.FINANCIAL_MODELING_PREP_API_KEY;
       
       if (!analystData && FMP_API_KEY) {
@@ -275,76 +380,31 @@ export default async function handler(req, res) {
         }
       }
       
-      // Use realistic COHR analyst data based on public research
-      // Data compiled from TipRanks, Zacks, StockAnalysis, and other sources (Dec 2024)
+      // No hardcoded fallback data - maintain data integrity
       if (!analystData) {
-        const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
-        const avgTarget = 102.81; // Average from multiple sources
-        const upside = ((avgTarget - currentPrice) / currentPrice) * 100;
-        
-        analystData = {
-          symbol: symbol.toUpperCase(),
-          consensus: {
-            rating: 'Buy', // 63% Strong Buy + 21% Buy from research
-            score: 0.75, // Strong positive bias
-            analystCount: 17, // Based on Zacks data
-            distribution: {
-              buy: 12, // 10 Strong Buy + 2 Buy from research
-              hold: 5,  // 3 Hold + buffer
-              sell: 0   // 0 Sell ratings found
-            }
-          },
-          priceTarget: {
-            average: avgTarget,
-            high: 136.00, // From Zacks research
-            low: 80.00,   // From StockAnalysis research
-            upside: parseFloat(upside.toFixed(1)),
-            targetCount: 16 // Based on research sources
-          },
-          recentActivity: [
-            {
-              date: '2024-12-10',
-              company: 'Barclays',
-              action: 'Overweight',
-              previousGrade: 'Equal Weight',
-              priceTarget: 90.00
-            },
-            {
-              date: '2024-12-05',
-              company: 'B. Riley',
-              action: 'Buy',
-              previousGrade: 'Buy',
-              priceTarget: 77.00
-            },
-            {
-              date: '2024-11-28',
-              company: 'Goldman Sachs',
-              action: 'Buy',
-              previousGrade: 'Neutral',
-              priceTarget: 120.00
-            }
-          ],
-          nextEarnings: {
-            date: '2025-02-06', // Typical Q1 earnings timing
-            estimatedEPS: 0.92,
-            estimatedRevenue: 1450000000,
-            analystCount: 15
-          },
-          source: 'Research Compilation',
-          sourceNote: 'Data compiled from TipRanks, Zacks, StockAnalysis, and financial research (Dec 2024)',
-          lastUpdated: new Date().toISOString()
-        };
-        
-        console.log('Using demo analyst data - FMP API not available');
+        console.log(`No analyst data available for ${symbol} from any source`);
+        return res.status(500).json({
+          error: 'Failed to retrieve analyst data',
+          message: 'No analyst data available from Finnhub, Yahoo Finance, or FMP APIs',
+          symbol,
+          details: 'Analyst data sources are currently unavailable. Please try refreshing or check back later.',
+          apiKeysUsed: {
+            finnhub: !!process.env.FINNHUB_API_KEY,
+            financialModelingPrep: !!process.env.FINANCIAL_MODELING_PREP_API_KEY
+          }
+        });
       }
       
       const response = {
         ...analystData,
         apiKeysUsed: {
+          finnhub: !!process.env.FINNHUB_API_KEY,
           financialModelingPrep: !!process.env.FINANCIAL_MODELING_PREP_API_KEY
         }
       };
       
+      // Add caching headers to reduce API calls (30 minutes)
+      res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=300');
       res.status(200).json(response);
       
     } catch (error) {

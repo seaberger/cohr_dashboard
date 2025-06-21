@@ -123,6 +123,15 @@
             font-size: 0.95em;
         }
 
+        .analyst-value.error-state {
+            color: #e74c3c;
+            font-style: italic;
+        }
+
+        .retry-button:hover {
+            background: #2980b9 !important;
+        }
+
         .chart-card {
             grid-column: 1 / -1;
             min-height: 450px;
@@ -1718,17 +1727,26 @@
             try {
                 const currentPrice = currentStockData ? currentStockData.price : 81.07;
                 const response = await fetch(`${API_BASE}/api/analyst?symbol=COHR&currentPrice=${currentPrice}`);
-                if (!response.ok) throw new Error('Failed to fetch analyst data');
-                const data = await response.json();
                 
+                if (!response.ok) {
+                    // Handle API error responses professionally
+                    const errorData = await response.json();
+                    console.error('Analyst API error:', errorData);
+                    updateAnalystDisplayError(errorData);
+                    return;
+                }
+                
+                const data = await response.json();
                 updateAnalystDisplay(data);
                 
             } catch (error) {
-                console.error('Analyst data error:', error);
-                // Fallback to loading indicator
-                document.getElementById('consensus').textContent = 'Loading...';
-                document.getElementById('avgTarget').textContent = 'Loading...';
-                document.getElementById('upside').textContent = 'Loading...';
+                console.error('Analyst data network error:', error);
+                // Handle network errors
+                updateAnalystDisplayError({
+                    error: 'Network Error',
+                    message: 'Failed to connect to analyst data service',
+                    details: 'Please check your internet connection and try again.'
+                });
             }
         }
 
@@ -1756,16 +1774,73 @@
                 upsideElement.textContent = 'N/A';
             }
             
-            // Add source indicator
+            // Add source indicator with improved transparency
             let sourceIndicator = '';
-            if (data.source === 'Demo Data') {
-                sourceIndicator = ' (Demo)';
+            if (data.source === 'Finnhub') {
+                sourceIndicator = ' ● Live';
+            } else if (data.source === 'Yahoo Finance') {
+                sourceIndicator = ' ● Yahoo';
+            } else if (data.source === 'Financial Modeling Prep') {
+                sourceIndicator = ' ● FMP';
             } else if (data.source === 'Research Compilation') {
-                sourceIndicator = ' (Research)';
+                sourceIndicator = ' ● Research';
             }
+            
             if (sourceIndicator) {
-                consensusElement.textContent += sourceIndicator;
+                // Add source indicator with styling
+                const sourceSpan = document.createElement('span');
+                sourceSpan.style.fontSize = '0.7em';
+                sourceSpan.style.color = data.source === 'Finnhub' ? '#27ae60' : '#666';
+                sourceSpan.textContent = sourceIndicator;
+                consensusElement.appendChild(sourceSpan);
             }
+        }
+
+        function updateAnalystDisplayError(errorData) {
+            // Display professional error state for analyst data
+            const consensusElement = document.getElementById('consensus');
+            const avgTargetElement = document.getElementById('avgTarget');
+            const upsideElement = document.getElementById('upside');
+            
+            // Set error display
+            consensusElement.textContent = 'Data Error';
+            consensusElement.className = 'analyst-value error-state';
+            
+            avgTargetElement.textContent = 'Unavailable';
+            avgTargetElement.className = 'analyst-value error-state';
+            
+            upsideElement.textContent = 'N/A';
+            upsideElement.className = 'analyst-value error-state';
+            
+            // Add retry button if we have error details
+            if (errorData.details) {
+                const retryButton = document.createElement('button');
+                retryButton.textContent = '↻ Retry';
+                retryButton.className = 'retry-button';
+                retryButton.style.cssText = `
+                    margin-left: 8px; 
+                    padding: 2px 6px; 
+                    font-size: 0.7em; 
+                    background: #3498db; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 3px; 
+                    cursor: pointer;
+                `;
+                retryButton.onclick = () => {
+                    retryButton.remove();
+                    loadAnalystData();
+                };
+                consensusElement.appendChild(retryButton);
+            }
+            
+            // Log detailed error for debugging
+            console.log('Analyst Data Error Details:', {
+                error: errorData.error,
+                message: errorData.message,
+                details: errorData.details,
+                apiKeysUsed: errorData.apiKeysUsed
+            });
         }
 
         function getConsensusClass(rating) {

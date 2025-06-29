@@ -2148,13 +2148,10 @@
             const analystCountElement = document.getElementById('analystCount');
             analystCountElement.textContent = data.consensus.analystCount || 'N/A';
             
-            // Check if we have enhanced data for visualizations
-            if (data.enhancedData) {
-                // Show the expand button on the compact card
-                addExpandButton();
-                // Create enhanced visualizations
-                createEnhancedVisualizations(data);
-            }
+            // Always show the expand button and create visualizations
+            // Enhanced data will be used if available, otherwise sample data
+            addExpandButton();
+            createEnhancedVisualizations(data);
             
             // Update average price target
             const avgTargetElement = document.getElementById('avgTarget');

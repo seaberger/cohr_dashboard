@@ -65,35 +65,48 @@ export default async function handler(request) {
           const html = await response.text();
           console.log(`Yahoo Finance HTML length: ${html.length}`);
           
-          // Extract relevant section of HTML for LLM processing
-          // Look for the main content area with analyst data
-          const startMarker = '<section';
-          const endMarker = '</section>';
+          // Extract relevant sections of HTML for LLM processing
+          // Look for tables and sections that contain analyst data
+          const relevantContent = [];
           
-          // Find all section tags and get the ones containing analyst data
-          const sections = [];
-          let currentPos = 0;
-          while (currentPos < html.length) {
-            const startIdx = html.indexOf(startMarker, currentPos);
-            if (startIdx === -1) break;
-            
-            const endIdx = html.indexOf(endMarker, startIdx);
-            if (endIdx === -1) break;
-            
-            const section = html.substring(startIdx, endIdx + endMarker.length);
-            
-            // Check if this section contains analyst data
-            if (section.includes('Earnings Estimate') || 
-                section.includes('Revenue Estimate') || 
-                section.includes('Price Target') ||
-                section.includes('Analyst Recommendation')) {
-              sections.push(section);
+          // Extract tables that likely contain analyst data
+          const tableMatches = html.matchAll(/<table[^>]*>.*?<\/table>/gs);
+          for (const match of tableMatches) {
+            const table = match[0];
+            if (table.includes('Estimate') || 
+                table.includes('Target') || 
+                table.includes('EPS') ||
+                table.includes('Revenue') ||
+                table.includes('Analyst')) {
+              relevantContent.push(table);
             }
-            
-            currentPos = endIdx + 1;
           }
           
-          if (sections.length > 0) {
+          // Also extract divs that might contain structured data
+          const divMatches = html.matchAll(/<div[^>]*data-test[^>]*>.*?<\/div>/gs);
+          for (const match of divMatches) {
+            const div = match[0];
+            if (div.includes('Estimate') || div.includes('Target') || div.includes('Recommendation')) {
+              relevantContent.push(div);
+            }
+          }
+          
+          // If we have limited content, take a broader approach
+          if (relevantContent.length === 0) {
+            // Look for any content that mentions analyst-related terms
+            const searchTerms = ['Price Target', 'Earnings Estimate', 'Revenue Estimate', 'Analyst Recommendation', 'EPS'];
+            for (const term of searchTerms) {
+              const termIndex = html.indexOf(term);
+              if (termIndex !== -1) {
+                // Extract 2000 characters around the term
+                const start = Math.max(0, termIndex - 1000);
+                const end = Math.min(html.length, termIndex + 1000);
+                relevantContent.push(html.substring(start, end));
+              }
+            }
+          }
+          
+          if (relevantContent.length > 0) {
             // Use Gemini to extract structured data from HTML
             try {
               const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -181,8 +194,8 @@ export default async function handler(request) {
   ]
 }
 
-HTML sections to analyze:
-${sections.join('\n\n')}`;
+HTML content to analyze:
+${relevantContent.join('\n\n')}`;
 
               const geminiResponse = await fetch(`${geminiUrl}?key=${geminiApiKey}`, {
                 method: 'POST',
@@ -238,7 +251,7 @@ ${sections.join('\n\n')}`;
               // ... original regex code could go here as fallback ...
             }
           } else {
-            console.log('❌ No analyst sections found in HTML');
+            console.log('❌ No analyst content found in HTML');
           }
         }
       } catch (error) {

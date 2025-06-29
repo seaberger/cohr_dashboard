@@ -2385,12 +2385,12 @@
         }
         
         function toggleAnalystView() {
-            const compactCard = document.querySelector('.analyst-consensus-card').closest('.header-card');
+            const analystCard = document.querySelector('.analyst-consensus-card');
             const enhancedSection = document.getElementById('enhancedAnalystSection');
             const toggleBtn = document.getElementById('toggleAnalystViewBtn');
             
             console.log('🔄 Toggling analyst view');
-            console.log('Compact card:', compactCard);
+            console.log('Analyst card:', analystCard);
             console.log('Enhanced section:', enhancedSection);
             console.log('Enhanced section current display:', enhancedSection?.style.display);
             
@@ -2399,14 +2399,14 @@
                 return;
             }
             
-            if (!compactCard) {
-                console.error('❌ Compact card not found!');
+            if (!analystCard) {
+                console.error('❌ Analyst card not found!');
                 return;
             }
             
-            // Show enhanced view
+            // Hide just the analyst card (not the entire header) and show enhanced view
+            analystCard.style.display = 'none';
             enhancedSection.style.display = 'block';
-            compactCard.style.display = 'none';
             
             // Create enhanced visualizations with current data
             const currentData = window.lastAnalystData || {
@@ -2420,7 +2420,7 @@
             if (toggleBtn) {
                 toggleBtn.onclick = () => {
                     enhancedSection.style.display = 'none';
-                    compactCard.style.display = 'flex';
+                    analystCard.style.display = 'block';
                     console.log('🔄 Returned to compact view');
                 };
             }

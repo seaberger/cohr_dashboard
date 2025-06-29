@@ -739,6 +739,35 @@
             }
         }
 
+        /* Enhanced Analytics Button */
+        .enhanced-analytics-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .enhanced-analytics-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        .enhanced-analytics-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
         /* Hide sections until implemented */
         .competitive-section {
             display: none;
@@ -2139,6 +2168,9 @@
             console.log('💰 Price target data:', data.priceTarget);
             console.log('🎯 Enhanced data:', data.enhancedData);
             
+            // Store data globally for enhanced view
+            window.lastAnalystData = data;
+            
             // Update consensus rating
             const consensusElement = document.getElementById('consensus');
             consensusElement.textContent = data.consensus.rating;
@@ -2339,8 +2371,8 @@
             if (analystCard && !document.getElementById('expandAnalystBtn')) {
                 const expandBtn = document.createElement('button');
                 expandBtn.id = 'expandAnalystBtn';
-                expandBtn.style.cssText = 'background: none; border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 0.8em; color: #666; margin-top: 12px; display: block; width: auto;';
-                expandBtn.innerHTML = '📊 Detailed Analysis';
+                expandBtn.className = 'enhanced-analytics-btn';
+                expandBtn.innerHTML = '📊 Enhanced Analytics';
                 expandBtn.onclick = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -2362,24 +2394,38 @@
             console.log('Enhanced section:', enhancedSection);
             console.log('Enhanced section current display:', enhancedSection?.style.display);
             
-            if (enhancedSection && compactCard) {
-                // Show enhanced view
-                enhancedSection.style.display = 'block';
-                compactCard.style.display = 'none';
-                
-                // Set up the return toggle
-                if (toggleBtn) {
-                    toggleBtn.onclick = () => {
-                        enhancedSection.style.display = 'none';
-                        compactCard.style.display = 'flex';
-                        console.log('🔄 Returned to compact view');
-                    };
-                }
-                
-                console.log('✅ Switched to enhanced view');
-            } else {
-                console.error('❌ Could not find required elements for toggle');
+            if (!enhancedSection) {
+                console.error('❌ Enhanced section not found!');
+                return;
             }
+            
+            if (!compactCard) {
+                console.error('❌ Compact card not found!');
+                return;
+            }
+            
+            // Show enhanced view
+            enhancedSection.style.display = 'block';
+            compactCard.style.display = 'none';
+            
+            // Create enhanced visualizations with current data
+            const currentData = window.lastAnalystData || {
+                priceTarget: { average: 96.06, upside: 18.5 },
+                consensus: { distribution: null, analystCount: 0 },
+                enhancedData: null
+            };
+            createEnhancedVisualizations(currentData);
+            
+            // Set up the return toggle
+            if (toggleBtn) {
+                toggleBtn.onclick = () => {
+                    enhancedSection.style.display = 'none';
+                    compactCard.style.display = 'flex';
+                    console.log('🔄 Returned to compact view');
+                };
+            }
+            
+            console.log('✅ Switched to enhanced view');
         }
         
         function createEnhancedVisualizations(data) {

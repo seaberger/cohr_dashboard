@@ -65,29 +65,181 @@ export default async function handler(request) {
           const html = await response.text();
           console.log(`Yahoo Finance HTML length: ${html.length}`);
           
-          // Extract data from the HTML
-          // Price targets are in a table with "Low", "Current", "Average", "High" columns
-          const priceTargetMatch = html.match(/Avg\. Estimate.*?<td[^>]*>([0-9,.]+)<\/td>/);
-          const lowTargetMatch = html.match(/Low Estimate.*?<td[^>]*>([0-9,.]+)<\/td>/);
-          const highTargetMatch = html.match(/High Estimate.*?<td[^>]*>([0-9,.]+)<\/td>/);
+          // Extract relevant section of HTML for LLM processing
+          // Look for the main content area with analyst data
+          const startMarker = '<section';
+          const endMarker = '</section>';
           
-          // Extract current quarter EPS estimate
-          const currentQtrEpsMatch = html.match(/Current Qtr.*?<td[^>]*>([0-9,.-]+)<\/td>/);
-          const nextQtrEpsMatch = html.match(/Next Qtr.*?<td[^>]*>([0-9,.-]+)<\/td>/);
+          // Find all section tags and get the ones containing analyst data
+          const sections = [];
+          let currentPos = 0;
+          while (currentPos < html.length) {
+            const startIdx = html.indexOf(startMarker, currentPos);
+            if (startIdx === -1) break;
+            
+            const endIdx = html.indexOf(endMarker, startIdx);
+            if (endIdx === -1) break;
+            
+            const section = html.substring(startIdx, endIdx + endMarker.length);
+            
+            // Check if this section contains analyst data
+            if (section.includes('Earnings Estimate') || 
+                section.includes('Revenue Estimate') || 
+                section.includes('Price Target') ||
+                section.includes('Analyst Recommendation')) {
+              sections.push(section);
+            }
+            
+            currentPos = endIdx + 1;
+          }
           
-          // Extract number of analysts
-          const analystCountMatch = html.match(/No\. of Analysts.*?<td[^>]*>([0-9,]+)<\/td>/);
-          
-          yahooAnalysisData = {
-            priceTarget: priceTargetMatch ? parseFloat(priceTargetMatch[1].replace(/,/g, '')) : null,
-            lowTarget: lowTargetMatch ? parseFloat(lowTargetMatch[1].replace(/,/g, '')) : null,
-            highTarget: highTargetMatch ? parseFloat(highTargetMatch[1].replace(/,/g, '')) : null,
-            currentQtrEps: currentQtrEpsMatch ? parseFloat(currentQtrEpsMatch[1].replace(/,/g, '')) : null,
-            nextQtrEps: nextQtrEpsMatch ? parseFloat(nextQtrEpsMatch[1].replace(/,/g, '')) : null,
-            analystCount: analystCountMatch ? parseInt(analystCountMatch[1].replace(/,/g, '')) : null
-          };
-          
-          console.log('✅ Yahoo Finance analysis data extracted:', yahooAnalysisData);
+          if (sections.length > 0) {
+            // Use Gemini to extract structured data from HTML
+            try {
+              const geminiApiKey = process.env.GEMINI_API_KEY;
+              if (!geminiApiKey) {
+                throw new Error('GEMINI_API_KEY not configured');
+              }
+              
+              const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+              
+              const prompt = `Extract analyst data from this Yahoo Finance HTML. Return ONLY valid JSON with this exact structure:
+{
+  "priceTargets": {
+    "current": <current stock price if shown>,
+    "average": <average analyst target>,
+    "low": <lowest target>,
+    "high": <highest target>,
+    "numberOfAnalysts": <number>
+  },
+  "earningsEstimates": {
+    "currentQuarter": {
+      "period": <quarter name like "Dec 2024">,
+      "average": <average estimate>,
+      "low": <low estimate>,
+      "high": <high estimate>,
+      "numberOfAnalysts": <number>
+    },
+    "nextQuarter": {
+      "period": <quarter name>,
+      "average": <average estimate>,
+      "low": <low estimate>,
+      "high": <high estimate>,
+      "numberOfAnalysts": <number>
+    },
+    "currentYear": {
+      "period": <year>,
+      "average": <average estimate>,
+      "numberOfAnalysts": <number>
+    },
+    "nextYear": {
+      "period": <year>,
+      "average": <average estimate>,
+      "numberOfAnalysts": <number>
+    }
+  },
+  "revenueEstimates": {
+    "currentQuarter": {
+      "average": <average in millions>,
+      "numberOfAnalysts": <number>,
+      "yearAgoSales": <number>,
+      "growthPercent": <growth %>
+    },
+    "nextQuarter": {
+      "average": <average in millions>,
+      "numberOfAnalysts": <number>,
+      "growthPercent": <growth %>
+    }
+  },
+  "recommendationTrend": {
+    "current": {
+      "strongBuy": <count>,
+      "buy": <count>,
+      "hold": <count>,
+      "sell": <count>,
+      "strongSell": <count>
+    },
+    "history": [
+      {
+        "period": <month name>,
+        "strongBuy": <count>,
+        "buy": <count>,
+        "hold": <count>,
+        "sell": <count>,
+        "strongSell": <count>
+      }
+    ]
+  },
+  "earningsHistory": [
+    {
+      "quarter": <quarter ending date>,
+      "epsEstimate": <estimate>,
+      "epsActual": <actual>,
+      "difference": <difference>,
+      "surprisePercent": <surprise %>
+    }
+  ]
+}
+
+HTML sections to analyze:
+${sections.join('\n\n')}`;
+
+              const geminiResponse = await fetch(`${geminiUrl}?key=${geminiApiKey}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  contents: [{
+                    parts: [{
+                      text: prompt
+                    }]
+                  }],
+                  generationConfig: {
+                    temperature: 0.1,
+                    topK: 1,
+                    topP: 0.1,
+                    maxOutputTokens: 2048,
+                  }
+                })
+              });
+              
+              if (geminiResponse.ok) {
+                const geminiData = await geminiResponse.json();
+                const responseText = geminiData.candidates[0].content.parts[0].text;
+                
+                // Extract JSON from response (remove any markdown formatting)
+                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                  const parsedData = JSON.parse(jsonMatch[0]);
+                  
+                  // Convert to our expected format
+                  yahooAnalysisData = {
+                    priceTarget: parsedData.priceTargets?.average || null,
+                    lowTarget: parsedData.priceTargets?.low || null,
+                    highTarget: parsedData.priceTargets?.high || null,
+                    currentQtrEps: parsedData.earningsEstimates?.currentQuarter?.average || null,
+                    nextQtrEps: parsedData.earningsEstimates?.nextQuarter?.average || null,
+                    analystCount: parsedData.priceTargets?.numberOfAnalysts || null,
+                    // Store full data for enhanced visualizations
+                    fullData: parsedData
+                  };
+                  
+                  console.log('✅ Yahoo Finance analysis data extracted via Gemini:', yahooAnalysisData);
+                } else {
+                  console.log('❌ Failed to parse Gemini response as JSON');
+                }
+              } else {
+                console.log('❌ Gemini API request failed:', geminiResponse.status);
+              }
+            } catch (llmError) {
+              console.log('❌ LLM extraction failed:', llmError.message);
+              // Fall back to regex parsing as backup
+              // ... original regex code could go here as fallback ...
+            }
+          } else {
+            console.log('❌ No analyst sections found in HTML');
+          }
         }
       } catch (error) {
         console.log('❌ Yahoo Finance analysis scraping failed:', error.message);
@@ -377,6 +529,10 @@ export default async function handler(request) {
                   estimatedEPS: nextQtrEps,
                   source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
                 } : null;
+                // Include enhanced data if available from Yahoo scraping
+                if (yahooAnalysisData?.fullData) {
+                  analystData.enhancedData = yahooAnalysisData.fullData;
+                }
                 analystData.source = yahooAnalysisData?.priceTarget ? 'Finnhub + Yahoo Finance Scraping' : (finvizTargetPrice ? 'Finnhub + Finviz' : 'Finnhub + Yahoo Finance API');
                 delete analystData.consensusOnly;
                 
@@ -404,7 +560,8 @@ export default async function handler(request) {
                     source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
                   } : null,
                   source: yahooAnalysisData?.priceTarget ? 'Yahoo Finance Scraping' : (finvizTargetPrice ? 'Finviz + Yahoo Finance API' : 'Yahoo Finance API'),
-                  lastUpdated: new Date().toISOString()
+                  lastUpdated: new Date().toISOString(),
+                  enhancedData: yahooAnalysisData?.fullData || null
                 };
                 
                 console.log(`${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : (finvizTargetPrice ? 'Finviz + Yahoo API' : 'Yahoo API')} analyst data loaded for ${symbol} - ${analystCount} analysts, $${targetPrice} target`);
@@ -436,7 +593,8 @@ export default async function handler(request) {
                   source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
                 } : null,
                 source: yahooAnalysisData?.priceTarget ? 'Yahoo Finance Scraping' : 'Finviz',
-                lastUpdated: new Date().toISOString()
+                lastUpdated: new Date().toISOString(),
+                enhancedData: yahooAnalysisData?.fullData || null
               };
               
               console.log(`${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : 'Finviz'}-only analyst data loaded for ${symbol} - $${targetPrice} target`);

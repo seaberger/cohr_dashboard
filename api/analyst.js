@@ -1,21 +1,34 @@
-// Vercel serverless function for analyst data from Financial Modeling Prep
-export default async function handler(req, res) {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-      res.status(200).end();
-      return;
+// Vercel Edge Runtime function for analyst data
+export const config = {
+  runtime: 'edge',
+};
+
+export default async function handler(request) {
+    // Parse URL to get query parameters
+    const { searchParams } = new URL(request.url);
+    const symbol = searchParams.get('symbol') || process.env.DEFAULT_SYMBOL || 'COHR';
+    
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      });
     }
   
-    if (req.method !== 'GET') {
-      return res.status(405).json({ error: 'Method not allowed' });
+    if (request.method !== 'GET') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
-  
-    const symbol = req.query.symbol || process.env.DEFAULT_SYMBOL || 'COHR';
     
     try {
       let analystData = null;
@@ -26,9 +39,9 @@ export default async function handler(req, res) {
       try {
         console.log(`Attempting Finviz fetch for ${symbol}...`);
         
-        // Add timeout to prevent hanging
+        // Add timeout to prevent hanging - Edge Runtime compatible
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
         
         // Try different approaches for serverless environment
         const headers = {
@@ -47,7 +60,7 @@ export default async function handler(req, res) {
           redirect: 'follow'
         });
         
-        clearTimeout(timeout);
+        clearTimeout(timeoutId);
         
         console.log(`Finviz response status: ${finvizResponse.status}`);
         
@@ -237,7 +250,7 @@ export default async function handler(req, res) {
             let highTarget = null;
             let lowTarget = null;
             let upside = null;
-            const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+            const currentPrice = parseFloat(searchParams.get('currentPrice')) || 81.07;
             
             if (result.financialData) {
               if (result.financialData.targetMeanPrice && result.financialData.targetMeanPrice.raw) {
@@ -335,7 +348,7 @@ export default async function handler(req, res) {
               }
             } else if (finvizTargetPrice !== null && !analystData) {
               // Only Finviz price target available, no consensus data
-              const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+              const currentPrice = parseFloat(searchParams.get('currentPrice')) || 81.07;
               const calculatedUpside = ((finvizTargetPrice - currentPrice) / currentPrice) * 100;
               
               analystData = {
@@ -425,7 +438,7 @@ export default async function handler(req, res) {
           let highTarget = null;
           let lowTarget = null;
           let upside = null;
-          let currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+          let currentPrice = parseFloat(searchParams.get('currentPrice')) || 81.07;
           
           if (priceTargets && priceTargets.length > 0) {
             // Calculate average from recent price targets
@@ -529,7 +542,7 @@ export default async function handler(req, res) {
               const avgTarget = parseFloat(targetMatch[1].replace(/[$,]/g, ''));
               const highTarget = highMatch ? parseFloat(highMatch[1].replace(/[$,]/g, '')) : null;
               const lowTarget = lowMatch ? parseFloat(lowMatch[1].replace(/[$,]/g, '')) : null;
-              const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
+              const currentPrice = parseFloat(searchParams.get('currentPrice')) || 81.07;
               const upside = ((avgTarget - currentPrice) / currentPrice) * 100;
               
               analystData.priceTarget = {
@@ -555,7 +568,7 @@ export default async function handler(req, res) {
       // No hardcoded fallback data - maintain data integrity
       if (!analystData) {
         console.log(`No analyst data available for ${symbol} from any source`);
-        return res.status(500).json({
+        return new Response(JSON.stringify({
           error: 'Failed to retrieve analyst data',
           message: 'No analyst data available from Finnhub, Yahoo Finance, or FMP APIs',
           symbol,
@@ -564,10 +577,16 @@ export default async function handler(req, res) {
             finnhub: !!process.env.FINNHUB_API_KEY,
             financialModelingPrep: !!process.env.FINANCIAL_MODELING_PREP_API_KEY
           }
+        }), {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
         });
       }
       
-      const response = {
+      const responseData = {
         ...analystData,
         apiKeysUsed: {
           finnhub: !!process.env.FINNHUB_API_KEY,
@@ -575,15 +594,27 @@ export default async function handler(req, res) {
         }
       };
       
-      // Add caching headers to reduce API calls (30 minutes)
-      res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=300');
-      res.status(200).json(response);
+      // Return successful response with caching headers
+      return new Response(JSON.stringify(responseData), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 's-maxage=1800, stale-while-revalidate=300',
+        },
+      });
       
     } catch (error) {
       console.error('Analyst API error:', error);
-      res.status(500).json({ 
+      return new Response(JSON.stringify({ 
         error: 'Failed to fetch analyst data',
         message: error.message 
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       });
     }
   }

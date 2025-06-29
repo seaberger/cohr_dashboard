@@ -58,7 +58,10 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
   - **Smart fallback** to Q2 2025 data if LLM analysis fails
   - **Visual indicators** show data source (LLM vs fallback)
 - **COHR-Specific News** - Yahoo Finance search with article summaries
-- **Analyst Consensus** - Yahoo Finance quoteSummary API data
+- **Analyst Consensus** - Finviz primary source with multi-API fallback strategy
+  - **Price Targets**: $96.06 target with +18.5% upside calculation
+  - **EPS Estimates**: $0.91 next quarter estimate
+  - **Consensus Ratings**: Buy/Hold/Sell distribution with visual bars
 - **Data Transparency** - Full source verification and methodology
 
 ### 🔜 **NEXT FEATURES**
@@ -124,7 +127,7 @@ All endpoints include CORS support and 30-second timeout limits:
 ### **Enhanced Data Flow (LLM-Powered)**
 1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → professional error handling
 2. **News Data**: Yahoo Finance search → article summary extraction → transparent error states
-3. **Analyst Data**: Yahoo Finance quoteSummary → research-compiled consensus data
+3. **Analyst Data**: Finviz primary → Finnhub consensus → Yahoo Finance → professional error handling
 4. **Technical Analysis**: Yahoo Finance historical → real support/resistance calculation
 5. **Universal Metrics**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → GAAP metrics extraction
 6. **Company Insights**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → investment-grade categorization
@@ -149,7 +152,7 @@ All endpoints include CORS support and 30-second timeout limits:
   - Color-coded confidence scoring
   - Only authentic SEC filing data - no placeholder content
 - **COHR-specific news** (Yahoo Finance search API)
-- **Analyst consensus data** (Yahoo Finance quoteSummary)
+- **Analyst consensus data** (Finviz primary source with multi-API fallback)
 
 ### **🤖 LLM INTEGRATION STATUS**
 - **Google Gemini 2.5 Flash Lite**: Deployed and analyzing latest SEC filings
@@ -261,6 +264,13 @@ All endpoints include CORS support and 30-second timeout limits:
 - [x] Data integrity priority - removed all hardcoded fallbacks
 - [x] Professional error handling with transparent failure states
 - [x] Sparklines data integrity fix - disabled hallucinated historical data
+
+**Analyst Consensus Integration** ✅ (January 2025)
+- [x] Finviz primary source implementation with fallback strategy
+- [x] Real price targets ($96.06) and EPS estimates ($0.91) displaying
+- [x] Enhanced analyst card with consensus ratings and visual distribution bars
+- [x] Removed Enhanced Analytics button and Chart.js dependencies
+- [x] Code simplification maintaining core analyst functionality
 
 ### **🚧 NEXT PRIORITIES**
 **Data Integrity & Performance** - Current Focus

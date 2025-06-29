@@ -33,7 +33,67 @@ export default async function handler(request) {
     try {
       let analystData = null;
       
-      // Primary: Try Finviz for price targets and EPS estimates (most reliable, no API key needed)
+      // Primary: Try Yahoo Finance Analysis page scraping
+      let yahooAnalysisData = null;
+      try {
+        console.log(`Attempting Yahoo Finance analysis page scraping for ${symbol}...`);
+        
+        const yahooUrl = `https://finance.yahoo.com/quote/${symbol}/analysis`;
+        const headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        };
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        
+        const response = await fetch(yahooUrl, {
+          headers,
+          signal: controller.signal,
+          redirect: 'follow'
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`Yahoo Finance analysis page response status: ${response.status}`);
+        
+        if (response.ok) {
+          const html = await response.text();
+          console.log(`Yahoo Finance HTML length: ${html.length}`);
+          
+          // Extract data from the HTML
+          // Price targets are in a table with "Low", "Current", "Average", "High" columns
+          const priceTargetMatch = html.match(/Avg\. Estimate.*?<td[^>]*>([0-9,.]+)<\/td>/);
+          const lowTargetMatch = html.match(/Low Estimate.*?<td[^>]*>([0-9,.]+)<\/td>/);
+          const highTargetMatch = html.match(/High Estimate.*?<td[^>]*>([0-9,.]+)<\/td>/);
+          
+          // Extract current quarter EPS estimate
+          const currentQtrEpsMatch = html.match(/Current Qtr.*?<td[^>]*>([0-9,.-]+)<\/td>/);
+          const nextQtrEpsMatch = html.match(/Next Qtr.*?<td[^>]*>([0-9,.-]+)<\/td>/);
+          
+          // Extract number of analysts
+          const analystCountMatch = html.match(/No\. of Analysts.*?<td[^>]*>([0-9,]+)<\/td>/);
+          
+          yahooAnalysisData = {
+            priceTarget: priceTargetMatch ? parseFloat(priceTargetMatch[1].replace(/,/g, '')) : null,
+            lowTarget: lowTargetMatch ? parseFloat(lowTargetMatch[1].replace(/,/g, '')) : null,
+            highTarget: highTargetMatch ? parseFloat(highTargetMatch[1].replace(/,/g, '')) : null,
+            currentQtrEps: currentQtrEpsMatch ? parseFloat(currentQtrEpsMatch[1].replace(/,/g, '')) : null,
+            nextQtrEps: nextQtrEpsMatch ? parseFloat(nextQtrEpsMatch[1].replace(/,/g, '')) : null,
+            analystCount: analystCountMatch ? parseInt(analystCountMatch[1].replace(/,/g, '')) : null
+          };
+          
+          console.log('✅ Yahoo Finance analysis data extracted:', yahooAnalysisData);
+        }
+      } catch (error) {
+        console.log('❌ Yahoo Finance analysis scraping failed:', error.message);
+      }
+      
+      // Secondary: Try Finviz for price targets and EPS estimates
       let finvizTargetPrice = null;
       let finvizEpsNextQ = null;
       try {
@@ -282,10 +342,13 @@ export default async function handler(request) {
                 }));
             }
             
-            // Merge price targets prioritizing Finviz, then Yahoo Finance data
-            if (finvizTargetPrice !== null || avgPriceTarget !== null || analystCount > 0) {
-              // Calculate upside using Finviz target if available, otherwise Yahoo target
-              const targetPrice = finvizTargetPrice || avgPriceTarget;
+            // Merge price targets prioritizing Yahoo scraping, then Finviz, then Yahoo Finance API data
+            if (yahooAnalysisData?.priceTarget || finvizTargetPrice !== null || avgPriceTarget !== null || analystCount > 0) {
+              // Calculate upside using Yahoo scraping first, then Finviz, then Yahoo API
+              const targetPrice = yahooAnalysisData?.priceTarget || finvizTargetPrice || avgPriceTarget;
+              const finalHighTarget = yahooAnalysisData?.highTarget || highTarget;
+              const finalLowTarget = yahooAnalysisData?.lowTarget || lowTarget;
+              const nextQtrEps = yahooAnalysisData?.nextQtrEps || finvizEpsNextQ;
               const calculatedUpside = targetPrice ? ((targetPrice - currentPrice) / currentPrice) * 100 : null;
               
               if (analystData && analystData.consensusOnly) {
@@ -304,20 +367,20 @@ export default async function handler(request) {
                 
                 analystData.priceTarget = {
                   average: targetPrice ? parseFloat(targetPrice.toFixed(2)) : null,
-                  high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
-                  low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
+                  high: finalHighTarget ? parseFloat(finalHighTarget.toFixed(2)) : null,
+                  low: finalLowTarget ? parseFloat(finalLowTarget.toFixed(2)) : null,
                   upside: calculatedUpside ? parseFloat(calculatedUpside.toFixed(1)) : null,
-                  targetCount: analystData.consensus.analystCount
+                  targetCount: yahooAnalysisData?.analystCount || analystData.consensus.analystCount
                 };
                 analystData.recentActivity = recentActivity;
-                analystData.nextEarnings = finvizEpsNextQ ? {
-                  estimatedEPS: finvizEpsNextQ,
-                  source: 'Finviz'
+                analystData.nextEarnings = nextQtrEps ? {
+                  estimatedEPS: nextQtrEps,
+                  source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
                 } : null;
-                analystData.source = finvizTargetPrice ? 'Finnhub + Finviz' : 'Finnhub + Yahoo Finance';
+                analystData.source = yahooAnalysisData?.priceTarget ? 'Finnhub + Yahoo Finance Scraping' : (finvizTargetPrice ? 'Finnhub + Finviz' : 'Finnhub + Yahoo Finance API');
                 delete analystData.consensusOnly;
                 
-                console.log(`Combined Finnhub consensus (${analystData.consensus.analystCount} analysts) + ${finvizTargetPrice ? 'Finviz' : 'Yahoo'} price targets ($${targetPrice})`);
+                console.log(`Combined Finnhub consensus (${analystData.consensus.analystCount} analysts) + ${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : (finvizTargetPrice ? 'Finviz' : 'Yahoo API')} price targets ($${targetPrice})`);
               } else if (!analystData) {
                 // No Finnhub data, create new data prioritizing Finviz for price targets
                 analystData = {
@@ -330,26 +393,27 @@ export default async function handler(request) {
                   },
                   priceTarget: {
                     average: targetPrice ? parseFloat(targetPrice.toFixed(2)) : null,
-                    high: highTarget ? parseFloat(highTarget.toFixed(2)) : null,
-                    low: lowTarget ? parseFloat(lowTarget.toFixed(2)) : null,
+                    high: finalHighTarget ? parseFloat(finalHighTarget.toFixed(2)) : null,
+                    low: finalLowTarget ? parseFloat(finalLowTarget.toFixed(2)) : null,
                     upside: calculatedUpside ? parseFloat(calculatedUpside.toFixed(1)) : null,
-                    targetCount: analystCount
+                    targetCount: yahooAnalysisData?.analystCount || analystCount
                   },
                   recentActivity: recentActivity,
-                  nextEarnings: finvizEpsNextQ ? {
-                    estimatedEPS: finvizEpsNextQ,
-                    source: 'Finviz'
+                  nextEarnings: nextQtrEps ? {
+                    estimatedEPS: nextQtrEps,
+                    source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
                   } : null,
-                  source: finvizTargetPrice ? 'Finviz + Yahoo Finance' : 'Yahoo Finance',
+                  source: yahooAnalysisData?.priceTarget ? 'Yahoo Finance Scraping' : (finvizTargetPrice ? 'Finviz + Yahoo Finance API' : 'Yahoo Finance API'),
                   lastUpdated: new Date().toISOString()
                 };
                 
-                console.log(`${finvizTargetPrice ? 'Finviz + Yahoo' : 'Yahoo'} Finance analyst data loaded for ${symbol} - ${analystCount} analysts, $${targetPrice} target`);
+                console.log(`${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : (finvizTargetPrice ? 'Finviz + Yahoo API' : 'Yahoo API')} analyst data loaded for ${symbol} - ${analystCount} analysts, $${targetPrice} target`);
               }
-            } else if (finvizTargetPrice !== null && !analystData) {
-              // Only Finviz price target available, no consensus data
+            } else if ((yahooAnalysisData?.priceTarget || finvizTargetPrice !== null) && !analystData) {
+              // Only scraped price target available, no consensus data
               const currentPrice = parseFloat(searchParams.get('currentPrice')) || 81.07;
-              const calculatedUpside = ((finvizTargetPrice - currentPrice) / currentPrice) * 100;
+              const targetPrice = yahooAnalysisData?.priceTarget || finvizTargetPrice;
+              const calculatedUpside = ((targetPrice - currentPrice) / currentPrice) * 100;
               
               analystData = {
                 symbol: symbol.toUpperCase(),
@@ -360,22 +424,22 @@ export default async function handler(request) {
                   distribution: null
                 },
                 priceTarget: {
-                  average: parseFloat(finvizTargetPrice.toFixed(2)),
-                  high: null,
-                  low: null,
+                  average: parseFloat(targetPrice.toFixed(2)),
+                  high: yahooAnalysisData?.highTarget ? parseFloat(yahooAnalysisData.highTarget.toFixed(2)) : null,
+                  low: yahooAnalysisData?.lowTarget ? parseFloat(yahooAnalysisData.lowTarget.toFixed(2)) : null,
                   upside: parseFloat(calculatedUpside.toFixed(1)),
-                  targetCount: 1 // Assuming at least one analyst for the target
+                  targetCount: yahooAnalysisData?.analystCount || 1 // Assuming at least one analyst for the target
                 },
                 recentActivity: [],
-                nextEarnings: finvizEpsNextQ ? {
-                  estimatedEPS: finvizEpsNextQ,
-                  source: 'Finviz'
+                nextEarnings: (yahooAnalysisData?.nextQtrEps || finvizEpsNextQ) ? {
+                  estimatedEPS: yahooAnalysisData?.nextQtrEps || finvizEpsNextQ,
+                  source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
                 } : null,
-                source: 'Finviz',
+                source: yahooAnalysisData?.priceTarget ? 'Yahoo Finance Scraping' : 'Finviz',
                 lastUpdated: new Date().toISOString()
               };
               
-              console.log(`Finviz-only analyst data loaded for ${symbol} - $${finvizTargetPrice} target`);
+              console.log(`${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : 'Finviz'}-only analyst data loaded for ${symbol} - $${targetPrice} target`);
             } else {
               console.log(`Yahoo Finance returned no useful analyst data for ${symbol}`);
             }

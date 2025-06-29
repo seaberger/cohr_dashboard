@@ -33,7 +33,7 @@ export default async function handler(request) {
     try {
       let analystData = null;
       
-      // Primary: Try Yahoo Finance Analysis page scraping
+      // Primary: Try Yahoo Finance Analysis page scraping with LLM parsing
       let yahooAnalysisData = null;
       try {
         console.log(`Attempting Yahoo Finance analysis page scraping for ${symbol}...`);
@@ -116,7 +116,7 @@ export default async function handler(request) {
               
               const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
               
-              const prompt = `Extract analyst data from this Yahoo Finance HTML. Return ONLY valid JSON with this exact structure:
+              const prompt = `You are extracting financial analyst data from Yahoo Finance HTML content. Parse the HTML and extract the analyst estimates, price targets, and recommendation data. Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 {
   "priceTargets": {
     "current": <current stock price if shown>,
@@ -209,10 +209,10 @@ ${relevantContent.join('\n\n')}`;
                     }]
                   }],
                   generationConfig: {
-                    temperature: 0.1,
+                    temperature: 0.0,
                     topK: 1,
                     topP: 0.1,
-                    maxOutputTokens: 2048,
+                    maxOutputTokens: 4096,
                   }
                 })
               });
@@ -258,75 +258,8 @@ ${relevantContent.join('\n\n')}`;
         console.log('❌ Yahoo Finance analysis scraping failed:', error.message);
       }
       
-      // Secondary: Try Finviz for price targets and EPS estimates
-      let finvizTargetPrice = null;
-      let finvizEpsNextQ = null;
-      try {
-        console.log(`Attempting Finviz fetch for ${symbol}...`);
-        
-        // Add timeout to prevent hanging - Edge Runtime compatible
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-        
-        // Try different approaches for serverless environment
-        const headers = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        };
-        
-        // First try direct fetch
-        let finvizResponse = await fetch(`https://finviz.com/quote.ashx?t=${symbol}`, {
-          headers,
-          signal: controller.signal,
-          redirect: 'follow'
-        });
-        
-        clearTimeout(timeoutId);
-        
-        console.log(`Finviz response status: ${finvizResponse.status}`);
-        
-        if (finvizResponse.ok) {
-          const finvizHtml = await finvizResponse.text();
-          console.log(`Finviz HTML length: ${finvizHtml.length}`);
-          
-          // Extract target price from Finviz HTML
-          const targetPriceMatch = finvizHtml.match(/Target Price.*?<span class="color-text[^"]*">([0-9]+\.[0-9]+)<\/span>/);
-          if (targetPriceMatch) {
-            finvizTargetPrice = parseFloat(targetPriceMatch[1]);
-            console.log(`✅ Finviz target price for ${symbol}: $${finvizTargetPrice}`);
-          } else {
-            console.log('❌ No target price match found in Finviz HTML');
-          }
-          
-          // Extract EPS next Q from Finviz HTML
-          const epsNextQMatch = finvizHtml.match(/EPS next Q.*?<b>([0-9.-]+)<\/b>/);
-          if (epsNextQMatch) {
-            finvizEpsNextQ = parseFloat(epsNextQMatch[1]);
-            console.log(`✅ Finviz EPS next Q for ${symbol}: $${finvizEpsNextQ}`);
-          } else {
-            console.log('❌ No EPS next Q match found in Finviz HTML');
-          }
-        } else {
-          console.log(`❌ Finviz returned non-OK status: ${finvizResponse.status}`);
-        }
-      } catch (error) {
-        console.log('❌ Finviz data extraction failed:', error.message);
-        if (error.name === 'AbortError') {
-          console.log('Request timed out after 5 seconds');
-        }
-      }
-      
-      // Temporary fallback for COHR while Finviz is blocked in serverless
-      if (symbol === 'COHR' && !finvizTargetPrice) {
-        console.log('Using fallback data for COHR due to Finviz access issues');
-        finvizTargetPrice = 96.06;
-        finvizEpsNextQ = 0.91;
-        console.log(`✅ Fallback applied: Target=$${finvizTargetPrice}, EPS=$${finvizEpsNextQ}`);
-      }
+      // No more Finviz scraping - Yahoo Finance LLM parsing only
+      console.log('📊 Yahoo Finance data extracted:', yahooAnalysisData);
       
       // Secondary: Try Finnhub API for analyst consensus ratings
       const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
@@ -507,14 +440,30 @@ ${relevantContent.join('\n\n')}`;
                 }));
             }
             
-            // Merge price targets prioritizing Yahoo scraping, then Finviz, then Yahoo Finance API data
-            if (yahooAnalysisData?.priceTarget || finvizTargetPrice !== null || avgPriceTarget !== null || analystCount > 0) {
-              // Calculate upside using Yahoo scraping first, then Finviz, then Yahoo API
-              const targetPrice = yahooAnalysisData?.priceTarget || finvizTargetPrice || avgPriceTarget;
+            // Use Yahoo Finance LLM data as primary source, with API data as fallback
+            console.log('🔀 Data merging check:', {
+              'Yahoo LLM price target': yahooAnalysisData?.priceTarget,
+              'Yahoo API avg price target': avgPriceTarget,
+              'Analyst count': analystCount,
+              'Yahoo LLM enhanced data': !!yahooAnalysisData?.fullData
+            });
+            
+            if (yahooAnalysisData?.priceTarget || avgPriceTarget !== null || analystCount > 0) {
+              // Prioritize Yahoo LLM data, fallback to API data
+              const targetPrice = yahooAnalysisData?.priceTarget || avgPriceTarget;
               const finalHighTarget = yahooAnalysisData?.highTarget || highTarget;
               const finalLowTarget = yahooAnalysisData?.lowTarget || lowTarget;
-              const nextQtrEps = yahooAnalysisData?.nextQtrEps || finvizEpsNextQ;
+              const nextQtrEps = yahooAnalysisData?.nextQtrEps;
               const calculatedUpside = targetPrice ? ((targetPrice - currentPrice) / currentPrice) * 100 : null;
+              
+              console.log('🎯 Final merged values:', {
+                targetPrice,
+                finalHighTarget,
+                finalLowTarget,
+                nextQtrEps,
+                calculatedUpside,
+                'Enhanced data available': !!yahooAnalysisData?.fullData
+              });
               
               if (analystData && analystData.consensusOnly) {
                 // We have Finnhub consensus data, but prioritize Yahoo distribution if available
@@ -540,18 +489,18 @@ ${relevantContent.join('\n\n')}`;
                 analystData.recentActivity = recentActivity;
                 analystData.nextEarnings = nextQtrEps ? {
                   estimatedEPS: nextQtrEps,
-                  source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
+                  source: 'Yahoo Finance LLM'
                 } : null;
                 // Include enhanced data if available from Yahoo scraping
                 if (yahooAnalysisData?.fullData) {
                   analystData.enhancedData = yahooAnalysisData.fullData;
                 }
-                analystData.source = yahooAnalysisData?.priceTarget ? 'Finnhub + Yahoo Finance Scraping' : (finvizTargetPrice ? 'Finnhub + Finviz' : 'Finnhub + Yahoo Finance API');
+                analystData.source = yahooAnalysisData?.priceTarget ? 'Finnhub + Yahoo Finance LLM' : 'Finnhub + Yahoo Finance API';
                 delete analystData.consensusOnly;
                 
-                console.log(`Combined Finnhub consensus (${analystData.consensus.analystCount} analysts) + ${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : (finvizTargetPrice ? 'Finviz' : 'Yahoo API')} price targets ($${targetPrice})`);
+                console.log(`Combined Finnhub consensus (${analystData.consensus.analystCount} analysts) + ${yahooAnalysisData?.priceTarget ? 'Yahoo LLM' : 'Yahoo API'} price targets ($${targetPrice})`);
               } else if (!analystData) {
-                // No Finnhub data, create new data prioritizing Finviz for price targets
+                // No Finnhub data, create new data using Yahoo Finance LLM
                 analystData = {
                   symbol: symbol.toUpperCase(),
                   consensus: {
@@ -570,19 +519,19 @@ ${relevantContent.join('\n\n')}`;
                   recentActivity: recentActivity,
                   nextEarnings: nextQtrEps ? {
                     estimatedEPS: nextQtrEps,
-                    source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
+                    source: 'Yahoo Finance LLM'
                   } : null,
-                  source: yahooAnalysisData?.priceTarget ? 'Yahoo Finance Scraping' : (finvizTargetPrice ? 'Finviz + Yahoo Finance API' : 'Yahoo Finance API'),
+                  source: yahooAnalysisData?.priceTarget ? 'Yahoo Finance LLM' : 'Yahoo Finance API',
                   lastUpdated: new Date().toISOString(),
                   enhancedData: yahooAnalysisData?.fullData || null
                 };
                 
-                console.log(`${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : (finvizTargetPrice ? 'Finviz + Yahoo API' : 'Yahoo API')} analyst data loaded for ${symbol} - ${analystCount} analysts, $${targetPrice} target`);
+                console.log(`${yahooAnalysisData?.priceTarget ? 'Yahoo LLM' : 'Yahoo API'} analyst data loaded for ${symbol} - ${analystCount} analysts, $${targetPrice} target`);
               }
-            } else if ((yahooAnalysisData?.priceTarget || finvizTargetPrice !== null) && !analystData) {
-              // Only scraped price target available, no consensus data
+            } else if (yahooAnalysisData?.priceTarget && !analystData) {
+              // Only Yahoo LLM price target available, no consensus data
               const currentPrice = parseFloat(searchParams.get('currentPrice')) || 81.07;
-              const targetPrice = yahooAnalysisData?.priceTarget || finvizTargetPrice;
+              const targetPrice = yahooAnalysisData?.priceTarget;
               const calculatedUpside = ((targetPrice - currentPrice) / currentPrice) * 100;
               
               analystData = {
@@ -601,16 +550,16 @@ ${relevantContent.join('\n\n')}`;
                   targetCount: yahooAnalysisData?.analystCount || 1 // Assuming at least one analyst for the target
                 },
                 recentActivity: [],
-                nextEarnings: (yahooAnalysisData?.nextQtrEps || finvizEpsNextQ) ? {
-                  estimatedEPS: yahooAnalysisData?.nextQtrEps || finvizEpsNextQ,
-                  source: yahooAnalysisData?.nextQtrEps ? 'Yahoo Finance' : 'Finviz'
+                nextEarnings: yahooAnalysisData?.nextQtrEps ? {
+                  estimatedEPS: yahooAnalysisData?.nextQtrEps,
+                  source: 'Yahoo Finance LLM'
                 } : null,
-                source: yahooAnalysisData?.priceTarget ? 'Yahoo Finance Scraping' : 'Finviz',
+                source: 'Yahoo Finance LLM',
                 lastUpdated: new Date().toISOString(),
                 enhancedData: yahooAnalysisData?.fullData || null
               };
               
-              console.log(`${yahooAnalysisData?.priceTarget ? 'Yahoo scraping' : 'Finviz'}-only analyst data loaded for ${symbol} - $${targetPrice} target`);
+              console.log(`Yahoo LLM-only analyst data loaded for ${symbol} - $${targetPrice} target`);
             } else {
               console.log(`Yahoo Finance returned no useful analyst data for ${symbol}`);
             }

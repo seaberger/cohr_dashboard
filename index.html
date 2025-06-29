@@ -2339,10 +2339,16 @@
             if (analystCard && !document.getElementById('expandAnalystBtn')) {
                 const expandBtn = document.createElement('button');
                 expandBtn.id = 'expandAnalystBtn';
-                expandBtn.style.cssText = 'background: none; border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 0.8em; color: #666; margin-top: 12px;';
+                expandBtn.style.cssText = 'background: none; border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 0.8em; color: #666; margin-top: 12px; display: block; width: auto;';
                 expandBtn.innerHTML = '📊 Detailed Analysis';
-                expandBtn.onclick = toggleAnalystView;
+                expandBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📊 Expand button clicked');
+                    toggleAnalystView();
+                };
                 analystCard.appendChild(expandBtn);
+                console.log('✅ Expand button added to analyst card');
             }
         }
         
@@ -2351,14 +2357,28 @@
             const enhancedSection = document.getElementById('enhancedAnalystSection');
             const toggleBtn = document.getElementById('toggleAnalystViewBtn');
             
-            if (enhancedSection.style.display === 'none') {
+            console.log('🔄 Toggling analyst view');
+            console.log('Compact card:', compactCard);
+            console.log('Enhanced section:', enhancedSection);
+            console.log('Enhanced section current display:', enhancedSection?.style.display);
+            
+            if (enhancedSection && compactCard) {
                 // Show enhanced view
                 enhancedSection.style.display = 'block';
                 compactCard.style.display = 'none';
-                toggleBtn.onclick = () => {
-                    enhancedSection.style.display = 'none';
-                    compactCard.style.display = 'flex';
-                };
+                
+                // Set up the return toggle
+                if (toggleBtn) {
+                    toggleBtn.onclick = () => {
+                        enhancedSection.style.display = 'none';
+                        compactCard.style.display = 'flex';
+                        console.log('🔄 Returned to compact view');
+                    };
+                }
+                
+                console.log('✅ Switched to enhanced view');
+            } else {
+                console.error('❌ Could not find required elements for toggle');
             }
         }
         

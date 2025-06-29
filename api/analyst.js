@@ -379,15 +379,16 @@ export default async function handler(req, res) {
         console.log('Yahoo Finance API failed:', error.message);
       }
       
-      // Handle Finviz-only data after all API attempts
-      if (finvizTargetPrice !== null && !analystData) {
-        console.log('🎯 Creating Finviz-only analyst data...');
+      // FINVIZ TAKES PRIORITY - Create Finviz data if available, regardless of other sources
+      if (finvizTargetPrice !== null) {
+        console.log('🎯 Creating PRIMARY Finviz analyst data...');
         const currentPrice = parseFloat(req.query.currentPrice) || 81.07;
         const calculatedUpside = ((finvizTargetPrice - currentPrice) / currentPrice) * 100;
         
+        // Override any existing analyst data with Finviz as primary source
         analystData = {
           symbol: symbol.toUpperCase(),
-          consensus: {
+          consensus: analystData ? analystData.consensus : {
             rating: 'Hold', // Default when no consensus available
             score: 0,
             analystCount: 0,
@@ -400,16 +401,16 @@ export default async function handler(req, res) {
             upside: parseFloat(calculatedUpside.toFixed(1)),
             targetCount: 1 // Assuming at least one analyst for the target
           },
-          recentActivity: [],
+          recentActivity: analystData ? analystData.recentActivity : [],
           nextEarnings: finvizEpsNextQ ? {
             estimatedEPS: finvizEpsNextQ,
             source: 'Finviz'
           } : null,
-          source: 'Finviz',
+          source: 'Finviz (Primary)',
           lastUpdated: new Date().toISOString()
         };
         
-        console.log(`✅ Finviz-only analyst data created for ${symbol} - $${finvizTargetPrice} target, $${finvizEpsNextQ} EPS`);
+        console.log(`✅ PRIMARY Finviz analyst data created for ${symbol} - $${finvizTargetPrice} target, $${finvizEpsNextQ} EPS`);
       }
       
       // Tertiary: Try FMP API if Finnhub and Yahoo didn't work and FMP key is available

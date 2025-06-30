@@ -82,14 +82,6 @@ export default async function handler(req, res) {
         }
       }
       
-      // Temporary fallback for COHR while Finviz is blocked in serverless
-      if (symbol === 'COHR' && !finvizTargetPrice) {
-        console.log('Using fallback data for COHR due to Finviz access issues');
-        finvizTargetPrice = 96.06;
-        finvizEpsNextQ = 0.91;
-        console.log(`✅ Fallback applied: Target=$${finvizTargetPrice}, EPS=$${finvizEpsNextQ}`);
-      }
-      
       // Secondary: Try Finnhub API for analyst consensus ratings
       const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
       

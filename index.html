@@ -2239,14 +2239,16 @@
                 const timestampElement = document.getElementById('finvizTimestamp');
                 if (timestampElement) {
                     const queryTime = new Date(data.finvizQueryTime);
-                    const timeString = queryTime.toLocaleTimeString('en-US', { 
+                    const dateTimeString = queryTime.toLocaleString('en-US', { 
+                        month: 'short',
+                        day: 'numeric',
                         hour: '2-digit', 
                         minute: '2-digit',
                         timeZoneName: 'short'
                     });
-                    timestampElement.textContent = `Finviz data retrieved: ${timeString}`;
+                    timestampElement.textContent = `Finviz data retrieved: ${dateTimeString}`;
                     timestampElement.style.display = 'block';
-                    console.log('✅ Finviz timestamp displayed:', timeString);
+                    console.log('✅ Finviz timestamp displayed:', dateTimeString);
                 } else {
                     console.log('⚠️ Finviz timestamp element not found in HTML');
                 }

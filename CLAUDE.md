@@ -168,7 +168,8 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
   - **Price targets**: ✅ **WORKING** - Finviz primary source ($96.06) with fallback strategy
   - **EPS estimates**: ✅ **WORKING** - Finviz EPS next Q ($0.91) displaying correctly
   - **Upside calculation**: ✅ **WORKING** - Real-time upside percentage (+18.5%)
-  - **Status**: All analyst data displaying with Finviz prioritization logic
+  - **Data transparency**: ✅ **NEW** - Finviz query timestamp with date/time display
+  - **Status**: All analyst data displaying with full transparency and Finviz prioritization
 - **Dynamic business insights** (Google Gemini 2.5 Flash Lite + SEC EDGAR) ✨ ENHANCED
   - **Tagged insight cards**: GROWTH-DRIVER 🚀, RISK ⚠, STRATEGIC-MOVE 🎯, etc.
   - **Evidence attribution**: SEC filing page references with inline footnotes
@@ -247,6 +248,8 @@ REFRESH_INTERVAL_MS=300000                     # Frontend refresh interval
 - ✅ **Fixed Consensus Bug**: Corrected calculation preventing "Strong Buy" with only 26% ratings
 - ✅ **Enhanced Analytics Removal**: Eliminated problematic Chart.js features for clean, reliable UI
 - ✅ **Code Simplification**: Removed complex visualizations, maintained core analyst functionality
+- ✅ **Data Transparency Enhancement**: Added Finviz query timestamp with date/time for user trust
+- ✅ **Issue #19 Resolution**: Removed all hardcoded fallback data for pure API-based solution
 
 ### 🚧 NEXT PRIORITIES (Data Quality & Performance)
 

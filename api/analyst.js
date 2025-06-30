@@ -23,6 +23,7 @@ export default async function handler(req, res) {
       // Primary: Try Finviz for price targets and EPS estimates (most reliable, no API key needed)
       let finvizTargetPrice = null;
       let finvizEpsNextQ = null;
+      let finvizQueryTimestamp = null;
       try {
         console.log(`Attempting Finviz fetch for ${symbol}...`);
         
@@ -55,11 +56,14 @@ export default async function handler(req, res) {
           const finvizHtml = await finvizResponse.text();
           console.log(`Finviz HTML length: ${finvizHtml.length}`);
           
+          // Capture timestamp when Finviz data is successfully retrieved
+          finvizQueryTimestamp = new Date().toISOString();
+          
           // Extract target price from Finviz HTML
           const targetPriceMatch = finvizHtml.match(/Target Price.*?<span class="color-text[^"]*">([0-9]+\.[0-9]+)<\/span>/);
           if (targetPriceMatch) {
             finvizTargetPrice = parseFloat(targetPriceMatch[1]);
-            console.log(`✅ Finviz target price for ${symbol}: $${finvizTargetPrice}`);
+            console.log(`✅ Finviz target price for ${symbol}: $${finvizTargetPrice} (retrieved at ${finvizQueryTimestamp})`);
           } else {
             console.log('❌ No target price match found in Finviz HTML');
           }
@@ -68,7 +72,7 @@ export default async function handler(req, res) {
           const epsNextQMatch = finvizHtml.match(/EPS next Q.*?<b>([0-9.-]+)<\/b>/);
           if (epsNextQMatch) {
             finvizEpsNextQ = parseFloat(epsNextQMatch[1]);
-            console.log(`✅ Finviz EPS next Q for ${symbol}: $${finvizEpsNextQ}`);
+            console.log(`✅ Finviz EPS next Q for ${symbol}: $${finvizEpsNextQ} (retrieved at ${finvizQueryTimestamp})`);
           } else {
             console.log('❌ No EPS next Q match found in Finviz HTML');
           }
@@ -399,7 +403,8 @@ export default async function handler(req, res) {
             source: 'Finviz'
           } : null,
           source: 'Finviz (Primary)',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          finvizQueryTime: finvizQueryTimestamp
         };
         
         console.log(`✅ PRIMARY Finviz analyst data created for ${symbol} - $${finvizTargetPrice} target, $${finvizEpsNextQ} EPS`);

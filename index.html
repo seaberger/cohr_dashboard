@@ -2698,6 +2698,7 @@
                             console.log('📦 Using cached universal metrics data');
                             updateUniversalMetrics(parsed.universalMetrics);
                             updateMetricsTitle(parsed);
+                            updateDataSources(parsed);
                             return;
                         } else {
                             console.log('⏰ Cache expired, fetching fresh data');

@@ -1786,12 +1786,10 @@
                     refreshButton.textContent = '⏳ Refreshing Financial Data...';
                     refreshButton.disabled = true;
                     
-                    // Clear caches and force refresh both endpoints
-                    clearAllCaches();
-                    
+                    // Force refresh both endpoints (bypasses both browser and CDN cache)
                     await Promise.all([
-                        loadUniversalMetrics(),
-                        loadCompanyInsights()
+                        loadUniversalMetrics(true),
+                        loadCompanyInsights(true)
                     ]);
 
                     console.log('✅ Universal metrics and insights refreshed successfully');
@@ -1811,9 +1809,8 @@
                         refreshInsightsButton.innerHTML = '⏳ <span class="refresh-text">Refreshing...</span>';
                         refreshInsightsButton.disabled = true;
                         
-                        // Clear insights cache and reload
-                        sessionStorage.removeItem('cohr-company-insights');
-                        await loadCompanyInsights();
+                        // Force refresh insights (bypasses both browser and CDN cache)
+                        await loadCompanyInsights(true);
 
                         console.log('✅ Company insights refreshed successfully');
                         
@@ -2680,7 +2677,7 @@
             ]);
         }
 
-        async function loadUniversalMetrics() {
+        async function loadUniversalMetrics(forceRefresh = false) {
             const container = document.getElementById('universalMetricsContainer');
             const cacheKey = 'cohr-universal-metrics';
             
@@ -2689,21 +2686,27 @@
             console.log('API_BASE:', API_BASE);
             
             try {
-                // Check for cached data first
-                const cachedData = sessionStorage.getItem(cacheKey);
-                if (cachedData) {
-                    const parsed = JSON.parse(cachedData);
-                    const age = Date.now() - parsed.timestamp;
-                    
-                    // Use cache if less than 6 hours old
-                    if (age < 6 * 60 * 60 * 1000) {
-                        console.log('📦 Using cached universal metrics data');
-                        updateUniversalMetrics(parsed.universalMetrics);
-                        updateMetricsTitle(parsed);
-                        return;
-                    } else {
-                        console.log('⏰ Cache expired, fetching fresh data');
+                // Check for cached data first (skip if force refresh)
+                if (!forceRefresh) {
+                    const cachedData = sessionStorage.getItem(cacheKey);
+                    if (cachedData) {
+                        const parsed = JSON.parse(cachedData);
+                        const age = Date.now() - parsed.timestamp;
+
+                        // Use cache if less than 6 hours old
+                        if (age < 6 * 60 * 60 * 1000) {
+                            console.log('📦 Using cached universal metrics data');
+                            updateUniversalMetrics(parsed.universalMetrics);
+                            updateMetricsTitle(parsed);
+                            updateDataSources(parsed, true, parsed.timestamp);  // fromCache = true, with cache timestamp
+                            return;
+                        } else {
+                            console.log('⏰ Cache expired, fetching fresh data');
+                        }
                     }
+                } else {
+                    console.log('🔄 Force refresh requested, bypassing cache');
+                    sessionStorage.removeItem(cacheKey);
                 }
                 
                 // Show loading state - but preserve existing tiles if they exist
@@ -2725,8 +2728,11 @@
                 }
                 
                 console.log('🌐 Fetching from API...');
-                const apiUrl = `${API_BASE}/api/universal-metrics?t=${Date.now()}`;
-                console.log('API URL:', apiUrl);
+                // Use refresh=true to bypass Vercel CDN cache when force refresh requested
+                const apiUrl = forceRefresh
+                    ? `${API_BASE}/api/universal-metrics?refresh=true`
+                    : `${API_BASE}/api/universal-metrics`;
+                console.log('API URL:', apiUrl, forceRefresh ? '(bypassing CDN cache)' : '(using CDN cache)');
                 
                 // Create timeout promise
                 const timeoutPromise = new Promise((_, reject) => 
@@ -2800,7 +2806,7 @@
                             <p style="color: #8c7851; margin-bottom: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
                                 Unable to extract financial metrics from SEC filing data. This may be due to filing processing delays or temporary API issues.
                             </p>
-                            <button onclick="loadUniversalMetrics()" style="background: #f39c12; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            <button onclick="loadUniversalMetrics(true)" style="background: #f39c12; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
                                 🔄 Retry Load
                             </button>
                             <p style="margin-top: 16px; font-size: 0.85em; color: #95a5a6;">
@@ -2816,35 +2822,45 @@
             }
         }
 
-        async function loadCompanyInsights() {
+        async function loadCompanyInsights(forceRefresh = false) {
             const container = document.getElementById('companyInsightsContainer');
             const cacheKey = 'cohr-company-insights';
-            
+
             try {
-                // Check for cached data first
-                const cachedData = sessionStorage.getItem(cacheKey);
-                if (cachedData) {
-                    const parsed = JSON.parse(cachedData);
-                    const age = Date.now() - parsed.timestamp;
-                    
-                    // Use cache if less than 12 hours old
-                    if (age < 12 * 60 * 60 * 1000) {
-                        console.log('Using cached company insights data');
-                        updateCompanyInsights(parsed.companyInsights);
-                        return;
+                // Check for cached data first (skip if force refresh)
+                if (!forceRefresh) {
+                    const cachedData = sessionStorage.getItem(cacheKey);
+                    if (cachedData) {
+                        const parsed = JSON.parse(cachedData);
+                        const age = Date.now() - parsed.timestamp;
+
+                        // Use cache if less than 12 hours old
+                        if (age < 12 * 60 * 60 * 1000) {
+                            console.log('Using cached company insights data');
+                            updateCompanyInsights(parsed.companyInsights);
+                            return;
+                        }
                     }
+                } else {
+                    console.log('🔄 Force refresh requested for insights, bypassing cache');
+                    sessionStorage.removeItem(cacheKey);
                 }
                 
                 // Show loading state
                 container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">💡 Loading company insights...</div>';
                 
                 // Create timeout promise
-                const timeoutPromise = new Promise((_, reject) => 
+                const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Insights request timeout')), 25000)
                 );
-                
+
+                // Use refresh=true to bypass Vercel CDN cache when force refresh requested
+                const apiUrl = forceRefresh
+                    ? `${API_BASE}/api/company-insights?refresh=true`
+                    : `${API_BASE}/api/company-insights`;
+
                 const response = await Promise.race([
-                    fetch(`${API_BASE}/api/company-insights?t=${Date.now()}`),
+                    fetch(apiUrl),
                     timeoutPromise
                 ]);
                 
@@ -2872,7 +2888,7 @@
                                 ? 'SEC filing analysis timed out. The system may be processing a large filing.' 
                                 : 'Unable to analyze SEC filing for business insights. This may be due to filing format issues or temporary processing delays.'}
                         </p>
-                        <button onclick="loadCompanyInsights()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        <button onclick="loadCompanyInsights(true)" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
                             🔄 Retry Analysis
                         </button>
                         <p style="margin-top: 12px; font-size: 0.8em; color: #95a5a6;">
@@ -2941,8 +2957,8 @@
             loadMetrics: loadUniversalMetrics,
             loadInsights: loadCompanyInsights,
             refreshAll: () => {
-                clearAllCaches();
-                return Promise.all([loadUniversalMetrics(), loadCompanyInsights()]);
+                // Force refresh both endpoints (bypasses CDN cache)
+                return Promise.all([loadUniversalMetrics(true), loadCompanyInsights(true)]);
             },
             forceShowUniversalMetrics: forceShowUniversalMetrics,
             checkContainers: checkContainers
@@ -3203,24 +3219,38 @@
 
         // Legacy function removed - no longer needed with universal metrics
 
-        function updateDataSources(data) {
+        function updateDataSources(data, fromCache = false, cacheTimestamp = null) {
             const container = document.getElementById('dataSourcesContent');
-            
+
             const lastUpdated = new Date(data.lastUpdated).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
-            
+
+            let cacheIndicator;
+            if (fromCache && cacheTimestamp) {
+                const cachedAt = new Date(cacheTimestamp).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                cacheIndicator = `<span style="background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">📦 Cached ${cachedAt}</span>`;
+            } else {
+                cacheIndicator = '<span style="background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">✨ Fresh</span>';
+            }
+
             container.innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
                     <div>
                         <strong style="color: #2c3e50;">Data Quality:</strong> ${data.dataQuality}<br>
                         <strong style="color: #2c3e50;">Confidence Level:</strong> ${data.confidence}<br>
-                        <strong style="color: #2c3e50;">Last Updated:</strong> ${lastUpdated}
+                        <strong style="color: #2c3e50;">Last Updated:</strong> ${lastUpdated} ${cacheIndicator}
                     </div>
                     <div>
-                        <strong style="color: #2c3e50;">Update Frequency:</strong> ${data.updateFrequency}<br>
+                        <strong style="color: #2c3e50;">Update Frequency:</strong> ${data.updateFrequency || 'Quarterly (SEC Filings)'}<br>
                         <strong style="color: #2c3e50;">Source Count:</strong> ${data.sources.length} reports<br>
                         <strong style="color: #2c3e50;">Research Method:</strong> Multi-source aggregation
                     </div>

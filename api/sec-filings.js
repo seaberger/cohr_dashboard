@@ -25,7 +25,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { symbol = 'COHR', type = '10-Q' } = req.query;
+  const { symbol = 'COHR', type = '10-Q', refresh = 'false' } = req.query;
+
+  // Set Vercel CDN cache headers (persists across cold starts)
+  // SEC filings change infrequently (quarterly), so cache for 24 hours
+  if (refresh === 'true') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  } else {
+    // Cache at Vercel CDN for 24 hours, serve stale for 7 days while revalidating
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+  }
 
   try {
     // Check cache first

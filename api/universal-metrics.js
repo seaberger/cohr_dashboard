@@ -24,6 +24,15 @@ export default async function handler(req, res) {
 
   const { symbol = 'COHR', refresh = 'false', clearCache = 'false' } = req.query;
 
+  // Set Vercel CDN cache headers (persists across cold starts)
+  // Skip CDN cache if refresh is requested
+  if (refresh === 'true' || clearCache === 'true') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  } else {
+    // Cache at Vercel CDN for 6 hours, serve stale for 24hr while revalidating
+    res.setHeader('Cache-Control', 'public, s-maxage=21600, stale-while-revalidate=86400');
+  }
+
   try {
     // Clear cache if requested
     const cacheKey = `metrics-${symbol}`;

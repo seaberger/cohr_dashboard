@@ -1,8 +1,14 @@
 // Extract universal financial metrics from SEC filings using Google Gemini
 import { extractUniversalMetrics } from '../lib/metricsExtractor.js';
 import fetch from 'node-fetch';
+import {
+  getCurrentMetrics,
+  cacheCurrentMetrics,
+  getSparklineData,
+  isRedisAvailable
+} from '../lib/cacheService.js';
 
-// Simple in-memory cache for metrics results
+// Simple in-memory cache for metrics results (fallback when Redis unavailable)
 const metricsCache = new Map();
 const CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours for financial metrics
 

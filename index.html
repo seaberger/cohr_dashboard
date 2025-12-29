@@ -838,9 +838,34 @@
         }
         
         .metric-sparkline {
-            height: 24px;
+            height: 32px;
             width: 100%;
             margin-top: 8px;
+            border-radius: 4px;
+            background: linear-gradient(180deg, rgba(52, 152, 219, 0.05) 0%, rgba(52, 152, 219, 0.02) 100%);
+        }
+
+        .metric-sparkline.positive {
+            background: linear-gradient(180deg, rgba(39, 174, 96, 0.08) 0%, rgba(39, 174, 96, 0.02) 100%);
+        }
+
+        .metric-sparkline.negative {
+            background: linear-gradient(180deg, rgba(231, 76, 60, 0.08) 0%, rgba(231, 76, 60, 0.02) 100%);
+        }
+
+        .sparkline-loading {
+            height: 32px;
+            width: 100%;
+            margin-top: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
         
         .metric-change {
@@ -2699,6 +2724,11 @@
                             updateUniversalMetrics(parsed.universalMetrics);
                             updateMetricsTitle(parsed);
                             updateDataSources(parsed, true, parsed.timestamp);  // fromCache = true, with cache timestamp
+
+                            // Load sparklines (from Redis cache if available)
+                            loadSparklineData().then(sparklineData => {
+                                if (sparklineData) renderSparklines(sparklineData);
+                            });
                             return;
                         } else {
                             console.log('⏰ Cache expired, fetching fresh data');
@@ -2774,7 +2804,12 @@
                     updateUniversalMetrics(data.universalMetrics);
                     updateMetricsTitle(data);
                     updateDataSources(data);
-                    
+
+                    // Load sparklines (from Redis cache if available)
+                    loadSparklineData().then(sparklineData => {
+                        if (sparklineData) renderSparklines(sparklineData);
+                    });
+
                     // Double-check container visibility after update
                     if (container) {
                         container.style.display = 'grid';
@@ -3011,15 +3046,18 @@
                     // Update change text
                     const changeText = metric.growth || metric.change || '';
                     changeElement.textContent = changeText;
-                    
-                    // Draw sparkline - DISABLED until real data available (Issue #12)
-                    // if (metric.sparkline && sparklineCanvas) {
-                    //     drawSparkline(sparklineCanvas, metric.sparkline);
-                    // }
-                    
-                    // Hide sparkline canvas until we have real data
+
+                    // Show sparkline canvas with loading shimmer
+                    // Will be populated by renderSparklines() when Redis data available
                     if (sparklineCanvas) {
-                        sparklineCanvas.style.display = 'none';
+                        sparklineCanvas.style.display = 'block';
+                        // Add loading shimmer effect until sparkline data loads
+                        if (!sparklineCanvas.hasAttribute('data-loaded')) {
+                            const loadingDiv = document.createElement('div');
+                            loadingDiv.className = 'sparkline-loading';
+                            sparklineCanvas.parentNode.insertBefore(loadingDiv, sparklineCanvas);
+                            sparklineCanvas.style.display = 'none';
+                        }
                     }
                     
                     // Reset opacity and visibility after update
@@ -3051,49 +3089,158 @@
             }
         }
         
-        function drawSparkline(canvas, data) {
-            if (!canvas || !data || data.length < 2) return;
-            
+        function drawSparkline(canvas, data, trend = 'neutral') {
+            if (!canvas || !data || data.length < 2) {
+                canvas.style.display = 'none';
+                return;
+            }
+
+            canvas.style.display = 'block';
+
+            // Set canvas size for high DPI displays
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
             const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = rect.height;
+
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
-            
-            // Calculate bounds
+
+            // Calculate bounds with padding
             const min = Math.min(...data);
             const max = Math.max(...data);
             const range = max - min || 1;
-            const padding = 2;
-            
-            // Draw line
-            ctx.strokeStyle = '#3498db';
-            ctx.lineWidth = 1.5;
+            const paddingX = 4;
+            const paddingY = 4;
+
+            // Choose colors based on trend
+            const colors = {
+                positive: { line: '#27ae60', fill: 'rgba(39, 174, 96, 0.15)', dot: '#27ae60' },
+                negative: { line: '#e74c3c', fill: 'rgba(231, 76, 60, 0.15)', dot: '#e74c3c' },
+                neutral: { line: '#3498db', fill: 'rgba(52, 152, 219, 0.15)', dot: '#3498db' }
+            };
+            const color = colors[trend] || colors.neutral;
+
+            // Calculate points
+            const points = data.map((value, index) => ({
+                x: paddingX + (index / (data.length - 1)) * (width - 2 * paddingX),
+                y: height - paddingY - ((value - min) / range) * (height - 2 * paddingY)
+            }));
+
+            // Draw gradient fill under the line
             ctx.beginPath();
-            
-            data.forEach((value, index) => {
-                const x = (index / (data.length - 1)) * (width - 2 * padding) + padding;
-                const y = height - padding - ((value - min) / range) * (height - 2 * padding);
-                
-                if (index === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            });
-            
+            ctx.moveTo(points[0].x, height);
+            points.forEach(point => ctx.lineTo(point.x, point.y));
+            ctx.lineTo(points[points.length - 1].x, height);
+            ctx.closePath();
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, color.fill);
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Draw smooth curved line using bezier curves
+            ctx.strokeStyle = color.line;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i + 1].x) / 2;
+                const yc = (points[i].y + points[i + 1].y) / 2;
+                ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+            }
+            // Draw to the last point
+            ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
             ctx.stroke();
-            
-            // Draw dots
-            ctx.fillStyle = '#3498db';
-            data.forEach((value, index) => {
-                const x = (index / (data.length - 1)) * (width - 2 * padding) + padding;
-                const y = height - padding - ((value - min) / range) * (height - 2 * padding);
-                
-                ctx.beginPath();
-                ctx.arc(x, y, 1.5, 0, 2 * Math.PI);
-                ctx.fill();
+
+            // Draw endpoint dot (current quarter)
+            const lastPoint = points[points.length - 1];
+            ctx.beginPath();
+            ctx.arc(lastPoint.x, lastPoint.y, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = color.dot;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Add CSS class for background gradient
+            canvas.className = `metric-sparkline ${trend}`;
+        }
+
+        // Fetch and render sparklines from real historical data
+        async function loadSparklineData() {
+            try {
+                const response = await fetch('/api/sparkline-data?symbol=COHR');
+
+                if (!response.ok) {
+                    console.log('Sparkline data not available (Redis not configured)');
+                    return null;
+                }
+
+                const data = await response.json();
+
+                if (data.sparklines) {
+                    console.log('📊 Real sparkline data loaded:', data.quartersAvailable, 'quarters');
+                    return data.sparklines;
+                }
+
+                return null;
+            } catch (error) {
+                console.log('Sparklines: Using fallback (cache not available)');
+                return null;
+            }
+        }
+
+        // Render sparklines for all metric tiles
+        function renderSparklines(sparklineData) {
+            if (!sparklineData) return;
+
+            const metricMap = {
+                'Revenue': 'revenue',
+                'Gross Margin': 'grossMarginPct',
+                'Operating Margin': 'operatingMarginPct',
+                'Operating Income': 'operatingIncome',
+                'Operating Cash Flow': 'operatingCashFlow',
+                'R&D / Revenue': 'rndRatioPct',
+                'Net Income': 'netIncome',
+                'Diluted EPS': 'epsDiluted'
+            };
+
+            document.querySelectorAll('.metric-tile').forEach(tile => {
+                const labelElement = tile.querySelector('.metric-label');
+                const canvas = tile.querySelector('.metric-sparkline');
+                const loadingShimmer = tile.querySelector('.sparkline-loading');
+
+                if (labelElement && canvas) {
+                    const label = labelElement.textContent.trim();
+                    const metricKey = metricMap[label];
+
+                    if (metricKey && sparklineData[metricKey]) {
+                        const sparkline = sparklineData[metricKey];
+
+                        // Remove loading shimmer if present
+                        if (loadingShimmer) {
+                            loadingShimmer.remove();
+                        }
+
+                        // Show and draw the canvas
+                        canvas.style.display = 'block';
+                        canvas.setAttribute('data-loaded', 'true');
+                        drawSparkline(canvas, sparkline.data, sparkline.trend);
+
+                        console.log(`📈 Sparkline drawn for ${label}: ${sparkline.count} points, trend: ${sparkline.trend}`);
+                    }
+                }
             });
         }
         

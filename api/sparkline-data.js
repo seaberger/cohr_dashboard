@@ -118,8 +118,10 @@ function buildSparklineArrays(historicalData, currentMetrics, requestedMetric) {
     }
 
     // Add current quarter if available
-    if (currentMetrics?.metrics?.[metricName]?.value !== null) {
-      dataPoints.push(currentMetrics.metrics[metricName].value);
+    // Note: currentMetrics uses .data.universalMetrics structure, not .metrics
+    const currentMetricValue = currentMetrics?.data?.universalMetrics?.[metricName]?.value;
+    if (currentMetricValue != null) {
+      dataPoints.push(currentMetricValue);
       labels.push('Current');
     }
 
@@ -131,12 +133,12 @@ function buildSparklineArrays(historicalData, currentMetrics, requestedMetric) {
       labels,
       count: dataPoints.length,
       trend,
-      min: Math.min(...dataPoints),
-      max: Math.max(...dataPoints),
-      latest: dataPoints[dataPoints.length - 1] || null,
-      first: dataPoints[0] || null,
+      min: dataPoints.length > 0 ? Math.min(...dataPoints) : null,
+      max: dataPoints.length > 0 ? Math.max(...dataPoints) : null,
+      latest: dataPoints[dataPoints.length - 1] ?? null,
+      first: dataPoints[0] ?? null,
       change: dataPoints.length >= 2
-        ? ((dataPoints[dataPoints.length - 1] - dataPoints[0]) / dataPoints[0] * 100).toFixed(1) + '%'
+        ? ((dataPoints[dataPoints.length - 1] - dataPoints[0]) / Math.abs(dataPoints[0]) * 100).toFixed(1) + '%'
         : null
     };
   }

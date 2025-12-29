@@ -187,26 +187,40 @@ export default async function handler(req, res) {
  * Format insights response for API output
  */
 function formatInsightsResponse(data, symbol, filingData) {
+  const filingDate = data.filingDate || filingData?.filing?.filingDate;
+  const accession = data.accessionNumber || filingData?.filing?.accessionNumber;
+  const model = data.model || 'gemini-2.5-flash-lite';
+  const insightsCount = data.companyInsights?.length || 0;
+
   return {
     status: 'success',
     symbol: symbol.toUpperCase(),
     quarter: data.quarter,
     filing: {
-      date: data.filingDate || filingData?.filing?.filingDate,
+      date: filingDate,
       type: filingData?.filing?.type || '10-Q',
       quarter: data.quarterDisplay || data.quarter,
-      accessionNumber: data.accessionNumber
+      accessionNumber: accession
     },
     companyInsights: data.companyInsights || [],
     segmentPerformance: data.segmentPerformance || [],
-    dataQuality: 'High',
-    confidence: '95%',
     lastUpdated: data.extractedAt || data.cachedAt || new Date().toISOString(),
+    // Accurate extraction information
+    extraction: {
+      method: 'LLM Analysis',
+      model: model,
+      modelDisplay: model === 'gemini-3-flash-preview' ? 'Google Gemini 3 Flash' : 'Google Gemini 2.5 Flash Lite',
+      source: 'SEC EDGAR',
+      filingType: '10-Q',
+      insightsExtracted: insightsCount,
+      filingUrl: accession ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000820318&type=10-Q&dateb=&owner=include&count=40&search_text=` : null
+    },
     sources: [
-      `${symbol} SEC 10-Q Filing`,
-      `Filed on ${data.filingDate || filingData?.filing?.filingDate}`,
-      `Analyzed by Google Gemini (${data.model || 'gemini-2.5-flash-lite'})`
+      `SEC EDGAR 10-Q Filing (${filingDate})`,
+      `Accession: ${accession}`,
+      `Extracted by ${model === 'gemini-3-flash-preview' ? 'Google Gemini 3 Flash' : 'Google Gemini 2.5 Flash Lite'}`
     ],
+    methodology: 'Business insights extracted from SEC 10-Q filing using LLM analysis. The model identifies growth drivers, risks, strategic moves, and market dynamics from the Management Discussion & Analysis section.',
     extractionType: 'unified-format'
   };
 }

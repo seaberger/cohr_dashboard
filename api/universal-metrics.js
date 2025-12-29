@@ -184,28 +184,39 @@ export default async function handler(req, res) {
 function formatResponse(data, symbol, filingData) {
   // Support both unified format (metrics) and legacy format (universalMetrics)
   const metrics = data.metrics || data.universalMetrics;
+  const filingDate = data.filingDate || filingData?.filing?.filingDate;
+  const accession = data.accessionNumber || filingData?.filing?.accessionNumber;
+  const model = data.model || 'gemini-2.5-flash-lite';
 
   return {
     status: 'success',
     symbol: symbol.toUpperCase(),
     filing: {
-      date: data.filingDate || filingData?.filing?.filingDate,
+      date: filingDate,
       type: filingData?.filing?.type || '10-Q',
       quarter: data.quarterDisplay || data.quarter,
-      accessionNumber: data.accessionNumber
+      accessionNumber: accession
     },
     quarter: data.quarter,
     // Include metrics in BOTH formats for backward compatibility
     metrics: metrics,
     universalMetrics: metrics,
-    dataQuality: 'High',
-    confidence: '95%',
     lastUpdated: data.extractedAt || data.cachedAt || new Date().toISOString(),
+    // Accurate source information
+    extraction: {
+      method: 'LLM Analysis',
+      model: model,
+      modelDisplay: model === 'gemini-3-flash-preview' ? 'Google Gemini 3 Flash' : 'Google Gemini 2.5 Flash Lite',
+      source: 'SEC EDGAR',
+      filingType: '10-Q',
+      filingUrl: accession ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000820318&type=10-Q&dateb=&owner=include&count=40&search_text=` : null
+    },
     sources: [
-      `${symbol} SEC 10-Q Filing`,
-      `Filed on ${data.filingDate || filingData?.filing?.filingDate}`,
-      `Analyzed by Google Gemini (${data.model || 'gemini-2.5-flash-lite'})`
+      `SEC EDGAR 10-Q Filing (${filingDate})`,
+      `Accession: ${accession}`,
+      `Extracted by ${model === 'gemini-3-flash-preview' ? 'Google Gemini 3 Flash' : 'Google Gemini 2.5 Flash Lite'}`
     ],
+    methodology: 'Financial metrics extracted directly from SEC 10-Q filing using LLM analysis. Values are parsed from Condensed Consolidated Financial Statements.',
     extractionType: 'unified-format'
   };
 }

@@ -1520,10 +1520,24 @@
                         <h3 style="color: #2c3e50; margin: 0 0 4px 0; font-size: 1.2em; font-weight: 600;">Key Company Insights</h3>
                         <p style="color: #7f8c8d; margin: 0; font-size: 0.9em;">AI-powered analysis from latest SEC filings</p>
                     </div>
-                    <button id="refreshInsightsBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666; display: flex; align-items: center; gap: 6px;">
-                        🔄 <span class="refresh-text">Refresh</span>
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="refreshInsightsBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666; display: flex; align-items: center; gap: 6px;">
+                            🔄 <span class="refresh-text">Refresh</span>
+                        </button>
+                        <button id="insightsSourcesBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666;">
+                            📊 Data Sources
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Insights Data Sources Panel (initially hidden) -->
+                <div id="insightsSourcesPanel" style="display: none; background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 16px; border-left: 4px solid #9b59b6;">
+                    <h4 style="margin: 0 0 12px 0; color: #2c3e50; font-size: 1em;">Company Insights Sources & Methodology</h4>
+                    <div id="insightsSourcesContent">
+                        <p style="margin: 8px 0; font-size: 0.9em; color: #555;">Loading source information...</p>
+                    </div>
+                </div>
+
                 <div class="insights-grid" id="companyInsightsContainer">
                     <div style="text-align: center; padding: 40px 20px; color: #999;">
                         <div style="font-size: 2em; margin-bottom: 16px;">🔍</div>
@@ -1833,17 +1847,33 @@
                     try {
                         refreshInsightsButton.innerHTML = '⏳ <span class="refresh-text">Refreshing...</span>';
                         refreshInsightsButton.disabled = true;
-                        
+
                         // Force refresh insights (bypasses both browser and CDN cache)
                         await loadCompanyInsights(true);
 
                         console.log('✅ Company insights refreshed successfully');
-                        
+
                     } catch (error) {
                         console.error('Failed to refresh insights:', error);
                     } finally {
                         refreshInsightsButton.innerHTML = '🔄 <span class="refresh-text">Refresh</span>';
                         refreshInsightsButton.disabled = false;
+                    }
+                });
+            }
+
+            // Setup insights sources panel toggle
+            const insightsSourcesBtn = document.getElementById('insightsSourcesBtn');
+            const insightsSourcesPanel = document.getElementById('insightsSourcesPanel');
+
+            if (insightsSourcesBtn && insightsSourcesPanel) {
+                insightsSourcesBtn.addEventListener('click', () => {
+                    if (insightsSourcesPanel.style.display === 'none') {
+                        insightsSourcesPanel.style.display = 'block';
+                        insightsSourcesBtn.textContent = '📊 Hide Sources';
+                    } else {
+                        insightsSourcesPanel.style.display = 'none';
+                        insightsSourcesBtn.textContent = '📊 Data Sources';
                     }
                 });
             }
@@ -2907,9 +2937,10 @@
                     ...data,
                     timestamp: Date.now()
                 }));
-                
+
                 updateCompanyInsights(data.companyInsights);
-                
+                updateInsightsSources(data);
+
             } catch (error) {
                 console.error('Company insights error:', error);
                 
@@ -3389,38 +3420,98 @@
                 cacheIndicator = '<span style="background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">✨ Fresh</span>';
             }
 
+            // Use new extraction info if available, otherwise fallback
+            const extraction = data.extraction || {};
+            const modelDisplay = extraction.modelDisplay || 'Google Gemini 2.5 Flash Lite';
+            const methodology = data.methodology || 'Financial metrics extracted from SEC filings using LLM analysis.';
+
             container.innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
                     <div>
-                        <strong style="color: #2c3e50;">Data Quality:</strong> ${data.dataQuality}<br>
-                        <strong style="color: #2c3e50;">Confidence Level:</strong> ${data.confidence}<br>
-                        <strong style="color: #2c3e50;">Last Updated:</strong> ${lastUpdated} ${cacheIndicator}
+                        <strong style="color: #2c3e50;">Data Source:</strong> SEC EDGAR<br>
+                        <strong style="color: #2c3e50;">Filing Type:</strong> ${data.filing?.type || '10-Q'}<br>
+                        <strong style="color: #2c3e50;">Filing Date:</strong> ${data.filing?.date || 'N/A'} ${cacheIndicator}
                     </div>
                     <div>
-                        <strong style="color: #2c3e50;">Update Frequency:</strong> ${data.updateFrequency || 'Quarterly (SEC Filings)'}<br>
-                        <strong style="color: #2c3e50;">Source Count:</strong> ${data.sources.length} reports<br>
-                        <strong style="color: #2c3e50;">Research Method:</strong> Multi-source aggregation
+                        <strong style="color: #2c3e50;">Extraction Model:</strong> ${modelDisplay}<br>
+                        <strong style="color: #2c3e50;">Quarter:</strong> ${data.filing?.quarter || data.quarter || 'N/A'}<br>
+                        <strong style="color: #2c3e50;">Update Frequency:</strong> When new 10-Q filed
                     </div>
                 </div>
-                
+
                 <div style="margin-bottom: 12px;">
-                    <strong style="color: #2c3e50;">Primary Data Sources:</strong>
+                    <strong style="color: #2c3e50;">Data Pipeline:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #555;">
                         ${data.sources.map(source => `<li style="margin: 4px 0;">${source}</li>`).join('')}
                     </ul>
                 </div>
-                
+
                 <div style="background: #e8f4fd; padding: 12px; border-radius: 6px; border-left: 3px solid #3498db;">
                     <strong style="color: #2c3e50;">Methodology:</strong>
                     <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #555;">
-                        Market data is compiled from multiple industry research reports and cross-validated for accuracy. 
-                        Figures represent consensus estimates from leading market research firms. Data is updated monthly 
-                        to reflect the latest market intelligence and industry trends.
+                        ${methodology}
                     </p>
                 </div>
-                
+
                 <div style="margin-top: 12px; font-size: 0.85em; color: #666; text-align: center;">
-                    <em>Specific data points may vary between sources due to different methodologies and market definitions.</em>
+                    <em>Data is automatically refreshed when a new SEC 10-Q filing is detected.</em>
+                </div>
+            `;
+        }
+
+        function updateInsightsSources(data) {
+            const container = document.getElementById('insightsSourcesContent');
+            if (!container) return;
+
+            const lastUpdated = new Date(data.lastUpdated).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Use extraction info if available
+            const extraction = data.extraction || {};
+            const modelDisplay = extraction.modelDisplay || 'Google Gemini 2.5 Flash Lite';
+            const insightsCount = extraction.insightsExtracted || data.companyInsights?.length || 0;
+            const methodology = data.methodology || 'Business insights extracted from SEC filings using LLM analysis.';
+
+            let cacheIndicator = '';
+            if (data.fromCache) {
+                cacheIndicator = `<span style="background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">📦 Cached</span>`;
+            } else {
+                cacheIndicator = '<span style="background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">✨ Fresh</span>';
+            }
+
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                    <div>
+                        <strong style="color: #2c3e50;">Data Source:</strong> SEC EDGAR<br>
+                        <strong style="color: #2c3e50;">Filing Type:</strong> ${data.filing?.type || '10-Q'}<br>
+                        <strong style="color: #2c3e50;">Filing Date:</strong> ${data.filing?.date || 'N/A'} ${cacheIndicator}
+                    </div>
+                    <div>
+                        <strong style="color: #2c3e50;">Extraction Model:</strong> ${modelDisplay}<br>
+                        <strong style="color: #2c3e50;">Quarter:</strong> ${data.filing?.quarter || data.quarter || 'N/A'}<br>
+                        <strong style="color: #2c3e50;">Insights Extracted:</strong> ${insightsCount}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #2c3e50;">Data Pipeline:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #555;">
+                        ${data.sources ? data.sources.map(source => `<li style="margin: 4px 0;">${source}</li>`).join('') : '<li>SEC EDGAR 10-Q Filing</li>'}
+                    </ul>
+                </div>
+
+                <div style="background: #f3e8fd; padding: 12px; border-radius: 6px; border-left: 3px solid #9b59b6;">
+                    <strong style="color: #2c3e50;">Methodology:</strong>
+                    <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #555;">
+                        ${methodology}
+                    </p>
+                </div>
+
+                <div style="margin-top: 12px; font-size: 0.85em; color: #666; text-align: center;">
+                    <em>Insights are automatically refreshed when a new SEC 10-Q filing is detected.</em>
                 </div>
             `;
         }

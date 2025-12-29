@@ -122,7 +122,7 @@ export default async function handler(req, res) {
       accessionNumber: latestAccession,
       symbol: symbol.toUpperCase(),
       extractedAt: new Date().toISOString(),
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-3-flash-preview',
       metrics: normalizedMetrics.metrics || normalizedMetrics.universalMetrics
     };
 
@@ -186,7 +186,7 @@ function formatResponse(data, symbol, filingData) {
   const metrics = data.metrics || data.universalMetrics;
   const filingDate = data.filingDate || filingData?.filing?.filingDate;
   const accession = data.accessionNumber || filingData?.filing?.accessionNumber;
-  const model = data.model || 'gemini-2.5-flash-lite';
+  const model = data.model || 'gemini-3-flash-preview';
 
   return {
     status: 'success',

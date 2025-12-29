@@ -125,7 +125,7 @@ export default async function handler(req, res) {
       accessionNumber: latestAccession,
       symbol: symbol.toUpperCase(),
       extractedAt: new Date().toISOString(),
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-3-flash-preview',
       companyInsights: insightsData.companyInsights || [],
       segmentPerformance: insightsData.segments || []
     };
@@ -189,7 +189,7 @@ export default async function handler(req, res) {
 function formatInsightsResponse(data, symbol, filingData) {
   const filingDate = data.filingDate || filingData?.filing?.filingDate;
   const accession = data.accessionNumber || filingData?.filing?.accessionNumber;
-  const model = data.model || 'gemini-2.5-flash-lite';
+  const model = data.model || 'gemini-3-flash-preview';
   const insightsCount = data.companyInsights?.length || 0;
 
   return {

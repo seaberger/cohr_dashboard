@@ -797,6 +797,75 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border-color: #cbd6e2;
         }
+
+        /* Metric Tooltip Styles */
+        .metric-tile .metric-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            width: 260px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .metric-tile .metric-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #2c3e50;
+        }
+
+        .metric-tile:hover .metric-tooltip {
+            display: block;
+        }
+
+        .metric-tooltip-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #3498db;
+        }
+
+        .metric-tooltip-formula {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin-top: 8px;
+            color: #f1c40f;
+        }
+
+        .metric-label {
+            position: relative;
+        }
+
+        .metric-tile[data-metric]::before {
+            content: 'ⓘ';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 0.75em;
+            color: #bdc3c7;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .metric-tile[data-metric]:hover::before {
+            opacity: 1;
+            color: #3498db;
+        }
         
         .metric-header {
             display: flex;
@@ -1435,7 +1504,11 @@
             <!-- Financial Metrics Grid -->
             <div class="metrics-grid" id="universalMetricsContainer" style="display: grid;">
                 <!-- Top Row: Core Financial Metrics -->
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="revenue">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Total Revenue</div>
+                        Total revenues from all business segments for the quarter, as reported in the Condensed Consolidated Statements of Operations.
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1444,7 +1517,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="grossMarginPct">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Gross Profit Margin</div>
+                        Percentage of revenue remaining after cost of goods sold. Measures production efficiency and pricing power.
+                        <div class="metric-tooltip-formula">= (Revenue − COGS) ÷ Revenue × 100</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1453,7 +1531,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="operatingMarginPct">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Operating Profit Margin</div>
+                        Percentage of revenue remaining after operating expenses (COGS, R&D, SG&A). Key measure of operational efficiency.
+                        <div class="metric-tooltip-formula">= Operating Income ÷ Revenue × 100</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">→</div>
@@ -1462,7 +1545,11 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="operatingIncome">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Operating Income (EBIT)</div>
+                        Profit from core business operations before interest and taxes. Reflects operational performance excluding financing decisions.
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1471,9 +1558,13 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                
+
                 <!-- Second Row: Cash Flow & Profitability -->
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="operatingCashFlow">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Operating Cash Flow</div>
+                        Cash generated from core business operations. From the Statement of Cash Flows: "Net cash provided by operating activities."
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">→</div>
@@ -1482,7 +1573,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="rndRatioPct">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">R&D Intensity</div>
+                        Research & development spending as percentage of revenue. Indicates investment in future products and innovation.
+                        <div class="metric-tooltip-formula">= R&D Expenses ÷ Revenue × 100</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1491,7 +1587,11 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="netIncome">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Net Income</div>
+                        Bottom-line profit after all expenses, interest, and taxes. "Net income attributable to Coherent Corp." from the income statement.
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↘</div>
@@ -1500,7 +1600,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="epsDiluted">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Diluted Earnings Per Share</div>
+                        Net income divided by diluted share count. Accounts for potential share dilution from options, warrants, and convertibles.
+                        <div class="metric-tooltip-formula">= Net Income ÷ Diluted Shares</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>

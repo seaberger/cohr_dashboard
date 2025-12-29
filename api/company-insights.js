@@ -1,8 +1,13 @@
 // Extract company insights from SEC filings using Google Gemini
 import { extractCompanyInsights, validateCompanyInsights } from '../lib/insightsExtractor.js';
 import fetch from 'node-fetch';
+import {
+  getCurrentInsights,
+  cacheCurrentInsights,
+  isRedisAvailable
+} from '../lib/cacheService.js';
 
-// Simple in-memory cache for insights results
+// Simple in-memory cache for insights results (fallback when Redis unavailable)
 const insightsCache = new Map();
 const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
 
@@ -43,12 +48,27 @@ export default async function handler(req, res) {
     
     // Check cache first (unless refresh is requested)
     if (refresh !== 'true') {
+      // Try Redis cache first (persists across server restarts)
+      const redisCache = await getCurrentInsights(symbol);
+      if (redisCache) {
+        console.log(`Returning Redis cached insights for ${symbol}`);
+        const cacheAge = Math.round((Date.now() - new Date(redisCache.cachedAt).getTime()) / 1000 / 60);
+        return res.status(200).json({
+          ...redisCache.data,
+          fromCache: true,
+          cacheType: 'redis',
+          cacheAge: cacheAge + ' minutes'
+        });
+      }
+
+      // Fallback to in-memory cache
       const cachedInsights = insightsCache.get(cacheKey);
       if (cachedInsights && Date.now() - cachedInsights.timestamp < CACHE_DURATION) {
-        console.log(`Returning cached insights for ${symbol}`);
+        console.log(`Returning in-memory cached insights for ${symbol}`);
         return res.status(200).json({
           ...cachedInsights.data,
           fromCache: true,
+          cacheType: 'memory',
           cacheAge: Math.round((Date.now() - cachedInsights.timestamp) / 1000 / 60) + ' minutes'
         });
       }
@@ -102,11 +122,20 @@ export default async function handler(req, res) {
       extractionType: 'focused-insights'
     };
 
-    // Cache the insights
+    // Cache the insights (both in-memory and Redis)
     insightsCache.set(cacheKey, {
       data: response,
       timestamp: Date.now()
     });
+
+    // Persist to Redis for cross-restart caching
+    try {
+      await cacheCurrentInsights(symbol, { data: response });
+      console.log(`Cached insights for ${symbol} to Redis`);
+    } catch (cacheError) {
+      console.warn('Redis cache write failed:', cacheError.message);
+      // Continue - in-memory cache is still available
+    }
 
     res.status(200).json(response);
 

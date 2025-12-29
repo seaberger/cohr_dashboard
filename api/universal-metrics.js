@@ -49,12 +49,27 @@ export default async function handler(req, res) {
     
     // Check cache first (unless refresh is requested)
     if (refresh !== 'true') {
+      // Try Redis cache first (persists across server restarts)
+      const redisCache = await getCurrentMetrics(symbol);
+      if (redisCache) {
+        console.log(`Returning Redis cached metrics for ${symbol}`);
+        const cacheAge = Math.round((Date.now() - new Date(redisCache.cachedAt).getTime()) / 1000 / 60);
+        return res.status(200).json({
+          ...redisCache.data,
+          fromCache: true,
+          cacheType: 'redis',
+          cacheAge: cacheAge + ' minutes'
+        });
+      }
+
+      // Fallback to in-memory cache
       const cachedMetrics = metricsCache.get(cacheKey);
       if (cachedMetrics && Date.now() - cachedMetrics.timestamp < CACHE_DURATION) {
-        console.log(`Returning cached metrics for ${symbol}`);
+        console.log(`Returning in-memory cached metrics for ${symbol}`);
         return res.status(200).json({
           ...cachedMetrics.data,
           fromCache: true,
+          cacheType: 'memory',
           cacheAge: Math.round((Date.now() - cachedMetrics.timestamp) / 1000 / 60) + ' minutes'
         });
       }
@@ -102,11 +117,20 @@ export default async function handler(req, res) {
       extractionType: 'focused-metrics'
     };
 
-    // Cache the metrics
+    // Cache the metrics (both in-memory and Redis)
     metricsCache.set(cacheKey, {
       data: response,
       timestamp: Date.now()
     });
+
+    // Persist to Redis for cross-restart caching
+    try {
+      await cacheCurrentMetrics(symbol, { data: response });
+      console.log(`Cached metrics for ${symbol} to Redis`);
+    } catch (cacheError) {
+      console.warn('Redis cache write failed:', cacheError.message);
+      // Continue - in-memory cache is still available
+    }
 
     res.status(200).json(response);
 

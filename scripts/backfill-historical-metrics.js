@@ -3,6 +3,13 @@
  * Historical Metrics Backfill Script
  *
  * This script analyzes past 10-Q filings to extract metrics for sparkline generation.
+ */
+
+// Load environment variables from .env.local (for local development)
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
+/**
  * Uses a more capable model (Gemini Pro) for accuracy since this is a one-time operation
  * and the results are cached permanently.
  *
@@ -17,14 +24,14 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import fetch from 'node-fetch';
-import { cacheHistoricalMetrics, isRedisAvailable, getCacheStats } from '../lib/cacheService.js';
+import { cacheHistoricalMetrics, getHistoricalMetrics, isRedisAvailable, getCacheStats } from '../lib/cacheService.js';
 
 // Configuration
 const SEC_API_BASE = 'https://data.sec.gov';
 const USER_AGENT = 'COHR-Dashboard/1.0 (sean.bergman.dev@gmail.com)';
 
-// Use Gemini 3 Flash for historical backfill (excellent accuracy, cost-effective)
-// See: https://ai.google.dev/gemini-api/docs/gemini-3
+// Use Gemini 3 Flash for historical backfill (latest model - Dec 2025)
+// See: https://ai.google.dev/gemini-api/docs/models
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
   model: 'gemini-3-flash-preview',
@@ -33,6 +40,7 @@ const model = genAI.getGenerativeModel({
     topK: 40,
     topP: 0.95,
     maxOutputTokens: 4096,
+    responseMimeType: 'application/json', // Force JSON output
   },
 });
 
@@ -208,15 +216,31 @@ ${filingText}
   const response = result.response;
   const text = response.text();
 
-  // Extract JSON from response
-  const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/);
+  try {
+    // With responseMimeType: 'application/json', response should be pure JSON
+    return JSON.parse(text);
+  } catch (parseError) {
+    // Fallback: try to extract JSON from markdown code blocks
+    const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/);
 
-  if (jsonMatch) {
-    const jsonStr = jsonMatch[1] || jsonMatch[0];
-    return JSON.parse(jsonStr);
+    if (jsonMatch) {
+      const jsonStr = jsonMatch[1] || jsonMatch[0];
+      try {
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.error('  Extracted JSON also failed to parse');
+      }
+    }
+
+    // Log more context around the error position
+    const errorMatch = parseError.message.match(/position (\d+)/);
+    if (errorMatch) {
+      const pos = parseInt(errorMatch[1]);
+      console.error('  Context around error (pos ' + pos + '):');
+      console.error('  ...' + text.substring(Math.max(0, pos - 50), pos + 50) + '...');
+    }
+    throw parseError;
   }
-
-  return JSON.parse(text);
 }
 
 /**
@@ -281,6 +305,22 @@ async function backfillHistoricalMetrics(options = {}) {
     console.log(`[${i + 1}/${filings.length}] Processing ${quarter} (filed ${filing.filingDate})...`);
 
     try {
+      // Check if already cached (skip if not dry-run)
+      if (!dryRun) {
+        const existing = await getHistoricalMetrics(symbol, quarter);
+        if (existing) {
+          console.log(`  ✅ Already cached, skipping LLM call`);
+          results.push({
+            quarter,
+            filingDate: filing.filingDate,
+            success: true,
+            cached: true,
+            metrics: existing.metrics
+          });
+          continue;
+        }
+      }
+
       // Fetch filing content
       const content = await getFilingContent(filing);
       console.log(`  Content length: ${content.length} chars`);

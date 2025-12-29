@@ -1,10 +1,13 @@
 // Extract universal financial metrics from SEC filings using Google Gemini
-import { extractUniversalMetrics } from '../lib/metricsExtractor.js';
+// Uses filing change detection to avoid reprocessing same 10-Q
+import { extractUniversalMetrics, normalizeToUnifiedFormat } from '../lib/metricsExtractor.js';
 import fetch from 'node-fetch';
 import {
-  getCurrentMetrics,
-  cacheCurrentMetrics,
-  getSparklineData,
+  getLatestFiling,
+  setLatestFiling,
+  getQuarterMetrics,
+  cacheQuarterMetrics,
+  filingDateToQuarter,
   isRedisAvailable
 } from '../lib/cacheService.js';
 
@@ -28,11 +31,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { symbol = 'COHR', refresh = 'false', clearCache = 'false' } = req.query;
+  const { symbol = 'COHR', refresh = 'false', forceReprocess = 'false' } = req.query;
 
-  // Set Vercel CDN cache headers (persists across cold starts)
-  // Skip CDN cache if refresh is requested
-  if (refresh === 'true' || clearCache === 'true') {
+  // Set Vercel CDN cache headers
+  if (refresh === 'true' || forceReprocess === 'true') {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   } else {
     // Cache at Vercel CDN for 6 hours, serve stale for 24hr while revalidating
@@ -40,103 +42,133 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Clear cache if requested
-    const cacheKey = `metrics-${symbol}`;
-    if (clearCache === 'true') {
-      metricsCache.delete(cacheKey);
-      console.log(`Metrics cache cleared for ${symbol}`);
-    }
-    
-    // Check cache first (unless refresh is requested)
-    if (refresh !== 'true') {
-      // Try Redis cache first (persists across server restarts)
-      const redisCache = await getCurrentMetrics(symbol);
-      if (redisCache) {
-        console.log(`Returning Redis cached metrics for ${symbol}`);
-        const cacheAge = Math.round((Date.now() - new Date(redisCache.cachedAt).getTime()) / 1000 / 60);
-        return res.status(200).json({
-          ...redisCache.data,
-          fromCache: true,
-          cacheType: 'redis',
-          cacheAge: cacheAge + ' minutes'
-        });
-      }
+    // Step 1: Fetch latest filing metadata from SEC EDGAR (lightweight call)
+    console.log(`Checking latest 10-Q filing for ${symbol}...`);
+    const filingResponse = await fetch(`${getBaseUrl(req)}/api/sec-filings?symbol=${symbol}&type=10-Q&metadataOnly=true`);
 
-      // Fallback to in-memory cache
-      const cachedMetrics = metricsCache.get(cacheKey);
-      if (cachedMetrics && Date.now() - cachedMetrics.timestamp < CACHE_DURATION) {
-        console.log(`Returning in-memory cached metrics for ${symbol}`);
-        return res.status(200).json({
-          ...cachedMetrics.data,
-          fromCache: true,
-          cacheType: 'memory',
-          cacheAge: Math.round((Date.now() - cachedMetrics.timestamp) / 1000 / 60) + ' minutes'
-        });
-      }
-    }
-
-    // Fetch the latest SEC filing
-    console.log(`Fetching SEC filing for ${symbol} metrics extraction...`);
-    const filingResponse = await fetch(`${getBaseUrl(req)}/api/sec-filings?symbol=${symbol}&type=10-Q`);
-    
     if (!filingResponse.ok) {
-      throw new Error(`Failed to fetch SEC filing: ${filingResponse.status}`);
+      throw new Error(`Failed to fetch SEC filing metadata: ${filingResponse.status}`);
     }
 
     const filingData = await filingResponse.json();
-    
-    if (!filingData.content || !filingData.content.fullText) {
+    const latestAccession = filingData.filing?.accessionNumber;
+    const latestFilingDate = filingData.filing?.filingDate;
+
+    if (!latestAccession) {
+      throw new Error('No filing accession number available');
+    }
+
+    // Calculate quarter from filing date
+    const currentQuarter = filingDateToQuarter(latestFilingDate);
+    console.log(`Latest 10-Q: ${latestAccession} (${currentQuarter})`);
+
+    // Step 2: Check if we've already processed this filing
+    const lastProcessed = await getLatestFiling(symbol, '10-Q');
+    const isNewFiling = forceReprocess === 'true' ||
+      !lastProcessed ||
+      lastProcessed.accessionNumber !== latestAccession;
+
+    console.log(`Last processed: ${lastProcessed?.accessionNumber || 'none'}, isNewFiling: ${isNewFiling}`);
+
+    // Step 3: Check for cached quarter data
+    const cachedMetrics = await getQuarterMetrics(symbol, currentQuarter);
+
+    if (cachedMetrics && !isNewFiling) {
+      // Return cached data - no LLM call needed
+      console.log(`Returning cached quarter metrics for ${symbol} ${currentQuarter}`);
+      const cacheAge = Math.round((Date.now() - new Date(cachedMetrics.cachedAt).getTime()) / 1000 / 60);
+
+      return res.status(200).json({
+        ...formatResponse(cachedMetrics, symbol, filingData),
+        fromCache: true,
+        cacheType: 'quarter',
+        cacheAge: cacheAge + ' minutes',
+        filingStatus: 'unchanged'
+      });
+    }
+
+    // Step 4: New filing detected - need to fetch full content and process
+    console.log(`New 10-Q detected! Processing with Gemini...`);
+
+    // Fetch full filing content
+    const fullFilingResponse = await fetch(`${getBaseUrl(req)}/api/sec-filings?symbol=${symbol}&type=10-Q`);
+
+    if (!fullFilingResponse.ok) {
+      throw new Error(`Failed to fetch full SEC filing: ${fullFilingResponse.status}`);
+    }
+
+    const fullFilingData = await fullFilingResponse.json();
+
+    if (!fullFilingData.content?.fullText) {
       throw new Error('No content found in SEC filing');
     }
 
-    console.log(`Extracting universal metrics from filing dated ${filingData.filing.filingDate}...`);
+    console.log(`Extracting metrics from filing dated ${latestFilingDate}...`);
 
-    // Extract universal metrics using focused Gemini call
-    const metricsData = await extractUniversalMetrics(
-      filingData.content.fullText,
+    // Extract metrics using Gemini (with unified format)
+    const rawMetrics = await extractUniversalMetrics(
+      fullFilingData.content.fullText,
       symbol
     );
 
-    const response = {
-      status: 'success',
-      symbol,
-      filing: {
-        date: filingData.filing.filingDate,
-        type: filingData.filing.type,
-        quarter: metricsData.quarterYear || 'Q3 2025'
-      },
-      universalMetrics: metricsData.universalMetrics,
-      dataQuality: 'High',
-      confidence: '95%',
-      lastUpdated: new Date().toISOString(),
-      sources: [
-        `${symbol} SEC ${filingData.filing.type} Filing`,
-        `Filed on ${filingData.filing.filingDate}`,
-        'Analyzed by Google Gemini 2.5 Flash Lite (Metrics Focus)'
-      ],
-      extractionType: 'focused-metrics'
+    // Normalize to unified format (numeric values + display strings)
+    const normalizedMetrics = normalizeToUnifiedFormat(rawMetrics);
+
+    // Build unified metrics object for storage
+    const unifiedData = {
+      quarter: currentQuarter,
+      quarterDisplay: normalizedMetrics.quarterYear || `Q${currentQuarter.split('-Q')[1]} ${currentQuarter.split('-')[0]}`,
+      filingDate: latestFilingDate,
+      accessionNumber: latestAccession,
+      symbol: symbol.toUpperCase(),
+      extractedAt: new Date().toISOString(),
+      model: 'gemini-2.5-flash-lite',
+      metrics: normalizedMetrics.metrics || normalizedMetrics.universalMetrics
     };
 
-    // Cache the metrics (both in-memory and Redis)
+    // Step 5: Cache the results by quarter (permanent)
+    await cacheQuarterMetrics(symbol, currentQuarter, unifiedData);
+
+    // Update filing tracker
+    await setLatestFiling(symbol, '10-Q', {
+      accessionNumber: latestAccession,
+      filingDate: latestFilingDate,
+      quarter: currentQuarter
+    });
+
+    console.log(`Cached new metrics for ${symbol} ${currentQuarter}`);
+
+    // Also cache in memory as fallback
+    const cacheKey = `metrics-${symbol}`;
     metricsCache.set(cacheKey, {
-      data: response,
+      data: unifiedData,
       timestamp: Date.now()
     });
 
-    // Persist to Redis for cross-restart caching
-    try {
-      await cacheCurrentMetrics(symbol, { data: response });
-      console.log(`Cached metrics for ${symbol} to Redis`);
-    } catch (cacheError) {
-      console.warn('Redis cache write failed:', cacheError.message);
-      // Continue - in-memory cache is still available
-    }
+    const response = formatResponse(unifiedData, symbol, fullFilingData);
+    response.newFilingProcessed = true;
+    response.filingStatus = 'new';
 
     res.status(200).json(response);
 
   } catch (error) {
     console.error('Universal metrics extraction error:', error);
-    
+
+    // Try returning cached data on error
+    const lastProcessed = await getLatestFiling(symbol, '10-Q');
+    if (lastProcessed?.quarter) {
+      const cachedMetrics = await getQuarterMetrics(symbol, lastProcessed.quarter);
+      if (cachedMetrics) {
+        console.log(`Returning stale cached metrics after error`);
+        return res.status(200).json({
+          ...formatResponse(cachedMetrics, symbol, { filing: lastProcessed }),
+          fromCache: true,
+          cacheType: 'stale',
+          error: error.message
+        });
+      }
+    }
+
     res.status(500).json({
       error: 'Failed to extract universal metrics',
       message: error.message,
@@ -144,6 +176,38 @@ export default async function handler(req, res) {
       details: 'Unable to extract financial metrics from SEC filing data. Please try refreshing or check back later.'
     });
   }
+}
+
+/**
+ * Format response for API output (supports both old and new data formats)
+ */
+function formatResponse(data, symbol, filingData) {
+  // Support both unified format (metrics) and legacy format (universalMetrics)
+  const metrics = data.metrics || data.universalMetrics;
+
+  return {
+    status: 'success',
+    symbol: symbol.toUpperCase(),
+    filing: {
+      date: data.filingDate || filingData?.filing?.filingDate,
+      type: filingData?.filing?.type || '10-Q',
+      quarter: data.quarterDisplay || data.quarter,
+      accessionNumber: data.accessionNumber
+    },
+    quarter: data.quarter,
+    // Include metrics in BOTH formats for backward compatibility
+    metrics: metrics,
+    universalMetrics: metrics,
+    dataQuality: 'High',
+    confidence: '95%',
+    lastUpdated: data.extractedAt || data.cachedAt || new Date().toISOString(),
+    sources: [
+      `${symbol} SEC 10-Q Filing`,
+      `Filed on ${data.filingDate || filingData?.filing?.filingDate}`,
+      `Analyzed by Google Gemini (${data.model || 'gemini-2.5-flash-lite'})`
+    ],
+    extractionType: 'unified-format'
+  };
 }
 
 function getBaseUrl(req) {

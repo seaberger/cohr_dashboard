@@ -1,9 +1,10 @@
 // Sparkline Data API - Returns historical metrics for sparkline visualization
-// Fetches 8 quarters of real data from Redis cache
+// Fetches 8 quarters of real data from Redis cache using unified format
 
 import {
   getSparklineData,
-  getCurrentMetrics,
+  getLatestFiling,
+  getQuarterMetrics,
   isRedisAvailable,
   getCacheStats
 } from '../lib/cacheService.js';
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
     // Get cache stats
     const stats = await getCacheStats(symbol);
 
-    // Get historical data from cache
+    // Get historical data from cache (backfilled quarters)
     const historicalData = await getSparklineData(symbol, 8);
 
     if (!historicalData || historicalData.length === 0) {
@@ -56,11 +57,19 @@ export default async function handler(req, res) {
       });
     }
 
-    // Get current quarter if available
-    const currentMetrics = await getCurrentMetrics(symbol);
+    // Get current quarter metrics (from unified format)
+    // First check what the latest processed filing is
+    const latestFiling = await getLatestFiling(symbol, '10-Q');
+    let currentQuarterData = null;
+
+    if (latestFiling?.quarter) {
+      // Get current quarter data using unified format
+      currentQuarterData = await getQuarterMetrics(symbol, latestFiling.quarter);
+      console.log(`Current quarter ${latestFiling.quarter} data found: ${!!currentQuarterData}`);
+    }
 
     // Build sparkline arrays for each metric
-    const sparklines = buildSparklineArrays(historicalData, currentMetrics, metric);
+    const sparklines = buildSparklineArrays(historicalData, currentQuarterData, metric);
 
     res.status(200).json({
       status: 'success',
@@ -84,8 +93,9 @@ export default async function handler(req, res) {
 
 /**
  * Build sparkline arrays from historical data
+ * Supports both unified format (numeric values) and legacy format (display strings)
  */
-function buildSparklineArrays(historicalData, currentMetrics, requestedMetric) {
+function buildSparklineArrays(historicalData, currentQuarterData, requestedMetric) {
   const metrics = [
     'revenue',
     'grossMarginPct',
@@ -108,24 +118,36 @@ function buildSparklineArrays(historicalData, currentMetrics, requestedMetric) {
     const dataPoints = [];
     const labels = [];
 
-    // Extract values from each quarter
+    // Extract values from historical quarters (backfilled data)
     for (const quarter of historicalData) {
       const metricData = quarter.metrics?.[metricName];
-      if (metricData && metricData.value !== null) {
-        dataPoints.push(metricData.value);
-        labels.push(quarter.quarter);
+      if (metricData && metricData.value !== null && metricData.value !== undefined) {
+        // Value should be numeric from backfill script
+        const numericValue = typeof metricData.value === 'number'
+          ? metricData.value
+          : parseDisplayValue(metricData.value);
+        if (numericValue !== null) {
+          dataPoints.push(numericValue);
+          labels.push(quarter.quarter);
+        }
       }
     }
 
-    // Add current quarter if available
-    // Note: currentMetrics uses .data.universalMetrics structure with display strings
-    const currentMetricEntry = currentMetrics?.data?.universalMetrics?.[metricName];
-    if (currentMetricEntry?.value != null) {
-      // Parse numeric value from display string (e.g., "$1,581M" -> 1581, "37.0%" -> 37.0)
-      const numericValue = parseDisplayValue(currentMetricEntry.value);
-      if (numericValue !== null) {
-        dataPoints.push(numericValue);
-        labels.push('Current');
+    // Add current quarter if available and not already in historical data
+    if (currentQuarterData?.metrics) {
+      const currentMetric = currentQuarterData.metrics[metricName];
+      const currentQuarter = currentQuarterData.quarter;
+
+      // Only add if not already in labels (avoid duplicates)
+      if (currentMetric && currentMetric.value != null && !labels.includes(currentQuarter)) {
+        const numericValue = typeof currentMetric.value === 'number'
+          ? currentMetric.value
+          : parseDisplayValue(currentMetric.value);
+
+        if (numericValue !== null) {
+          dataPoints.push(numericValue);
+          labels.push(currentQuarter);
+        }
       }
     }
 

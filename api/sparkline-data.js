@@ -118,11 +118,15 @@ function buildSparklineArrays(historicalData, currentMetrics, requestedMetric) {
     }
 
     // Add current quarter if available
-    // Note: currentMetrics uses .data.universalMetrics structure, not .metrics
-    const currentMetricValue = currentMetrics?.data?.universalMetrics?.[metricName]?.value;
-    if (currentMetricValue != null) {
-      dataPoints.push(currentMetricValue);
-      labels.push('Current');
+    // Note: currentMetrics uses .data.universalMetrics structure with display strings
+    const currentMetricEntry = currentMetrics?.data?.universalMetrics?.[metricName];
+    if (currentMetricEntry?.value != null) {
+      // Parse numeric value from display string (e.g., "$1,581M" -> 1581, "37.0%" -> 37.0)
+      const numericValue = parseDisplayValue(currentMetricEntry.value);
+      if (numericValue !== null) {
+        dataPoints.push(numericValue);
+        labels.push('Current');
+      }
     }
 
     // Calculate trend
@@ -147,6 +151,45 @@ function buildSparklineArrays(historicalData, currentMetrics, requestedMetric) {
 }
 
 /**
+ * Parse display value string to numeric value
+ * Examples: "$1,581M" -> 1581, "37.0%" -> 37.0, "$1.19" -> 1.19, "-$0.29" -> -0.29
+ */
+function parseDisplayValue(displayStr) {
+  if (typeof displayStr === 'number') return displayStr;
+  if (typeof displayStr !== 'string') return null;
+
+  // Remove currency symbols, commas, and whitespace
+  let cleaned = displayStr.replace(/[$,\s]/g, '');
+
+  // Handle negative values in parentheses: ($0.29) -> -0.29
+  if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+    cleaned = '-' + cleaned.slice(1, -1);
+  }
+
+  // Handle millions suffix (M)
+  const millionMatch = cleaned.match(/^(-?[\d.]+)M$/i);
+  if (millionMatch) {
+    return parseFloat(millionMatch[1]);
+  }
+
+  // Handle billions suffix (B)
+  const billionMatch = cleaned.match(/^(-?[\d.]+)B$/i);
+  if (billionMatch) {
+    return parseFloat(billionMatch[1]) * 1000;
+  }
+
+  // Handle percentages
+  const percentMatch = cleaned.match(/^(-?[\d.]+)%$/);
+  if (percentMatch) {
+    return parseFloat(percentMatch[1]);
+  }
+
+  // Try parsing as plain number
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? null : num;
+}
+
+/**
  * Calculate trend direction from data points
  */
 function calculateTrend(dataPoints) {
@@ -154,7 +197,7 @@ function calculateTrend(dataPoints) {
 
   const first = dataPoints[0];
   const last = dataPoints[dataPoints.length - 1];
-  const changePercent = ((last - first) / first) * 100;
+  const changePercent = ((last - first) / Math.abs(first)) * 100;
 
   if (changePercent > 5) return 'positive';
   if (changePercent < -5) return 'negative';

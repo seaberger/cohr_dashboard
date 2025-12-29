@@ -1,345 +1,217 @@
 # COHR Investor Dashboard
 
-**Status**: 🟢 **LIVE & DEPLOYED**
+**Status**: **LIVE & DEPLOYED**
 
-A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, **LLM-powered SEC filing analysis**, and intelligent financial news. Built with Vercel serverless architecture and Google Gemini 2.5 Flash Lite for professional-grade financial analysis with investment-focused insights.
+A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) featuring live stock data, real historical technical analysis, **LLM-powered SEC filing analysis**, and intelligent financial news. Built with Vercel serverless architecture and **Google Gemini 3 Flash** for professional-grade financial analysis with investment-focused insights.
 
-## 🎯 Live Dashboard
+## Live Dashboard
 
-**✅ Currently Deployed**: The dashboard is live and operational on Vercel  
-**🔄 Auto-Updates**: Stock data refreshes every 5 minutes  
-**📱 Mobile Ready**: Responsive design works on all devices
+**Currently Deployed**: The dashboard is live and operational on Vercel
+**Auto-Updates**: Stock data refreshes every 5 minutes
+**Mobile Ready**: Responsive design works on all devices
 
-## 🚀 Key Features
+## Screenshots
 
-### 📊 **Financial Metrics** (NEW!)
-- **8 Key Financial KPIs** applicable to any public company:
-  - Total Revenue & Growth
-  - Gross Margin & Operating Margin  
-  - Free Cash Flow
-  - R&D Investment (% of revenue)
-  - Debt-to-Equity Ratio
-  - Return on Assets (ROA)
-  - EPS Growth
+### Header & Stock Price
+Real-time stock price with analyst consensus ratings from Finviz.
+
+![Header Section](docs/screenshots/dashboard-header.png)
+
+### Interactive Price Chart
+TradingView widget with technical indicators (RSI, MACD, Volume) and key support/resistance levels.
+
+![Technical Analysis Chart](docs/screenshots/dashboard-chart.png)
+
+### Financial Metrics
+8 verified GAAP metrics extracted from SEC 10-Q filings using Gemini 3 Flash. Hover over any metric for explanation and calculation formula.
+
+![Financial Metrics](docs/screenshots/dashboard-metrics.png)
+
+### AI-Powered Company Insights
+Investment-grade analysis with 8 professional categories extracted from SEC filings.
+
+![Company Insights](docs/screenshots/dashboard-insights.png)
+
+### Latest News
+COHR-specific financial news from Yahoo Finance with article summaries.
+
+![Latest News](docs/screenshots/dashboard-news.png)
+
+## Key Features
+
+### **Financial Metrics with Real Sparklines** (NEW!)
+- **8 Key Financial KPIs** with hover tooltips explaining each metric:
+  - **Revenue** - Total revenues from all business segments
+  - **Gross Margin** - `(Revenue - COGS) / Revenue x 100`
+  - **Operating Margin** - `Operating Income / Revenue x 100`
+  - **Operating Income** - EBIT from core operations
+  - **Operating Cash Flow** - Cash from operations
+  - **R&D / Revenue** - `R&D Expenses / Revenue x 100`
+  - **Net Income** - Bottom-line profit
+  - **Diluted EPS** - `Net Income / Diluted Shares`
+- **100% Verified Accuracy** against official SEC filings:
+  - Revenue: $1,581M
+  - Gross Margin: 36.6%
+  - Operating Margin: 16.4%
+  - Operating Income: $259M
+  - R&D/Revenue: 9.8% ($154.9M / $1,581.4M)
+  - Net Income: $226M
+  - Diluted EPS: $1.19
+- **Real 8-quarter sparklines** from Redis-cached historical data
+- **Metric tooltips** with formulas for calculated metrics
 - **Color-coded trend indicators** for quick visual scanning
-- **Data integrity focus** - real current quarter metrics only, no hallucinated historical data
-- **Mobile-responsive grid layout** that adapts to any screen size
 
-### 💡 **Professional Company Insights** (ENHANCED!)
+### **Professional Company Insights**
 - **Investment-grade analysis** with 8 professional categories:
-  - **GROWTH-DRIVER** 🚀 - New revenue engines, secular tailwinds, market-share wins
-  - **MARGIN-IMPACT** 💰 - Cost take-outs, mix shift, pricing power, commodity swings
-  - **RISK** ⚠️ - Litigation, macro headwinds, regulatory changes, FX exposure
-  - **STRATEGIC-MOVE** 🎯 - M&A, divestitures, new reporting segments, major hires
-  - **CAPITAL-ALLOCATION** 🏗️ - Buybacks, dividends, debt pay-down/issuance, big cap-ex
-  - **INNOVATION** 🧪 - Patents, product launches, R&D milestones
-  - **MARKET-DYNAMICS** 📊 - Industry demand shifts, competitor actions, TAM changes
-  - **OPERATIONS** 🛠️ - Supply-chain issues, manufacturing yields, plant closures/expansions
+  - **GROWTH-DRIVER** - New revenue engines, secular tailwinds, market-share wins
+  - **MARGIN-IMPACT** - Cost take-outs, mix shift, pricing power
+  - **RISK** - Litigation, macro headwinds, regulatory changes
+  - **STRATEGIC-MOVE** - M&A, divestitures, major hires
+  - **CAPITAL-ALLOCATION** - Buybacks, dividends, debt management
+  - **INNOVATION** - Patents, product launches, R&D milestones
+  - **MARKET-DYNAMICS** - Industry demand shifts, competitor actions
+  - **OPERATIONS** - Supply-chain issues, manufacturing yields
 - **Color-coded confidence indicators** (high/medium/low)
-- **Professional card design** with enhanced mobile responsiveness
-- **Data integrity priority** - only real SEC filing data, no placeholder content
+- **Data Sources panel** showing extraction methodology
 
-### ✅ **LIVE & REAL DATA**
+### **LIVE & REAL DATA**
 - **Real-time Stock Prices** - Yahoo Finance chart API with intelligent fallbacks
 - **Interactive Charts** - TradingView widget with professional technical overlays
-- **Historical Technical Analysis** - Yahoo Finance 1-2 year historical data
-  - Real support/resistance from swing highs/lows
-  - Moving averages (20, 50, 200-day) as dynamic levels
-  - RSI, MACD calculated from actual price history
-- **LLM-Powered Business Intelligence** - Real Q3 2025 SEC filing analysis  
-  - **AI Datacom: +45% YoY** (from SEC 10-Q filing)
-  - **Networking: +45% YoY** (record performance)  
-  - **Materials: -1% YoY** (sequential improvement)
-  - **Lasers: +4% YoY** (steady growth)
-  - **Total Revenue: $1.5B** (+24% YoY growth)
-  - **Google Gemini 2.5 Flash Lite** extracts data from latest SEC filings
-  - **Smart fallback** to Q2 2025 data if LLM analysis fails
-  - **Visual indicators** show data source (LLM vs fallback)
-- **COHR-Specific News** - Yahoo Finance search with article summaries
-- **Analyst Consensus** - Finviz primary source with multi-API fallback strategy
-  - **Price Targets**: $96.06 target with +18.5% upside calculation
-  - **EPS Estimates**: $0.91 next quarter estimate
-  - **Consensus Ratings**: Buy/Hold/Sell distribution with visual bars
-  - **Data Transparency**: Real-time Finviz query timestamps with date/time display
-- **Data Transparency** - Full source verification and methodology
+- **Historical Technical Analysis** - Real support/resistance from swing highs/lows
+- **LLM-Powered Business Intelligence** - Real Q1 FY2026 SEC filing analysis
+  - **Google Gemini 3 Flash** extracts data from latest SEC filings
+  - **Filing change detection** - Only reprocesses when new 10-Q detected
+  - **Quarter-based caching** - Historical data persists permanently
+- **Analyst Consensus** - Finviz primary source with multi-API fallback
+  - Real-time price targets and EPS estimates
+  - Query timestamps for data transparency
 
-### 🔜 **NEXT FEATURES**
-- **Performance Optimization** - Enhanced loading states, server-side caching
-- **User Experience Polish** - Improved animations, better error recovery
-- **Data Source Transparency** - Enhanced filing links, freshness indicators
-- **Advanced Features** - Export functionality, historical comparison tools
-
-## 🏗️ Architecture
+## Architecture
 
 ### **Tech Stack**
 - **Frontend**: Static HTML5 + Vanilla JavaScript
 - **Backend**: Vercel Serverless Functions (Node.js)
-- **LLM Integration**: Google Gemini 2.5 Flash Lite with SEC EDGAR API
-- **Historical Analysis**: Gemini 3 Flash for accurate backfill operations
-- **Caching**: Redis Cloud for persistent cross-restart data caching
+- **LLM**: Google Gemini 3 Flash Preview (`gemini-3-flash-preview`)
+- **Caching**: Redis Cloud for persistent metrics/insights storage
 - **Schema Validation**: Zod for robust data transformation
 - **Deployment**: Vercel with GitHub integration
 - **Charts**: TradingView widget
-- **APIs**: Multi-source financial data with intelligent fallbacks
 
 ### **Project Structure**
 ```
 /
 ├── index.html                    # Enhanced dashboard with real data
 ├── api/                          # Vercel serverless functions
-│   ├── stock.js                 # Yahoo Finance real-time quotes (chart API)
+│   ├── stock.js                 # Yahoo Finance real-time quotes
 │   ├── news.js                  # Yahoo Finance news with summaries
-│   ├── analyst.js               # Yahoo Finance analyst consensus
-│   ├── technical.js             # Basic technical indicators (fallback)
+│   ├── analyst.js               # Finviz analyst consensus
 │   ├── technical-real.js        # Real historical technical analysis
-│   ├── historical.js            # Yahoo Finance historical OHLCV
 │   ├── sec-filings.js           # SEC EDGAR filing fetcher
-│   ├── universal-metrics.js     # Focused GAAP metrics extraction
-│   └── company-insights.js      # Business intelligence extraction
+│   ├── universal-metrics.js     # GAAP metrics extraction
+│   ├── company-insights.js      # Business intelligence extraction
+│   └── sparkline-data.js        # Historical sparkline data
 ├── lib/                          # Technical analysis & LLM utilities
-│   ├── technicalAnalysis.js     # Support/resistance calculations
-│   ├── geminiService.js         # Google Gemini 2.5 Flash Lite LLM utilities
-│   ├── cacheService.js          # Redis Cloud caching for metrics/insights
-│   ├── schemas.js               # Zod schema validation for LLM data
-│   └── dataTransformer.js       # LLM data transformation pipeline
+│   ├── geminiService.js         # Google Gemini 3 Flash LLM service
+│   ├── cacheService.js          # Redis Cloud caching with filing detection
+│   ├── metricsExtractor.js      # GAAP metrics extraction prompts
+│   └── insightsExtractor.js     # Company insights extraction prompts
 ├── scripts/                      # Utility scripts
-│   └── backfill-historical-metrics.js  # Historical 10-Q backfill (Gemini 3 Flash)
-├── backups/                      # Original design files
-├── docs/                         # Project documentation
-│   └── LLM_INTEGRATION.md       # Comprehensive LLM integration guide
-├── testing/                      # Test scripts and utilities
-│   └── test-llm-integration.js  # LLM API testing script
-├── DEVELOPMENT_ROADMAP.md        # 4-sprint development plan
-├── package.json                  # Dependencies (node-fetch, @google/generative-ai, zod)
-├── vercel.json                   # Deployment config
-└── CLAUDE.md                     # Complete technical guide
+│   └── backfill-historical-metrics.js  # Historical 10-Q backfill
+└── docs/                         # Documentation & screenshots
 ```
 
-## 🔧 API Endpoints
+## API Endpoints
 
 All endpoints include CORS support and 30-second timeout limits:
 
 - **`GET /api/stock?symbol=COHR`** - Live stock price, change, market cap
-- **`GET /api/news?symbol=COHR&limit=10`** - COHR-specific financial news with summaries
-- **`GET /api/analyst?symbol=COHR&currentPrice={price}`** - Analyst consensus and price targets
-- **`GET /api/technical-real?symbol=COHR&period=1y`** - Real historical technical analysis
-- **`GET /api/historical?symbol=COHR&period=1y`** - Historical OHLCV data
-- **`GET /api/sec-filings?symbol=COHR&type=10-Q`** - Latest SEC filing fetcher
-- **`GET /api/universal-metrics?symbol=COHR`** - GAAP-focused financial metrics extraction
-- **`GET /api/company-insights?symbol=COHR`** - Business intelligence & insights analysis
+- **`GET /api/news?symbol=COHR&limit=10`** - COHR-specific financial news
+- **`GET /api/analyst?symbol=COHR`** - Analyst consensus and price targets
+- **`GET /api/universal-metrics?symbol=COHR`** - GAAP financial metrics
+- **`GET /api/company-insights?symbol=COHR`** - Business intelligence
+- **`GET /api/sparkline-data?symbol=COHR`** - 8-quarter historical data
 
-### **Enhanced Data Flow (LLM-Powered)**
-1. **Stock Data**: Yahoo Finance chart API → Finnhub → Alpha Vantage → professional error handling
-2. **News Data**: Yahoo Finance search → article summary extraction → transparent error states
-3. **Analyst Data**: Finviz primary → Finnhub consensus → Yahoo Finance → professional error handling
-4. **Technical Analysis**: Yahoo Finance historical → real support/resistance calculation
-5. **Universal Metrics**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → GAAP metrics extraction
-6. **Company Insights**: SEC EDGAR API → Google Gemini 2.5 Flash Lite → investment-grade categorization
-7. **Frontend**: 5-minute auto-refresh, independent refresh buttons, data integrity priority
+### **Filing Change Detection**
+The system automatically detects new SEC 10-Q filings:
+1. Fetches latest filing metadata from SEC EDGAR
+2. Compares accession number with last processed filing
+3. Only triggers LLM reprocessing when new filing detected
+4. Caches results by quarter for permanent storage
 
-## 📊 Data Quality & Sources
-
-### **✅ LIVE & REAL DATA**
-- **Stock prices and market data** (Yahoo Finance chart API - real-time)
-- **Interactive charts** (TradingView with professional overlays)
-- **Real technical analysis** (Yahoo Finance historical data)
-  - Support/resistance from actual swing highs/lows
-  - Moving averages calculated from historical prices
-  - RSI, MACD from real price data
-- **Financial Metrics** (Google Gemini 2.5 Flash Lite + SEC EDGAR)
-  - 8 GAAP-based KPIs with trend arrows showing real growth direction
-  - Real-time extraction from latest SEC filings
-  - Data integrity priority: Historical sparklines disabled until real data available
-  - Professional error handling when data unavailable
-- **Company Insights** (Investment-grade categorization)
-  - 8 professional categories for financial analysis
-  - Color-coded confidence scoring
-  - Only authentic SEC filing data - no placeholder content
-- **COHR-specific news** (Yahoo Finance search API)
-- **Analyst consensus data** (Finviz primary source with multi-API fallback)
-
-### **🤖 LLM INTEGRATION STATUS**
-- **Google Gemini 2.5 Flash Lite**: Deployed and analyzing latest SEC filings
-- **Gemini 3 Flash**: Used for historical backfill operations (more accurate)
-- **SEC EDGAR Integration**: Fetching 10-Q/10-K filings automatically
-- **Split Architecture**: Focused endpoints for metrics and insights
-- **Redis Caching**: Persistent storage across server restarts (6hr metrics, 12hr insights)
-- **Cost**: <$1/month with smart caching strategies
-- **Data Integrity**: Professional error states when analysis fails
-- **Manual Refresh**: Independent refresh buttons for each section
-- **Investment Grade**: Prioritizes accuracy over availability
-
-### **❌ PLANNED ENHANCEMENTS**
-- **Competitive positioning** (future Sprint 2 implementation)
-- **Advanced export features** (historical data comparison)
-
-## 🚀 Quick Deployment
+## Quick Deployment
 
 ### **For Users**
-1. Visit the live dashboard URL (available in Vercel deployment)
+1. Visit the live dashboard URL
 2. No setup required - all data loads automatically
-3. Bookmark for regular investment tracking
+3. Hover over metrics for explanations
 
 ### **For Developers**
-1. **Clone Repository**
-   ```bash
-   git clone https://github.com/seaberger/cohr_dashboard.git
-   cd cohr_dashboard
-   ```
+```bash
+# Clone Repository
+git clone https://github.com/seaberger/cohr_dashboard.git
+cd cohr_dashboard
 
-2. **Local Development**
-   ```bash
-   npm install
-   npm run dev  # Starts Vercel dev server
-   ```
+# Install dependencies
+npm install
 
-3. **Environment Setup**
-   ```bash
-   # Create .env.local file with your API keys
-   ALPHA_VANTAGE_API_KEY=your_key_here  # Primary stock data source
-   NEWS_API_KEY=your_key_here           # Financial news articles
-   GEMINI_API_KEY=your_key_here         # Google Gemini for LLM analysis
-   REDIS_URL=redis://...                # Redis Cloud URL for caching (optional)
-   ```
+# Create .env.local with API keys
+GEMINI_API_KEY=your_key_here     # Google Gemini API
+REDIS_URL=redis://...             # Redis Cloud URL
 
-4. **Deploy to Vercel**
-   - Connect GitHub repository to Vercel
-   - Add environment variables in Vercel dashboard
-   - Auto-deployment on main branch pushes
+# Start development server
+npm run dev
+```
 
-## 📈 Performance & Reliability
+## Data Quality & Sources
 
-### **Current Metrics**
-- **Page Load**: ~2-3 seconds
-- **API Response**: 500ms-2s average
-- **Uptime**: 99%+ (Vercel infrastructure)
-- **Error Handling**: Graceful fallbacks prevent failures
+### **Verified Metrics Accuracy**
+All metrics verified against [Coherent Q1 FY2026 Earnings Release](https://www.globenewswire.com/news-release/2025/11/05/3181974/11543/en/Coherent-Corp-Reports-First-Quarter-Fiscal-2026-Results.html):
 
-### **Monitoring**
-- Vercel function logs for API performance
-- Browser console for frontend errors
-- Real-time error tracking and alerting
+| Metric | Extracted | Official | Status |
+|--------|-----------|----------|--------|
+| Revenue | $1,581M | $1,581.4M | Verified |
+| Gross Margin | 36.6% | 36.6% | Verified |
+| Operating Margin | 16.4% | 16.4% | Verified |
+| Operating Income | $259M | $259.1M | Verified |
+| R&D/Revenue | 9.8% | 9.8% | Verified |
+| Net Income | $226M | $226.3M | Verified |
+| Diluted EPS | $1.19 | $1.19 | Verified |
 
-## 🔒 Security & Privacy
+### **LLM Integration**
+- **Model**: Google Gemini 3 Flash Preview (`gemini-3-flash-preview`)
+- **Source**: SEC EDGAR 10-Q filings
+- **Caching**: Redis Cloud with quarter-based keys
+- **Filing Detection**: Automatic new filing detection by accession number
+- **Cost**: <$1/month with smart caching
 
-- **API Keys**: Stored as environment variables, never in code
-- **HTTPS**: Enforced by Vercel platform
-- **CORS**: Properly configured for secure cross-origin requests
-- **No Personal Data**: No user tracking or data collection
+## Development Roadmap
 
-## 📖 Documentation
+### **COMPLETED**
+- Real-time stock data with multi-source fallbacks
+- TradingView interactive charts
+- Real historical technical analysis
+- LLM-powered SEC filing analysis
+- 8 GAAP financial metrics with tooltips
+- Real 8-quarter sparklines from Redis cache
+- Investment-grade company insights
+- Filing change detection system
+- Gemini 3 Flash upgrade (100% accuracy verified)
+- Metric tooltips with calculation formulas
 
-### **For Developers**
-- **`CLAUDE.md`** - Complete technical architecture and development guide
-- **`PROJECT_STATUS.md`** - Current project status and roadmap
-- **`DATA_SOURCES.md`** - Detailed breakdown of all data sources
+### **NEXT PRIORITIES**
+- Performance optimization
+- Enhanced loading states
+- Advanced export features
+- Competitive intelligence section
 
-### **For Analysts/Investors**
-- Real-time COHR stock tracking
-- Professional-grade technical analysis
-- Comprehensive financial news monitoring
-- Mobile-accessible from anywhere
+## Security & Privacy
 
-## 🔮 Development Roadmap
-
-### **✅ COMPLETED SPRINTS**
-**Sprint 1: Real Technical Analysis** ✅
-- [x] Yahoo Finance historical data integration
-- [x] Real support/resistance from swing highs/lows
-- [x] Enhanced technical indicators (RSI, MACD, Volume)
-- [x] Moving averages as dynamic support/resistance levels
-
-**Sprint 3: Market Intelligence** ✅
-- [x] COHR business segment performance data
-- [x] Q2 2025 earnings-based market intelligence
-- [x] Data transparency features with source verification
-- [x] Quarterly update cycle aligned with earnings
-
-**LLM Integration: Dynamic SEC Filing Analysis** ✅ (June 2025)
-- [x] Google Gemini 2.5 Flash Lite integration for SEC filing analysis
-- [x] Automatic fetching of latest 10-Q/10-K filings from SEC EDGAR
-- [x] Real-time extraction of Q3 2025 business segment performance
-- [x] Manual refresh functionality and enhanced error handling
-- [x] Cost-effective implementation (<$1/month with caching)
-
-**Financial Metrics & Company Insights Enhancement** ✅ (December 2025)
-- [x] Split LLM architecture with focused dual endpoints
-- [x] 8 universal GAAP-based financial metrics with trend arrows
-- [x] Professional Company Insights with 8 investment-grade categories
-- [x] Enhanced card design with gradients and improved typography
-- [x] Color-coded confidence scoring and mobile responsiveness
-- [x] Data integrity priority - removed all hardcoded fallbacks
-- [x] Professional error handling with transparent failure states
-- [x] Sparklines data integrity fix - disabled hallucinated historical data
-
-**Analyst Consensus Integration** ✅ (January 2025)
-- [x] Finviz primary source implementation with fallback strategy
-- [x] Real price targets ($96.06) and EPS estimates ($0.91) displaying
-- [x] Enhanced analyst card with consensus ratings and visual distribution bars
-- [x] Removed Enhanced Analytics button and Chart.js dependencies
-- [x] Code simplification maintaining core analyst functionality
-- [x] Data transparency enhancement with Finviz query timestamps
-- [x] Complete removal of hardcoded fallback data (Issue #19)
-
-### **🚧 NEXT PRIORITIES**
-**Real Sparklines Implementation** - In Progress (branch: `feature/real-sparklines`)
-- [x] Redis Cloud integration for persistent caching
-- [x] Cache service with metrics/insights persistence (6hr/12hr TTL)
-- [x] Historical backfill script using Gemini 3 Flash (`gemini-3-flash-preview`)
-- [ ] **Issue #12**: Complete real 8-quarter historical sparklines
-- [ ] Frontend sparkline rendering with gradient fills
-- [ ] API endpoint for sparkline data retrieval
-
-**Data Integrity & Performance**
-- [x] **Issue #19**: ✅ **COMPLETE** - Removed hardcoded analyst fallback data
-- [ ] **Issue #13**: Comprehensive caching strategy for multi-user scale
-- [ ] Performance optimization and enhanced loading states
-- [ ] Advanced user experience improvements
-- [ ] Data source transparency enhancements
-- [ ] Accessibility and keyboard navigation improvements
-
-**Sprint 2: Competitive Intelligence** (Future)
-- [ ] Competitive positioning section (currently hidden)
-- [ ] Peer company performance comparison
-- [ ] Relative stock performance vs competitors
-- [ ] Industry positioning and market share data
-
-**Sprint 4: AI Integration** (Future)
-- [ ] OpenAI-powered news sentiment analysis
-- [ ] AI-generated investment insights
-- [ ] Interactive Q&A about COHR performance
-- [ ] Automated earnings analysis and alerts
-
-### **🔧 TECHNICAL IMPROVEMENTS**
-- [x] Redis Cloud caching for API responses (metrics & insights)
-- [ ] Enhanced error handling UI
-- [ ] Performance optimization
-- [ ] WebSocket real-time data feeds
-
-## 🤝 Contributing
-
-This project is designed for financial analysis and investment research. Contributions welcome for:
-
-- Data source improvements
-- UI/UX enhancements
-- Performance optimizations
-- New financial metrics
-
-## 📞 Support
-
-### **Technical Issues**
-- Check Vercel function logs for API errors
-- Review browser console for frontend issues
-- Test API endpoints directly for debugging
-
-### **Data Quality**
-- Report inaccurate data via GitHub issues
-- Suggest new data sources or improvements
-- Request additional financial metrics
+- **API Keys**: Environment variables only
+- **HTTPS**: Enforced by Vercel
+- **No Personal Data**: No user tracking
 
 ---
 
-**Investment Disclaimer**: This dashboard is for informational purposes only. Not financial advice. Always consult with financial professionals before making investment decisions.
+**Investment Disclaimer**: This dashboard is for informational purposes only. Not financial advice.
 
-**Repository**: [github.com/seaberger/cohr_dashboard](https://github.com/seaberger/cohr_dashboard)  
-**Live Dashboard**: Available via Vercel deployment URL
+**Repository**: [github.com/seaberger/cohr_dashboard](https://github.com/seaberger/cohr_dashboard)

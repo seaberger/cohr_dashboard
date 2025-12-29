@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { symbol = 'COHR', type = '10-Q', refresh = 'false' } = req.query;
+  const { symbol = 'COHR', type = '10-Q', refresh = 'false', metadataOnly = 'false' } = req.query;
 
   // Set Vercel CDN cache headers (persists across cold starts)
   // SEC filings change infrequently (quarterly), so cache for 24 hours
@@ -37,14 +37,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Check cache first
-    const cacheKey = `${symbol}-${type}`;
-    const cachedData = cache.get(cacheKey);
-    if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
-      console.log(`Returning cached filing for ${symbol}`);
-      return res.status(200).json(cachedData.data);
-    }
-
     // Step 1: Get company CIK (Central Index Key)
     const cik = await getCompanyCIK(symbol);
     if (!cik) {
@@ -57,8 +49,40 @@ export default async function handler(req, res) {
       throw new Error(`No ${type} filings found for ${symbol}`);
     }
 
-    // Step 3: Get the most recent filing content
     const latestFiling = filings[0];
+
+    // If metadataOnly requested, return just filing metadata (no content fetch)
+    // This is used for filing change detection
+    if (metadataOnly === 'true') {
+      console.log(`Returning metadata only for ${symbol} ${type}`);
+      return res.status(200).json({
+        status: 'success',
+        symbol,
+        cik,
+        filing: {
+          type,
+          filingDate: latestFiling.filingDate,
+          acceptanceDate: latestFiling.acceptanceDateTime,
+          accessionNumber: latestFiling.accessionNumber,
+          documentUrl: latestFiling.primaryDocument,
+        },
+        metadataOnly: true,
+        extractedAt: new Date().toISOString()
+      });
+    }
+
+    // Check cache first (only for full content requests)
+    const cacheKey = `${symbol}-${type}`;
+    const cachedData = cache.get(cacheKey);
+    if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION && refresh !== 'true') {
+      // Verify cache is for same filing (accession number match)
+      if (cachedData.data.filing.accessionNumber === latestFiling.accessionNumber) {
+        console.log(`Returning cached filing for ${symbol}`);
+        return res.status(200).json(cachedData.data);
+      }
+    }
+
+    // Step 3: Get the most recent filing content
     const filingContent = await getFilingContent(latestFiling);
 
     // Step 4: Extract relevant sections

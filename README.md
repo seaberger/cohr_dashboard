@@ -72,9 +72,11 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 ## 🏗️ Architecture
 
 ### **Tech Stack**
-- **Frontend**: Static HTML5 + Vanilla JavaScript  
+- **Frontend**: Static HTML5 + Vanilla JavaScript
 - **Backend**: Vercel Serverless Functions (Node.js)
 - **LLM Integration**: Google Gemini 2.5 Flash Lite with SEC EDGAR API
+- **Historical Analysis**: Gemini 3 Flash for accurate backfill operations
+- **Caching**: Redis Cloud for persistent cross-restart data caching
 - **Schema Validation**: Zod for robust data transformation
 - **Deployment**: Vercel with GitHub integration
 - **Charts**: TradingView widget
@@ -94,11 +96,14 @@ A comprehensive, real-time investor dashboard for Coherent Corp (NASDAQ: COHR) f
 │   ├── sec-filings.js           # SEC EDGAR filing fetcher
 │   ├── universal-metrics.js     # Focused GAAP metrics extraction
 │   └── company-insights.js      # Business intelligence extraction
-├── lib/                          # Technical analysis & LLM utilities  
+├── lib/                          # Technical analysis & LLM utilities
 │   ├── technicalAnalysis.js     # Support/resistance calculations
 │   ├── geminiService.js         # Google Gemini 2.5 Flash Lite LLM utilities
+│   ├── cacheService.js          # Redis Cloud caching for metrics/insights
 │   ├── schemas.js               # Zod schema validation for LLM data
 │   └── dataTransformer.js       # LLM data transformation pipeline
+├── scripts/                      # Utility scripts
+│   └── backfill-historical-metrics.js  # Historical 10-Q backfill (Gemini 3 Flash)
 ├── backups/                      # Original design files
 ├── docs/                         # Project documentation
 │   └── LLM_INTEGRATION.md       # Comprehensive LLM integration guide
@@ -155,8 +160,10 @@ All endpoints include CORS support and 30-second timeout limits:
 
 ### **🤖 LLM INTEGRATION STATUS**
 - **Google Gemini 2.5 Flash Lite**: Deployed and analyzing latest SEC filings
+- **Gemini 3 Flash**: Used for historical backfill operations (more accurate)
 - **SEC EDGAR Integration**: Fetching 10-Q/10-K filings automatically
 - **Split Architecture**: Focused endpoints for metrics and insights
+- **Redis Caching**: Persistent storage across server restarts (6hr metrics, 12hr insights)
 - **Cost**: <$1/month with smart caching strategies
 - **Data Integrity**: Professional error states when analysis fails
 - **Manual Refresh**: Independent refresh buttons for each section
@@ -188,10 +195,11 @@ All endpoints include CORS support and 30-second timeout limits:
 
 3. **Environment Setup**
    ```bash
-   # Create .env file with your API keys
+   # Create .env.local file with your API keys
    ALPHA_VANTAGE_API_KEY=your_key_here  # Primary stock data source
    NEWS_API_KEY=your_key_here           # Financial news articles
-   GEMINI_API_KEY=your_key_here         # Google Gemini 2.5 Flash Lite for LLM analysis
+   GEMINI_API_KEY=your_key_here         # Google Gemini for LLM analysis
+   REDIS_URL=redis://...                # Redis Cloud URL for caching (optional)
    ```
 
 4. **Deploy to Vercel**
@@ -274,9 +282,16 @@ All endpoints include CORS support and 30-second timeout limits:
 - [x] Complete removal of hardcoded fallback data (Issue #19)
 
 ### **🚧 NEXT PRIORITIES**
-**Data Integrity & Performance** - Current Focus
+**Real Sparklines Implementation** - In Progress (branch: `feature/real-sparklines`)
+- [x] Redis Cloud integration for persistent caching
+- [x] Cache service with metrics/insights persistence (6hr/12hr TTL)
+- [x] Historical backfill script using Gemini 3 Flash (`gemini-3-flash-preview`)
+- [ ] **Issue #12**: Complete real 8-quarter historical sparklines
+- [ ] Frontend sparkline rendering with gradient fills
+- [ ] API endpoint for sparkline data retrieval
+
+**Data Integrity & Performance**
 - [x] **Issue #19**: ✅ **COMPLETE** - Removed hardcoded analyst fallback data
-- [ ] **Issue #12**: Implement real 8-quarter historical sparklines
 - [ ] **Issue #13**: Comprehensive caching strategy for multi-user scale
 - [ ] Performance optimization and enhanced loading states
 - [ ] Advanced user experience improvements
@@ -296,7 +311,7 @@ All endpoints include CORS support and 30-second timeout limits:
 - [ ] Automated earnings analysis and alerts
 
 ### **🔧 TECHNICAL IMPROVEMENTS**
-- [ ] Server-side caching for API responses
+- [x] Redis Cloud caching for API responses (metrics & insights)
 - [ ] Enhanced error handling UI
 - [ ] Performance optimization
 - [ ] WebSocket real-time data feeds

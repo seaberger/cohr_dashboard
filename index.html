@@ -797,6 +797,75 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border-color: #cbd6e2;
         }
+
+        /* Metric Tooltip Styles */
+        .metric-tile .metric-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            width: 260px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .metric-tile .metric-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #2c3e50;
+        }
+
+        .metric-tile:hover .metric-tooltip {
+            display: block;
+        }
+
+        .metric-tooltip-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #3498db;
+        }
+
+        .metric-tooltip-formula {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin-top: 8px;
+            color: #f1c40f;
+        }
+
+        .metric-label {
+            position: relative;
+        }
+
+        .metric-tile[data-metric]::before {
+            content: 'ⓘ';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 0.75em;
+            color: #bdc3c7;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .metric-tile[data-metric]:hover::before {
+            opacity: 1;
+            color: #3498db;
+        }
         
         .metric-header {
             display: flex;
@@ -838,9 +907,34 @@
         }
         
         .metric-sparkline {
-            height: 24px;
+            height: 32px;
             width: 100%;
             margin-top: 8px;
+            border-radius: 4px;
+            background: linear-gradient(180deg, rgba(52, 152, 219, 0.05) 0%, rgba(52, 152, 219, 0.02) 100%);
+        }
+
+        .metric-sparkline.positive {
+            background: linear-gradient(180deg, rgba(39, 174, 96, 0.08) 0%, rgba(39, 174, 96, 0.02) 100%);
+        }
+
+        .metric-sparkline.negative {
+            background: linear-gradient(180deg, rgba(231, 76, 60, 0.08) 0%, rgba(231, 76, 60, 0.02) 100%);
+        }
+
+        .sparkline-loading {
+            height: 32px;
+            width: 100%;
+            margin-top: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
         
         .metric-change {
@@ -1410,7 +1504,11 @@
             <!-- Financial Metrics Grid -->
             <div class="metrics-grid" id="universalMetricsContainer" style="display: grid;">
                 <!-- Top Row: Core Financial Metrics -->
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="revenue">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Total Revenue</div>
+                        Total revenues from all business segments for the quarter, as reported in the Condensed Consolidated Statements of Operations.
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1419,7 +1517,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="grossMarginPct">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Gross Profit Margin</div>
+                        Percentage of revenue remaining after cost of goods sold. Measures production efficiency and pricing power.
+                        <div class="metric-tooltip-formula">= (Revenue − COGS) ÷ Revenue × 100</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1428,7 +1531,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="operatingMarginPct">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Operating Profit Margin</div>
+                        Percentage of revenue remaining after operating expenses (COGS, R&D, SG&A). Key measure of operational efficiency.
+                        <div class="metric-tooltip-formula">= Operating Income ÷ Revenue × 100</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">→</div>
@@ -1437,7 +1545,11 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="operatingIncome">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Operating Income (EBIT)</div>
+                        Profit from core business operations before interest and taxes. Reflects operational performance excluding financing decisions.
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1446,9 +1558,13 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                
+
                 <!-- Second Row: Cash Flow & Profitability -->
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="operatingCashFlow">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Operating Cash Flow</div>
+                        Cash generated from core business operations. From the Statement of Cash Flows: "Net cash provided by operating activities."
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">→</div>
@@ -1457,7 +1573,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="rndRatioPct">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">R&D Intensity</div>
+                        Research & development spending as percentage of revenue. Indicates investment in future products and innovation.
+                        <div class="metric-tooltip-formula">= R&D Expenses ÷ Revenue × 100</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1466,7 +1587,11 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="netIncome">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Net Income</div>
+                        Bottom-line profit after all expenses, interest, and taxes. "Net income attributable to Coherent Corp." from the income statement.
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↘</div>
@@ -1475,7 +1600,12 @@
                     <canvas class="metric-sparkline" width="100" height="24"></canvas>
                     <div class="metric-change">Loading...</div>
                 </div>
-                <div class="metric-tile">
+                <div class="metric-tile" data-metric="epsDiluted">
+                    <div class="metric-tooltip">
+                        <div class="metric-tooltip-title">Diluted Earnings Per Share</div>
+                        Net income divided by diluted share count. Accounts for potential share dilution from options, warrants, and convertibles.
+                        <div class="metric-tooltip-formula">= Net Income ÷ Diluted Shares</div>
+                    </div>
                     <div class="metric-header">
                         <div class="metric-value">Loading...</div>
                         <div class="metric-trend-arrow">↗</div>
@@ -1495,10 +1625,24 @@
                         <h3 style="color: #2c3e50; margin: 0 0 4px 0; font-size: 1.2em; font-weight: 600;">Key Company Insights</h3>
                         <p style="color: #7f8c8d; margin: 0; font-size: 0.9em;">AI-powered analysis from latest SEC filings</p>
                     </div>
-                    <button id="refreshInsightsBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666; display: flex; align-items: center; gap: 6px;">
-                        🔄 <span class="refresh-text">Refresh</span>
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="refreshInsightsBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666; display: flex; align-items: center; gap: 6px;">
+                            🔄 <span class="refresh-text">Refresh</span>
+                        </button>
+                        <button id="insightsSourcesBtn" style="background: none; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.85em; color: #666;">
+                            📊 Data Sources
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Insights Data Sources Panel (initially hidden) -->
+                <div id="insightsSourcesPanel" style="display: none; background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 16px; border-left: 4px solid #9b59b6;">
+                    <h4 style="margin: 0 0 12px 0; color: #2c3e50; font-size: 1em;">Company Insights Sources & Methodology</h4>
+                    <div id="insightsSourcesContent">
+                        <p style="margin: 8px 0; font-size: 0.9em; color: #555;">Loading source information...</p>
+                    </div>
+                </div>
+
                 <div class="insights-grid" id="companyInsightsContainer">
                     <div style="text-align: center; padding: 40px 20px; color: #999;">
                         <div style="font-size: 2em; margin-bottom: 16px;">🔍</div>
@@ -1808,17 +1952,33 @@
                     try {
                         refreshInsightsButton.innerHTML = '⏳ <span class="refresh-text">Refreshing...</span>';
                         refreshInsightsButton.disabled = true;
-                        
+
                         // Force refresh insights (bypasses both browser and CDN cache)
                         await loadCompanyInsights(true);
 
                         console.log('✅ Company insights refreshed successfully');
-                        
+
                     } catch (error) {
                         console.error('Failed to refresh insights:', error);
                     } finally {
                         refreshInsightsButton.innerHTML = '🔄 <span class="refresh-text">Refresh</span>';
                         refreshInsightsButton.disabled = false;
+                    }
+                });
+            }
+
+            // Setup insights sources panel toggle
+            const insightsSourcesBtn = document.getElementById('insightsSourcesBtn');
+            const insightsSourcesPanel = document.getElementById('insightsSourcesPanel');
+
+            if (insightsSourcesBtn && insightsSourcesPanel) {
+                insightsSourcesBtn.addEventListener('click', () => {
+                    if (insightsSourcesPanel.style.display === 'none') {
+                        insightsSourcesPanel.style.display = 'block';
+                        insightsSourcesBtn.textContent = '📊 Hide Sources';
+                    } else {
+                        insightsSourcesPanel.style.display = 'none';
+                        insightsSourcesBtn.textContent = '📊 Data Sources';
                     }
                 });
             }
@@ -2699,6 +2859,11 @@
                             updateUniversalMetrics(parsed.universalMetrics);
                             updateMetricsTitle(parsed);
                             updateDataSources(parsed, true, parsed.timestamp);  // fromCache = true, with cache timestamp
+
+                            // Load sparklines (from Redis cache if available)
+                            loadSparklineData().then(sparklineData => {
+                                if (sparklineData) renderSparklines(sparklineData);
+                            });
                             return;
                         } else {
                             console.log('⏰ Cache expired, fetching fresh data');
@@ -2774,7 +2939,12 @@
                     updateUniversalMetrics(data.universalMetrics);
                     updateMetricsTitle(data);
                     updateDataSources(data);
-                    
+
+                    // Load sparklines (from Redis cache if available)
+                    loadSparklineData().then(sparklineData => {
+                        if (sparklineData) renderSparklines(sparklineData);
+                    });
+
                     // Double-check container visibility after update
                     if (container) {
                         container.style.display = 'grid';
@@ -2872,9 +3042,10 @@
                     ...data,
                     timestamp: Date.now()
                 }));
-                
+
                 updateCompanyInsights(data.companyInsights);
-                
+                updateInsightsSources(data);
+
             } catch (error) {
                 console.error('Company insights error:', error);
                 
@@ -3011,15 +3182,18 @@
                     // Update change text
                     const changeText = metric.growth || metric.change || '';
                     changeElement.textContent = changeText;
-                    
-                    // Draw sparkline - DISABLED until real data available (Issue #12)
-                    // if (metric.sparkline && sparklineCanvas) {
-                    //     drawSparkline(sparklineCanvas, metric.sparkline);
-                    // }
-                    
-                    // Hide sparkline canvas until we have real data
+
+                    // Show sparkline canvas with loading shimmer
+                    // Will be populated by renderSparklines() when Redis data available
                     if (sparklineCanvas) {
-                        sparklineCanvas.style.display = 'none';
+                        sparklineCanvas.style.display = 'block';
+                        // Add loading shimmer effect until sparkline data loads
+                        if (!sparklineCanvas.hasAttribute('data-loaded')) {
+                            const loadingDiv = document.createElement('div');
+                            loadingDiv.className = 'sparkline-loading';
+                            sparklineCanvas.parentNode.insertBefore(loadingDiv, sparklineCanvas);
+                            sparklineCanvas.style.display = 'none';
+                        }
                     }
                     
                     // Reset opacity and visibility after update
@@ -3051,49 +3225,158 @@
             }
         }
         
-        function drawSparkline(canvas, data) {
-            if (!canvas || !data || data.length < 2) return;
-            
+        function drawSparkline(canvas, data, trend = 'neutral') {
+            if (!canvas || !data || data.length < 2) {
+                canvas.style.display = 'none';
+                return;
+            }
+
+            canvas.style.display = 'block';
+
+            // Set canvas size for high DPI displays
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
             const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = rect.height;
+
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
-            
-            // Calculate bounds
+
+            // Calculate bounds with padding
             const min = Math.min(...data);
             const max = Math.max(...data);
             const range = max - min || 1;
-            const padding = 2;
-            
-            // Draw line
-            ctx.strokeStyle = '#3498db';
-            ctx.lineWidth = 1.5;
+            const paddingX = 4;
+            const paddingY = 4;
+
+            // Choose colors based on trend
+            const colors = {
+                positive: { line: '#27ae60', fill: 'rgba(39, 174, 96, 0.15)', dot: '#27ae60' },
+                negative: { line: '#e74c3c', fill: 'rgba(231, 76, 60, 0.15)', dot: '#e74c3c' },
+                neutral: { line: '#3498db', fill: 'rgba(52, 152, 219, 0.15)', dot: '#3498db' }
+            };
+            const color = colors[trend] || colors.neutral;
+
+            // Calculate points
+            const points = data.map((value, index) => ({
+                x: paddingX + (index / (data.length - 1)) * (width - 2 * paddingX),
+                y: height - paddingY - ((value - min) / range) * (height - 2 * paddingY)
+            }));
+
+            // Draw gradient fill under the line
             ctx.beginPath();
-            
-            data.forEach((value, index) => {
-                const x = (index / (data.length - 1)) * (width - 2 * padding) + padding;
-                const y = height - padding - ((value - min) / range) * (height - 2 * padding);
-                
-                if (index === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            });
-            
+            ctx.moveTo(points[0].x, height);
+            points.forEach(point => ctx.lineTo(point.x, point.y));
+            ctx.lineTo(points[points.length - 1].x, height);
+            ctx.closePath();
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, color.fill);
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Draw smooth curved line using bezier curves
+            ctx.strokeStyle = color.line;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const xc = (points[i].x + points[i + 1].x) / 2;
+                const yc = (points[i].y + points[i + 1].y) / 2;
+                ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+            }
+            // Draw to the last point
+            ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
             ctx.stroke();
-            
-            // Draw dots
-            ctx.fillStyle = '#3498db';
-            data.forEach((value, index) => {
-                const x = (index / (data.length - 1)) * (width - 2 * padding) + padding;
-                const y = height - padding - ((value - min) / range) * (height - 2 * padding);
-                
-                ctx.beginPath();
-                ctx.arc(x, y, 1.5, 0, 2 * Math.PI);
-                ctx.fill();
+
+            // Draw endpoint dot (current quarter)
+            const lastPoint = points[points.length - 1];
+            ctx.beginPath();
+            ctx.arc(lastPoint.x, lastPoint.y, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = color.dot;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Add CSS class for background gradient
+            canvas.className = `metric-sparkline ${trend}`;
+        }
+
+        // Fetch and render sparklines from real historical data
+        async function loadSparklineData() {
+            try {
+                const response = await fetch('/api/sparkline-data?symbol=COHR');
+
+                if (!response.ok) {
+                    console.log('Sparkline data not available (Redis not configured)');
+                    return null;
+                }
+
+                const data = await response.json();
+
+                if (data.sparklines) {
+                    console.log('📊 Real sparkline data loaded:', data.quartersAvailable, 'quarters');
+                    return data.sparklines;
+                }
+
+                return null;
+            } catch (error) {
+                console.log('Sparklines: Using fallback (cache not available)');
+                return null;
+            }
+        }
+
+        // Render sparklines for all metric tiles
+        function renderSparklines(sparklineData) {
+            if (!sparklineData) return;
+
+            const metricMap = {
+                'Revenue': 'revenue',
+                'Gross Margin': 'grossMarginPct',
+                'Operating Margin': 'operatingMarginPct',
+                'Operating Income': 'operatingIncome',
+                'Operating Cash Flow': 'operatingCashFlow',
+                'R&D / Revenue': 'rndRatioPct',
+                'Net Income': 'netIncome',
+                'Diluted EPS': 'epsDiluted'
+            };
+
+            document.querySelectorAll('.metric-tile').forEach(tile => {
+                const labelElement = tile.querySelector('.metric-label');
+                const canvas = tile.querySelector('.metric-sparkline');
+                const loadingShimmer = tile.querySelector('.sparkline-loading');
+
+                if (labelElement && canvas) {
+                    const label = labelElement.textContent.trim();
+                    const metricKey = metricMap[label];
+
+                    if (metricKey && sparklineData[metricKey]) {
+                        const sparkline = sparklineData[metricKey];
+
+                        // Remove loading shimmer if present
+                        if (loadingShimmer) {
+                            loadingShimmer.remove();
+                        }
+
+                        // Show and draw the canvas
+                        canvas.style.display = 'block';
+                        canvas.setAttribute('data-loaded', 'true');
+                        drawSparkline(canvas, sparkline.data, sparkline.trend);
+
+                        console.log(`📈 Sparkline drawn for ${label}: ${sparkline.count} points, trend: ${sparkline.trend}`);
+                    }
+                }
             });
         }
         
@@ -3242,38 +3525,98 @@
                 cacheIndicator = '<span style="background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">✨ Fresh</span>';
             }
 
+            // Use new extraction info if available, otherwise fallback
+            const extraction = data.extraction || {};
+            const modelDisplay = extraction.modelDisplay || 'Google Gemini 2.5 Flash Lite';
+            const methodology = data.methodology || 'Financial metrics extracted from SEC filings using LLM analysis.';
+
             container.innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
                     <div>
-                        <strong style="color: #2c3e50;">Data Quality:</strong> ${data.dataQuality}<br>
-                        <strong style="color: #2c3e50;">Confidence Level:</strong> ${data.confidence}<br>
-                        <strong style="color: #2c3e50;">Last Updated:</strong> ${lastUpdated} ${cacheIndicator}
+                        <strong style="color: #2c3e50;">Data Source:</strong> SEC EDGAR<br>
+                        <strong style="color: #2c3e50;">Filing Type:</strong> ${data.filing?.type || '10-Q'}<br>
+                        <strong style="color: #2c3e50;">Filing Date:</strong> ${data.filing?.date || 'N/A'} ${cacheIndicator}
                     </div>
                     <div>
-                        <strong style="color: #2c3e50;">Update Frequency:</strong> ${data.updateFrequency || 'Quarterly (SEC Filings)'}<br>
-                        <strong style="color: #2c3e50;">Source Count:</strong> ${data.sources.length} reports<br>
-                        <strong style="color: #2c3e50;">Research Method:</strong> Multi-source aggregation
+                        <strong style="color: #2c3e50;">Extraction Model:</strong> ${modelDisplay}<br>
+                        <strong style="color: #2c3e50;">Quarter:</strong> ${data.filing?.quarter || data.quarter || 'N/A'}<br>
+                        <strong style="color: #2c3e50;">Update Frequency:</strong> When new 10-Q filed
                     </div>
                 </div>
-                
+
                 <div style="margin-bottom: 12px;">
-                    <strong style="color: #2c3e50;">Primary Data Sources:</strong>
+                    <strong style="color: #2c3e50;">Data Pipeline:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #555;">
                         ${data.sources.map(source => `<li style="margin: 4px 0;">${source}</li>`).join('')}
                     </ul>
                 </div>
-                
+
                 <div style="background: #e8f4fd; padding: 12px; border-radius: 6px; border-left: 3px solid #3498db;">
                     <strong style="color: #2c3e50;">Methodology:</strong>
                     <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #555;">
-                        Market data is compiled from multiple industry research reports and cross-validated for accuracy. 
-                        Figures represent consensus estimates from leading market research firms. Data is updated monthly 
-                        to reflect the latest market intelligence and industry trends.
+                        ${methodology}
                     </p>
                 </div>
-                
+
                 <div style="margin-top: 12px; font-size: 0.85em; color: #666; text-align: center;">
-                    <em>Specific data points may vary between sources due to different methodologies and market definitions.</em>
+                    <em>Data is automatically refreshed when a new SEC 10-Q filing is detected.</em>
+                </div>
+            `;
+        }
+
+        function updateInsightsSources(data) {
+            const container = document.getElementById('insightsSourcesContent');
+            if (!container) return;
+
+            const lastUpdated = new Date(data.lastUpdated).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Use extraction info if available
+            const extraction = data.extraction || {};
+            const modelDisplay = extraction.modelDisplay || 'Google Gemini 2.5 Flash Lite';
+            const insightsCount = extraction.insightsExtracted || data.companyInsights?.length || 0;
+            const methodology = data.methodology || 'Business insights extracted from SEC filings using LLM analysis.';
+
+            let cacheIndicator = '';
+            if (data.fromCache) {
+                cacheIndicator = `<span style="background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">📦 Cached</span>`;
+            } else {
+                cacheIndicator = '<span style="background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">✨ Fresh</span>';
+            }
+
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                    <div>
+                        <strong style="color: #2c3e50;">Data Source:</strong> SEC EDGAR<br>
+                        <strong style="color: #2c3e50;">Filing Type:</strong> ${data.filing?.type || '10-Q'}<br>
+                        <strong style="color: #2c3e50;">Filing Date:</strong> ${data.filing?.date || 'N/A'} ${cacheIndicator}
+                    </div>
+                    <div>
+                        <strong style="color: #2c3e50;">Extraction Model:</strong> ${modelDisplay}<br>
+                        <strong style="color: #2c3e50;">Quarter:</strong> ${data.filing?.quarter || data.quarter || 'N/A'}<br>
+                        <strong style="color: #2c3e50;">Insights Extracted:</strong> ${insightsCount}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: #2c3e50;">Data Pipeline:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #555;">
+                        ${data.sources ? data.sources.map(source => `<li style="margin: 4px 0;">${source}</li>`).join('') : '<li>SEC EDGAR 10-Q Filing</li>'}
+                    </ul>
+                </div>
+
+                <div style="background: #f3e8fd; padding: 12px; border-radius: 6px; border-left: 3px solid #9b59b6;">
+                    <strong style="color: #2c3e50;">Methodology:</strong>
+                    <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #555;">
+                        ${methodology}
+                    </p>
+                </div>
+
+                <div style="margin-top: 12px; font-size: 0.85em; color: #666; text-align: center;">
+                    <em>Insights are automatically refreshed when a new SEC 10-Q filing is detected.</em>
                 </div>
             `;
         }

@@ -440,6 +440,11 @@
             color: #7f8c8d;
         }
 
+        .news-badge.pr {
+            background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%);
+            color: white;
+        }
+
         /* More News Button */
         .more-news-btn {
             display: flex;
@@ -2481,12 +2486,7 @@
             let html = '<div class="news-expanded">';
 
             articles.forEach(article => {
-                const badgeClass = article.type === 'sec-filing'
-                    ? (article.filingType?.startsWith('8-K') ? 'event' : 'sec')
-                    : 'news';
-                const badgeText = article.type === 'sec-filing'
-                    ? (article.filingType?.startsWith('8-K') ? '⚡ Event' : '📋 SEC')
-                    : '📰 News';
+                const { badgeClass, badgeText } = getNewsBadge(article);
 
                 html += `
                     <div class="news-tile">
@@ -2520,12 +2520,7 @@
 
             let html = '';
             allNewsArticles.forEach(article => {
-                const badgeClass = article.type === 'sec-filing'
-                    ? (article.filingType?.startsWith('8-K') ? 'event' : 'sec')
-                    : 'news';
-                const badgeText = article.type === 'sec-filing'
-                    ? (article.filingType?.startsWith('8-K') ? '⚡ Event' : '📋 SEC')
-                    : '📰 News';
+                const { badgeClass, badgeText } = getNewsBadge(article);
 
                 html += `
                     <div class="news-modal-item">
@@ -2569,6 +2564,19 @@
             if (diffDays < 7) return `${diffDays}d ago`;
 
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function getNewsBadge(article) {
+            if (article.type === 'sec-filing') {
+                if (article.filingType?.startsWith('8-K')) {
+                    return { badgeClass: 'event', badgeText: '⚡ Event' };
+                }
+                return { badgeClass: 'sec', badgeText: '📋 SEC' };
+            }
+            if (article.type === 'press-release') {
+                return { badgeClass: 'pr', badgeText: '📢 Press' };
+            }
+            return { badgeClass: 'news', badgeText: '📰 News' };
         }
 
         function renderNewsError() {

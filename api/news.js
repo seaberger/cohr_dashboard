@@ -17,22 +17,23 @@ export default async function handler(req, res) {
 
     const symbol = req.query.symbol || process.env.DEFAULT_SYMBOL || 'COHR';
     const limit = parseInt(req.query.limit) || parseInt(process.env.MAX_NEWS_ARTICLES) || 10;
-    // Default to 0 to show all articles, sorted by relevance
-    const minRelevance = parseInt(req.query.minRelevance) || 0;
+    // Default threshold filters out unrelated articles (oil, crypto, etc.)
+    const minRelevance = parseInt(req.query.minRelevance) || 10;
 
     try {
       let newsData = [];
 
       // Fetch news from multiple sources in parallel
-      const [yahooNews, secFilings, bloombergNews, pressReleases] = await Promise.all([
+      // Note: Coherent's official press releases at coherent.com/news/press-releases
+      // require JavaScript rendering - not accessible via simple fetch
+      const [yahooNews, secFilings, bloombergNews] = await Promise.all([
         fetchYahooNews(symbol, limit),
         fetchSECFilingsAsNews(symbol),
-        fetchBloombergNews(limit),
-        fetchPressReleases(symbol, limit)
+        fetchBloombergNews(limit)
       ]);
 
-      // Combine all sources
-      newsData = [...yahooNews, ...secFilings, ...bloombergNews, ...pressReleases];
+      // Combine all sources (SEC filings include official 8-K event announcements)
+      newsData = [...yahooNews, ...secFilings, ...bloombergNews];
 
       // Calculate relevance scores for all articles
       newsData = newsData.map(article => ({
@@ -66,8 +67,8 @@ export default async function handler(req, res) {
         totalResults: newsData.length,
         symbol: symbol.toUpperCase(),
         lastUpdated: new Date().toISOString(),
-        dataSources: ['Yahoo Finance', 'SEC EDGAR', 'Bloomberg RSS', 'GlobeNewswire', 'PR Newswire'],
-        note: 'News filtered by relevance score. SEC filings and official press releases included.'
+        dataSources: ['Yahoo Finance', 'SEC EDGAR (8-K/10-Q/10-K)', 'Bloomberg Technology'],
+        note: 'News filtered by relevance. SEC filings provide official company announcements.'
       };
 
       res.status(200).json(response);
@@ -294,8 +295,18 @@ async function fetchBloombergNews(limit) {
 
     if (!data.items?.length) return [];
 
-    // Get all Bloomberg articles - relevance scoring will sort them appropriately
+    // Pre-filter Bloomberg for tech/semiconductor relevance before scoring
+    const techKeywords = [
+      'semiconductor', 'chip', 'nvidia', 'ai ', 'datacenter', 'data center',
+      'cloud', 'tech', 'optical', 'photonics', 'networking', 'fiber',
+      'transceiver', 'laser', 'hyperscale'
+    ];
+
     const articles = data.items
+      .filter(item => {
+        const text = `${item.title} ${item.description || ''}`.toLowerCase();
+        return techKeywords.some(kw => text.includes(kw));
+      })
       .slice(0, limit)
       .map(item => ({
         title: item.title,
@@ -387,105 +398,6 @@ function deduplicateNews(articles) {
   });
 }
 
-/**
- * Fetch official press releases from GlobeNewswire and PR Newswire
- */
-async function fetchPressReleases(symbol, limit) {
-  const articles = [];
-
-  // Company-specific search terms
-  const searchTerms = {
-    'COHR': ['Coherent Corp', 'Coherent, Corp', 'COHR']
-  };
-
-  const terms = searchTerms[symbol.toUpperCase()] || [symbol];
-
-  // Fetch Coherent's official press releases from GlobeNewswire organization page
-  try {
-    // GlobeNewswire organization-specific RSS feed for Coherent Corp
-    const gnwUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.globenewswire.com/RssFeed/organization/GNW-820318/feedTitle/GlobeNewswire%20-%20Coherent%20Corp%2E';
-    const gnwResponse = await fetch(gnwUrl);
-    const gnwData = await gnwResponse.json();
-
-    if (gnwData.items?.length) {
-      const coherentPRs = gnwData.items
-        .slice(0, limit)
-        .map(item => ({
-          title: item.title,
-          description: cleanHtml(item.content || item.description || ''),
-          url: item.link,
-          publishedAt: item.pubDate,
-          source: { name: 'Coherent IR' },
-          type: 'press-release',
-          badge: '📢'
-        }));
-
-      articles.push(...coherentPRs);
-      console.log(`GlobeNewswire (Coherent): found ${coherentPRs.length} official press releases`);
-    }
-  } catch (error) {
-    console.log('GlobeNewswire Coherent fetch failed:', error.message);
-  }
-
-  // Try PR Newswire RSS
-  try {
-    const prnUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.prnewswire.com/rss/technology-latest-news.rss';
-    const prnResponse = await fetch(prnUrl);
-    const prnData = await prnResponse.json();
-
-    if (prnData.items?.length) {
-      const coherentPRs = prnData.items
-        .filter(item => {
-          const text = `${item.title} ${item.content || ''}`.toLowerCase();
-          return terms.some(term => text.includes(term.toLowerCase()));
-        })
-        .slice(0, Math.ceil(limit / 2))
-        .map(item => ({
-          title: item.title,
-          description: cleanHtml(item.content || item.description || ''),
-          url: item.link,
-          publishedAt: item.pubDate,
-          source: { name: 'PR Newswire' },
-          type: 'press-release',
-          badge: '📢'
-        }));
-
-      articles.push(...coherentPRs);
-      console.log(`PR Newswire: found ${coherentPRs.length} Coherent press releases`);
-    }
-  } catch (error) {
-    console.log('PR Newswire fetch failed:', error.message);
-  }
-
-  // Try BusinessWire RSS
-  try {
-    const bwUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFpRWg==';
-    const bwResponse = await fetch(bwUrl);
-    const bwData = await bwResponse.json();
-
-    if (bwData.items?.length) {
-      const coherentPRs = bwData.items
-        .filter(item => {
-          const text = `${item.title} ${item.content || ''}`.toLowerCase();
-          return terms.some(term => text.includes(term.toLowerCase()));
-        })
-        .slice(0, Math.ceil(limit / 2))
-        .map(item => ({
-          title: item.title,
-          description: cleanHtml(item.content || item.description || ''),
-          url: item.link,
-          publishedAt: item.pubDate,
-          source: { name: 'BusinessWire' },
-          type: 'press-release',
-          badge: '📢'
-        }));
-
-      articles.push(...coherentPRs);
-      console.log(`BusinessWire: found ${coherentPRs.length} Coherent press releases`);
-    }
-  } catch (error) {
-    console.log('BusinessWire fetch failed:', error.message);
-  }
-
-  return articles;
-}
+// Note: Official Coherent press releases are at https://www.coherent.com/news/press-releases
+// but require JavaScript rendering. SEC 8-K filings serve as official event announcements.
+// Future enhancement: Use Puppeteer/Playwright in a cron job to scrape and cache press releases.

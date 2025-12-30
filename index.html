@@ -2418,7 +2418,7 @@
 
         async function loadNews() {
             try {
-                const response = await fetch(`${API_BASE}/api/news?symbol=COHR&limit=15`);
+                const response = await fetch(`${API_BASE}/api/news?symbol=COHR&limit=20&minRelevance=10`);
                 if (!response.ok) throw new Error('Failed to fetch news data');
                 const data = await response.json();
 

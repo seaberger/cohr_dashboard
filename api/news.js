@@ -23,19 +23,14 @@ export default async function handler(req, res) {
       let newsData = [];
 
       // Fetch news from multiple sources in parallel
-      const [yahooNews, secFilings] = await Promise.all([
+      const [yahooNews, secFilings, bloombergNews] = await Promise.all([
         fetchYahooNews(symbol, limit),
-        fetchSECFilingsAsNews(symbol)
+        fetchSECFilingsAsNews(symbol),
+        fetchBloombergNews(limit)
       ]);
 
       // Combine all sources
-      newsData = [...yahooNews, ...secFilings];
-
-      // Try Bloomberg RSS for additional industry news if we need more
-      if (newsData.length < limit) {
-        const bloombergNews = await fetchBloombergNews(limit - newsData.length);
-        newsData = [...newsData, ...bloombergNews];
-      }
+      newsData = [...yahooNews, ...secFilings, ...bloombergNews];
 
       // Calculate relevance scores for all articles
       newsData = newsData.map(article => ({
@@ -294,10 +289,12 @@ async function fetchBloombergNews(limit) {
 
     if (!data.items?.length) return [];
 
-    // Only include articles with optical/photonics/datacenter relevance
+    // Include articles with optical/photonics/datacenter/semiconductor relevance
     const relevantKeywords = [
       'coherent', 'optical', 'photonics', 'transceiver',
-      'datacenter', 'data center', 'networking', 'fiber'
+      'datacenter', 'data center', 'networking', 'fiber',
+      'semiconductor', 'chip', 'nvidia', 'ai infrastructure',
+      'cloud', 'hyperscale', 'tech stocks', 'technology'
     ];
 
     const articles = data.items

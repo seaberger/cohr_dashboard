@@ -2503,14 +2503,12 @@
                 `;
             });
 
-            // Add "More News" button if we have more articles
-            if (allNewsArticles.length > 5) {
-                html += `
-                    <div class="more-news-btn" onclick="openNewsModal()">
-                        📰 View All News (${allNewsArticles.length} articles)
-                    </div>
-                `;
-            }
+            // Always show "More News" button in expanded view
+            html += `
+                <div class="more-news-btn" onclick="openNewsModal()">
+                    📰 View All News (${allNewsArticles.length} articles)
+                </div>
+            `;
 
             html += '</div>';
             container.innerHTML = html;

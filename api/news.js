@@ -17,7 +17,8 @@ export default async function handler(req, res) {
 
     const symbol = req.query.symbol || process.env.DEFAULT_SYMBOL || 'COHR';
     const limit = parseInt(req.query.limit) || parseInt(process.env.MAX_NEWS_ARTICLES) || 10;
-    const minRelevance = parseInt(req.query.minRelevance) || 20;
+    // Default to 0 to show all articles, sorted by relevance
+    const minRelevance = parseInt(req.query.minRelevance) || 0;
 
     try {
       let newsData = [];
@@ -293,19 +294,8 @@ async function fetchBloombergNews(limit) {
 
     if (!data.items?.length) return [];
 
-    // Include articles with optical/photonics/datacenter/semiconductor relevance
-    const relevantKeywords = [
-      'coherent', 'optical', 'photonics', 'transceiver',
-      'datacenter', 'data center', 'networking', 'fiber',
-      'semiconductor', 'chip', 'nvidia', 'ai infrastructure',
-      'cloud', 'hyperscale', 'tech stocks', 'technology'
-    ];
-
+    // Get all Bloomberg articles - relevance scoring will sort them appropriately
     const articles = data.items
-      .filter(item => {
-        const text = `${item.title} ${item.content || item.description}`.toLowerCase();
-        return relevantKeywords.some(kw => text.includes(kw));
-      })
       .slice(0, limit)
       .map(item => ({
         title: item.title,
@@ -410,34 +400,31 @@ async function fetchPressReleases(symbol, limit) {
 
   const terms = searchTerms[symbol.toUpperCase()] || [symbol];
 
-  // Try GlobeNewswire RSS
+  // Fetch Coherent's official press releases from GlobeNewswire organization page
   try {
-    const gnwUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.globenewswire.com/RssFeed/subjectcode/15-Earnings%20and%20Revenues/feedTitle/GlobeNewswire%20-%20Earnings%20and%20Revenues';
+    // GlobeNewswire organization-specific RSS feed for Coherent Corp
+    const gnwUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.globenewswire.com/RssFeed/organization/GNW-820318/feedTitle/GlobeNewswire%20-%20Coherent%20Corp%2E';
     const gnwResponse = await fetch(gnwUrl);
     const gnwData = await gnwResponse.json();
 
     if (gnwData.items?.length) {
       const coherentPRs = gnwData.items
-        .filter(item => {
-          const text = `${item.title} ${item.content || ''}`.toLowerCase();
-          return terms.some(term => text.includes(term.toLowerCase()));
-        })
-        .slice(0, Math.ceil(limit / 2))
+        .slice(0, limit)
         .map(item => ({
           title: item.title,
           description: cleanHtml(item.content || item.description || ''),
           url: item.link,
           publishedAt: item.pubDate,
-          source: { name: 'GlobeNewswire' },
+          source: { name: 'Coherent IR' },
           type: 'press-release',
           badge: '📢'
         }));
 
       articles.push(...coherentPRs);
-      console.log(`GlobeNewswire: found ${coherentPRs.length} Coherent press releases`);
+      console.log(`GlobeNewswire (Coherent): found ${coherentPRs.length} official press releases`);
     }
   } catch (error) {
-    console.log('GlobeNewswire fetch failed:', error.message);
+    console.log('GlobeNewswire Coherent fetch failed:', error.message);
   }
 
   // Try PR Newswire RSS

@@ -1,4 +1,6 @@
 // Vercel serverless function for news data with relevance scoring and SEC filings
+import { getRecentBlogs } from '../lib/cacheService.js';
+
 export default async function handler(req, res) {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,14 +28,15 @@ export default async function handler(req, res) {
       // Fetch news from multiple sources in parallel
       // Note: Coherent's official press releases at coherent.com/news/press-releases
       // require JavaScript rendering - not accessible via simple fetch
-      const [yahooNews, secFilings, bloombergNews] = await Promise.all([
+      const [yahooNews, secFilings, bloombergNews, blogPosts] = await Promise.all([
         fetchYahooNews(symbol, limit),
         fetchSECFilingsAsNews(symbol),
-        fetchBloombergNews(limit)
+        fetchBloombergNews(limit),
+        fetchBlogsFromRedis(symbol)
       ]);
 
       // Combine all sources (SEC filings include official 8-K event announcements)
-      newsData = [...yahooNews, ...secFilings, ...bloombergNews];
+      newsData = [...yahooNews, ...secFilings, ...bloombergNews, ...blogPosts];
 
       // Calculate relevance scores for all articles
       newsData = newsData.map(article => ({
@@ -67,7 +70,7 @@ export default async function handler(req, res) {
         totalResults: newsData.length,
         symbol: symbol.toUpperCase(),
         lastUpdated: new Date().toISOString(),
-        dataSources: ['Yahoo Finance', 'SEC EDGAR (8-K/10-Q/10-K)', 'Bloomberg Technology'],
+        dataSources: ['Yahoo Finance', 'SEC EDGAR (8-K/10-Q/10-K)', 'Bloomberg Technology', 'Coherent Blog'],
         note: 'News filtered by relevance. SEC filings provide official company announcements.'
       };
 
@@ -96,6 +99,10 @@ function calculateRelevanceScore(article, symbol) {
   }
   if (article.type === 'press-release') {
     return 90;
+  }
+  // Official Coherent blog posts are highly relevant
+  if (article.type === 'blog') {
+    return 85;
   }
 
   // Direct company mentions (highest weight)
@@ -398,6 +405,32 @@ function deduplicateNews(articles) {
   });
 }
 
+/**
+ * Fetch Coherent blog posts from Redis cache
+ */
+async function fetchBlogsFromRedis(symbol) {
+  try {
+    const blogs = await getRecentBlogs(symbol.toLowerCase());
+    if (!blogs?.length) {
+      console.log('No cached blog posts found in Redis');
+      return [];
+    }
+
+    // Blog posts already have the correct format from upload script
+    // Just ensure they have publishedAt for sorting
+    const articles = blogs.map(blog => ({
+      ...blog,
+      publishedAt: blog.parsedDate || new Date(0).toISOString()
+    }));
+
+    console.log(`Redis: loaded ${articles.length} blog posts`);
+    return articles;
+  } catch (error) {
+    console.log('Blog fetch from Redis failed:', error.message);
+    return [];
+  }
+}
+
 // Note: Official Coherent press releases are at https://www.coherent.com/news/press-releases
 // but require JavaScript rendering. SEC 8-K filings serve as official event announcements.
-// Future enhancement: Use Puppeteer/Playwright in a cron job to scrape and cache press releases.
+// Blog posts are fetched from Redis cache (populated by coherent_blog_scraper).

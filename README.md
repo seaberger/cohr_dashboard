@@ -85,6 +85,9 @@ COHR-specific financial news from Yahoo Finance with article summaries.
 - **Analyst Consensus** - Finviz primary source with multi-API fallback
   - Real-time price targets and EPS estimates
   - Query timestamps for data transparency
+- **Coherent Blog Posts** - Official company blog integrated via [cohr_blog_scraping](https://github.com/seaberger/coherent_blog_scraper)
+  - Playwright-based incremental scraper (178+ posts)
+  - Recent posts cached in Redis for news feed inclusion
 
 ## Architecture
 
@@ -116,7 +119,8 @@ COHR-specific financial news from Yahoo Finance with article summaries.
 │   ├── metricsExtractor.js      # GAAP metrics extraction prompts
 │   └── insightsExtractor.js     # Company insights extraction prompts
 ├── scripts/                      # Utility scripts
-│   └── backfill-historical-metrics.js  # Historical 10-Q backfill
+│   ├── backfill-historical-metrics.js  # Historical 10-Q backfill
+│   └── upload-blogs-to-redis.js  # Sync blog posts to Redis cache
 └── docs/                         # Documentation & screenshots
 ```
 
@@ -160,6 +164,18 @@ REDIS_URL=redis://...             # Redis Cloud URL
 
 # Start development server
 npm run dev
+```
+
+### **Refreshing Blog Data**
+Blog posts are sourced from the [coherent_blog_scraper](https://github.com/seaberger/coherent_blog_scraper) repository:
+```bash
+# 1. Run incremental blog scraper (fetches new posts only)
+cd ~/Repositories/cohr_blog_scraping
+uv run python coherent_blog_scraper.py
+
+# 2. Upload recent posts to Redis cache
+cd ~/Repositories/cohr_dashboard
+node scripts/upload-blogs-to-redis.js --count 10
 ```
 
 ## Data Quality & Sources
